@@ -17,6 +17,15 @@ in one sitting. Out comes the winner, a win probability **with an interval**,
 and the specific levers that would flip the verdict. It removes the Tuesdays:
 the same PM, the same two ideas, the same answer — every day of the week.
 
+**Download / mirror :** [huggingface.co/brettleehari/PairwisePM](https://huggingface.co/brettleehari/PairwisePM)
+· **Source :** [github.com/brettleehari/PairwisePM](https://github.com/brettleehari/PairwisePM)
+
+**→ [The statistics behind this, explained one concept at a time](docs/the-statistics.md)** —
+noise vs bias, why pairwise beats 1-to-10 scoring, Bradley-Terry as logistic
+regression on differences, why the default weights are deliberately not fitted,
+Goldberg's model-of-the-judge, shrinkage centered on the prior, Kendall's ζ,
+Brier, and the reason the c-statistic is not in the product yet.
+
 ## Epistemics (read this before trusting a number)
 
 - **Priors are a stated, editable policy, not fitted values.** The factor
