@@ -17,6 +17,12 @@ in one sitting. Out comes the winner, a win probability **with an interval**,
 and the specific levers that would flip the verdict. It removes the Tuesdays:
 the same PM, the same two ideas, the same answer — every day of the week.
 
+### ▶ [**Read the visual explainer — brettleehari.github.io/PairwisePM**](https://brettleehari.github.io/PairwisePM/)
+
+The whole project and its statistics, explained visually with a live model you
+can drag: [GitHub Pages](https://brettleehari.github.io/PairwisePM/) ·
+[mirror on Hugging Face Spaces](https://huggingface.co/spaces/brettleehari/PairwisePM-explained)
+
 **Download / mirror :** [huggingface.co/brettleehari/PairwisePM](https://huggingface.co/brettleehari/PairwisePM)
 · **Source :** [github.com/brettleehari/PairwisePM](https://github.com/brettleehari/PairwisePM)
 
