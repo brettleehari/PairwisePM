@@ -1,0 +1,114 @@
+# PairwisePM factor schema — 0→1 (search) mode.
+# Derives from docs/technical-spec.md §2. Priors are a stated, editable policy,
+# not fitted values (pending Decisions Leaf sign-off, D2). Edit weights here, not in code.
+#
+# HONESTY RULE (Spine): 0→1 mode never claims predictive accuracy. The banner below
+# is rendered permanently by the UI; the engine attaches it to every 0→1 result.
+#
+# Field meanings: see configs/one_to_n.yaml header.
+
+mode: zero_to_one
+label: "0→1 (search)"
+# Banner text is design-owned copy: str.banner.01 in leaves/design/strings.py
+# (vendored as pairwisepm/strings.py), quoted verbatim here — edit there first,
+# then mirror. Compliance T-NEG-04a asserts the engine attaches this text to
+# every 0→1 result; its first two sentences are the compliance-pinned
+# PINNED_BANNER_01 constant.
+banner: >-
+  0→1 mode structures your search. It does not predict product–market fit.
+  There is no dataset of ideas like yours, so this tool makes no claim about
+  which idea will succeed. What it does: makes your comparison explicit,
+  applies your policy identically to both ideas, and shows you the levers.
+  The judgment stays yours.
+
+factors:
+  - key: problem_severity_frequency
+    name: "Problem severity × frequency"
+    scale: "0–4"
+    prior_weight: 0.25
+    sign: 1
+    tag: fact
+    rationale: "How much it hurts times how often it hurts is the demand floor; the problem exists or it doesn't."
+    seed_mean: 2.0
+    seed_std: 1.0
+    transform: identity
+    plausible_range: [0, 4]
+
+  - key: capability_trajectory_exposure
+    name: "Capability-trajectory exposure"
+    scale: "−2..+2 (stronger vs. absorbed as frontier models improve)"
+    prior_weight: 0.20
+    sign: 1
+    tag: fact
+    rationale: "The next model release either feeds your product or eats it; that exposure is structural, not workable."
+    seed_mean: 0.0
+    seed_std: 1.0
+    transform: identity
+    plausible_range: [-2, 2]
+
+  - key: evidence_of_pull
+    name: "Evidence of pull"
+    scale: "interviews / waitlist / pre-orders, 0–4"
+    prior_weight: 0.20
+    sign: 1
+    tag: lever
+    rationale: "Pull evidence can be manufactured by doing the work — go get interviews and pre-orders; hence a lever."
+    seed_mean: 1.5
+    seed_std: 1.0
+    transform: identity
+    plausible_range: [0, 4]
+
+  - key: genai_necessity
+    name: "GenAI-necessity"
+    scale: "generative core vs. bolt-on, 0–4"
+    prior_weight: 0.15
+    sign: 1
+    tag: fact
+    rationale: "If the generative model is removable, the moat is removable; necessity is architecture, not effort."
+    seed_mean: 2.0
+    seed_std: 1.2
+    transform: identity
+    plausible_range: [0, 4]
+
+  - key: data_distribution_advantage
+    name: "Data / distribution advantage"
+    scale: "0–4"
+    prior_weight: 0.10
+    sign: 1
+    tag: fact
+    rationale: "Proprietary data or an owned channel is held or not held at decision time — a fact of position."
+    seed_mean: 1.5
+    seed_std: 1.0
+    transform: identity
+    plausible_range: [0, 4]
+
+  - key: cost_to_test
+    name: "Cost to test"
+    scale: "weeks to a falsifiable prototype"
+    prior_weight: 0.10
+    sign: -1
+    tag: lever
+    rationale: "In search mode the scarce resource is falsification speed; scoping the test smaller is always available work."
+    seed_mean: 4.0
+    seed_std: 3.0
+    transform: identity
+    plausible_range: [0.25, 26]
+
+# Unweighted by construction (spec §2): the Ceiling flag NEVER enters the score.
+# When set, the verdict card routes the idea to human portfolio judgment:
+# "high-ceiling outlier — portfolio decision, not averaged in."
+flags:
+  - key: ceiling
+    name: "Ceiling"
+    description: "Top-box flag: plausibly a 100x outcome. Unweighted; routes to human portfolio judgment instead of being averaged into the score."
+
+# Captured and displayed, NEVER entered into the mechanical score (Spine scope boundary).
+evaluative_inputs:
+  - key: strategic_fit
+    name: "Strategic fit"
+    scale: "0–4"
+    note: "not scored — labeled override input"
+  - key: brand_fit
+    name: "Brand fit"
+    scale: "0–4"
+    note: "not scored — labeled override input"

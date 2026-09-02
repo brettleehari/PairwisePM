@@ -1,0 +1,54 @@
+# PairwisePM packaging (architecture §4.3 contract).
+# Engine runtime deps are numpy + PyYAML ONLY; gradio is an optional [app]
+# extra confined to app.py. The wheel force-includes configs/ at the
+# site-packages root so pairwisepm.config.default_config_dir()'s
+# Path(__file__).parent.parent / "configs" resolution works identically from
+# a git clone and a pip install.
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pairwisepm"
+version = "0.1.0"
+description = "A mechanical pairwise judge for GenAI product decisions — weights and a (zero) bias term; no LLM, no API key, no network at runtime."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "PairwisePM contributors" }]
+keywords = ["product-management", "decision", "bradley-terry", "prioritization"]
+dependencies = [
+    "numpy>=1.24",
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+# Major-bounded deliberately: app.py delivers the M-UX-03 banner rule via
+# gr.Blocks(css=...), which gradio 6 honors only through launch()'s
+# `_deprecated_css` fallback (blocks.py:2785). A major that drops the fallback
+# swallows the kwarg silently — no error, no failing test, since the M-UX-03
+# guards are static source assertions — leaving the rule applied but inert.
+# Matches README's pinned Space sdk_version (6.26.0). See requirements.txt.
+app = ["gradio>=6.0,<7"]
+test = ["pytest>=7.0"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["pairwisepm"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"configs" = "configs"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "pairwisepm",
+    "configs",
+    "app.py",
+    "tests",
+    "decisions.sample.jsonl",
+    "requirements.txt",
+    "README.md",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

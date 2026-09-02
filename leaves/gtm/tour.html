@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PairwisePM Guided Tour</title>
+<style>
+/* ============================================================
+   PairwisePM guided tour — GTM Leaf
+   Every number shown is computed by running the SHIPPED engine:
+   pairwisepm.engine.compare() against configs/one_to_n.yaml
+   (M0 defaults, n_boot=2000, seed=7 — the app's own defaults).
+   Seeded comparison: A "Reply Drafts" vs B "Instant Summaries",
+   1->N mode. Canonical inputs: leaves/gtm/seed-comparison.json.
+   ============================================================ */
+:root{
+  --paper:#F1F3F2;
+  --card:#FBFCFB;
+  --ink:#1B2528;
+  --muted:#5B6B6E;
+  --line:#D3DBD8;
+  --faint:#E6EBE9;
+  --a:#0B7285;        /* Idea A — teal   */
+  --a-soft:#DCEDF0;
+  --b:#B0561C;        /* Idea B — copper */
+  --b-soft:#F4E4D6;
+  --warn-ink:#6E5100;
+  --warn-bg:#F6ECCE;
+  --warn-line:#DFC97F;
+  --lit:#0B7285;
+  --shadow:0 1px 2px rgba(27,37,40,.06), 0 8px 24px rgba(27,37,40,.07);
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#141A1C;
+    --card:#1C2427;
+    --ink:#E4EAE8;
+    --muted:#96A6A6;
+    --line:#2E3A3C;
+    --faint:#222C2E;
+    --a:#41B9CC;
+    --a-soft:#11363D;
+    --b:#DE8B4B;
+    --b-soft:#3A2716;
+    --warn-ink:#E7CB6E;
+    --warn-bg:#302A12;
+    --warn-line:#5C4E1E;
+    --lit:#41B9CC;
+    --shadow:0 1px 2px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#141A1C;
+  --card:#1C2427;
+  --ink:#E4EAE8;
+  --muted:#96A6A6;
+  --line:#2E3A3C;
+  --faint:#222C2E;
+  --a:#41B9CC;
+  --a-soft:#11363D;
+  --b:#DE8B4B;
+  --b-soft:#3A2716;
+  --warn-ink:#E7CB6E;
+  --warn-bg:#302A12;
+  --warn-line:#5C4E1E;
+  --lit:#41B9CC;
+  --shadow:0 1px 2px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:Charter,'Iowan Old Style','Palatino Linotype',Georgia,serif;
+  font-size:16px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace}
+.num{font-family:ui-monospace,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace;font-variant-numeric:tabular-nums}
+
+/* ---------- frame ---------- */
+.frame{max-width:1180px;margin:0 auto;padding:0 20px 96px}
+header.top{
+  display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+  padding:20px 0 14px;border-bottom:1px solid var(--line);
+}
+.wordmark{font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:15px;letter-spacing:.14em;text-transform:uppercase}
+.wordmark b{color:var(--a);font-weight:700}
+.topmeta{font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:12px;color:var(--muted);letter-spacing:.06em}
+
+.layout{display:grid;grid-template-columns:198px 1fr;gap:36px;padding-top:26px}
+@media (max-width:860px){.layout{grid-template-columns:1fr;gap:18px}}
+
+/* ---------- rail ---------- */
+nav.rail{position:sticky;top:18px;align-self:start}
+@media (max-width:860px){
+  nav.rail{position:static;display:flex;flex-wrap:wrap;gap:6px}
+  nav.rail ol{display:flex;flex-wrap:wrap;gap:6px}
+}
+nav.rail ol{list-style:none;margin:0;padding:0}
+nav.rail li{margin:0}
+nav.rail button{
+  display:flex;align-items:baseline;gap:10px;width:100%;text-align:left;
+  background:none;border:none;color:var(--muted);cursor:pointer;
+  padding:7px 8px;border-radius:4px;font:inherit;font-size:13.5px;line-height:1.3;
+}
+nav.rail button .n{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;min-width:1.4em;color:var(--muted)}
+nav.rail button:hover{color:var(--ink);background:var(--faint)}
+nav.rail button:focus-visible{outline:2px solid var(--lit);outline-offset:1px}
+nav.rail li.on button{color:var(--ink)}
+nav.rail li.on button .n{color:var(--a);font-weight:700}
+nav.rail li.on button{background:var(--faint);box-shadow:inset 2px 0 0 var(--a)}
+.railfoot{margin-top:18px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;color:var(--muted);letter-spacing:.05em}
+@media (max-width:860px){.railfoot{display:none}}
+
+/* ---------- stops ---------- */
+section.stop{display:none}
+section.stop.on{display:block;animation:rise .35s ease}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){
+  section.stop.on{animation:none}
+  .spot.lit::after{animation:none}
+}
+
+.eyebrow{
+  font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--a);margin:0 0 10px;
+}
+h1,h2{font-weight:700;letter-spacing:-.01em;text-wrap:balance;margin:0 0 14px}
+h1{font-size:clamp(30px,4.6vw,46px);line-height:1.08}
+h2{font-size:clamp(24px,3.2vw,32px);line-height:1.15}
+.lede{font-size:17.5px;max-width:62ch;color:var(--ink);margin:0 0 8px}
+.dim{color:var(--muted)}
+p{max-width:66ch}
+
+.stopgrid{display:grid;grid-template-columns:minmax(280px,4fr) minmax(340px,6fr);gap:32px;align-items:start;margin-top:18px}
+@media (max-width:980px){.stopgrid{grid-template-columns:1fr}}
+
+/* ---------- notes (numbered annotations) ---------- */
+ul.notes{list-style:none;margin:18px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+ul.notes li{
+  display:flex;gap:12px;align-items:flex-start;
+  border:1px solid var(--line);border-radius:6px;background:var(--card);
+  padding:10px 12px;cursor:default;transition:border-color .15s, box-shadow .15s;
+}
+ul.notes li:hover, ul.notes li:focus-within, ul.notes li.hot{border-color:var(--lit);box-shadow:0 0 0 1px var(--lit)}
+ul.notes .k{
+  flex:0 0 auto;width:20px;height:20px;border-radius:50%;
+  background:var(--a);color:var(--card);
+  font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11.5px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;margin-top:2px;
+}
+ul.notes .t{font-size:14px;line-height:1.45}
+ul.notes .t b{font-weight:700}
+.notehint{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;color:var(--muted);letter-spacing:.05em;margin-top:10px}
+
+/* ---------- mock chrome ---------- */
+.mock{
+  background:var(--card);border:1px solid var(--line);border-radius:8px;
+  box-shadow:var(--shadow);overflow:hidden;
+}
+.mock .bar{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 14px;border-bottom:1px solid var(--line);background:var(--faint);
+  font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11.5px;color:var(--muted);letter-spacing:.05em;
+}
+.mock .bar .dots{display:flex;gap:5px}
+.mock .bar .dots i{width:8px;height:8px;border-radius:50%;background:var(--line);display:block}
+.mock .pad{padding:16px 18px 18px}
+.badge{
+  display:inline-block;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:10.5px;
+  letter-spacing:.09em;text-transform:uppercase;border:1px solid var(--line);
+  border-radius:3px;padding:2px 7px;color:var(--muted);background:var(--faint);
+}
+.badge.sample{border-color:var(--warn-line);background:var(--warn-bg);color:var(--warn-ink)}
+
+/* spotlight targets */
+.spot{position:relative}
+.spot::after{
+  content:attr(data-n);
+  position:absolute;top:-9px;right:-9px;z-index:3;
+  width:20px;height:20px;border-radius:50%;
+  background:var(--a);color:var(--card);
+  font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11.5px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 2px var(--card);
+}
+.spot.lit{outline:2px solid var(--lit);outline-offset:2px;border-radius:4px}
+.spot.lit::after{animation:pip .5s ease}
+@keyframes pip{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+
+/* ---------- stop 0 : cover ---------- */
+.cover{padding:44px 0 8px;max-width:70ch}
+.cover .rule{height:1px;background:var(--line);margin:26px 0}
+.coverfacts{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 26px}
+.coverfacts span{
+  font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;letter-spacing:.05em;
+  border:1px solid var(--line);border-radius:999px;padding:5px 12px;color:var(--muted);background:var(--card);
+}
+.go{
+  font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:14px;letter-spacing:.08em;text-transform:uppercase;
+  background:var(--a);color:#FBFCFB;border:none;border-radius:5px;padding:13px 26px;cursor:pointer;
+}
+:root[data-theme="dark"] .go{color:#0E2A30}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .go{color:#0E2A30}}
+.go:hover{filter:brightness(1.08)}
+.go:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+/* ---------- stop 1 : noise ---------- */
+.week{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--line)}
+@media (max-width:560px){.week{grid-template-columns:1fr}}
+.day{padding:14px 18px 16px}
+.day + .day{border-left:1px solid var(--line)}
+@media (max-width:560px){.day + .day{border-left:none;border-top:1px solid var(--line)}}
+.day h4{margin:0 0 2px;font-size:15px}
+.day .sub{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;color:var(--muted);letter-spacing:.06em;margin-bottom:12px}
+.rice{width:100%;border-collapse:collapse;font-size:13.5px}
+.rice th,.rice td{padding:6px 8px;text-align:left;border-bottom:1px solid var(--faint)}
+.rice th{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:400}
+.rice td.v{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-variant-numeric:tabular-nums}
+.pickline{margin-top:10px;font-size:14px}
+.pick-a{color:var(--a);font-weight:700}
+.pick-b{color:var(--b);font-weight:700}
+.noisefoot{padding:12px 18px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted);font-style:italic}
+
+/* ---------- shared idea chips ---------- */
+.idea-a{color:var(--a);font-weight:700}
+.idea-b{color:var(--b);font-weight:700}
+
+/* ---------- stop 2 : questionnaire ---------- */
+.qhead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.modetoggle{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px}
+.modetoggle span{padding:6px 12px;color:var(--muted)}
+.modetoggle span.onmode{background:var(--a);color:var(--card);font-weight:700}
+.qcols{display:grid;grid-template-columns:minmax(150px,1.5fr) 1fr 1fr;gap:0;border:1px solid var(--line);border-radius:6px;overflow:hidden;font-size:13px}
+.qcols > div{padding:8px 10px;border-bottom:1px solid var(--faint);display:flex;flex-direction:column;justify-content:center}
+.qcols > div:nth-child(3n+2){border-left:1px solid var(--faint)}
+.qcols > div:nth-child(3n){border-left:1px solid var(--faint)}
+.qcols .hd{background:var(--faint);border-bottom:1px solid var(--line);font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;letter-spacing:.07em;text-transform:uppercase}
+.qcols .hd small{display:block;font-size:10px;color:var(--muted);text-transform:none;letter-spacing:0}
+.fname{font-weight:700;font-size:13px;line-height:1.3}
+.fscale{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:10px;color:var(--muted);margin-top:2px}
+.tag{display:inline-block;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;border-radius:3px;padding:1px 5px;margin-top:4px;align-self:flex-start}
+.tag.lever{background:var(--a-soft);color:var(--a)}
+.tag.fact{background:var(--faint);color:var(--muted);border:1px solid var(--line)}
+.fin{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-variant-numeric:tabular-nums;font-size:13px;border:1px solid var(--line);border-radius:4px;padding:4px 8px;background:var(--card)}
+.fin small{color:var(--muted);font-size:10px;display:block;line-height:1.3}
+.evbox{margin-top:14px;border:1px dashed var(--line);border-radius:6px;padding:10px 12px;font-size:13px;color:var(--muted)}
+.evbox .badge{margin-left:6px}
+.evrow{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}
+.evrow span{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px}
+.wnote{margin-top:12px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;color:var(--muted);letter-spacing:.03em}
+
+/* ---------- stop 3 : verdict ---------- */
+.verdict{padding:20px 18px 18px}
+.vwho{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.vline{font-size:24px;font-weight:700;letter-spacing:-.01em;line-height:1.2;margin-bottom:4px}
+.vp{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-variant-numeric:tabular-nums;font-size:15px;margin:10px 0 6px}
+.vp b{font-size:26px;color:var(--a)}
+.ibar{position:relative;height:34px;margin:10px 0 4px}
+.ibar .track{position:absolute;left:0;right:0;top:15px;height:4px;background:var(--faint);border-radius:2px}
+.ibar .mid{position:absolute;left:50%;top:6px;bottom:6px;width:1px;background:var(--muted)}
+.ibar .band{position:absolute;top:12px;height:10px;background:var(--a-soft);border:1px solid var(--a);border-radius:3px}
+.ibar .pt{position:absolute;top:9px;width:16px;height:16px;border-radius:50%;background:var(--a);box-shadow:0 0 0 2px var(--card)}
+.ibar .lab{position:absolute;top:-6px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:10px;color:var(--muted)}
+.iscale{display:flex;justify-content:space-between;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:10px;color:var(--muted)}
+.vread{font-size:14px;margin-top:12px;max-width:56ch}
+.vmeta{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.formula{margin-top:14px;padding:10px 12px;border-left:2px solid var(--a);background:var(--faint);font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;overflow-x:auto}
+
+/* ---------- stop 4 : leverage ---------- */
+.levgrid{display:flex;flex-direction:column;gap:14px}
+.contrib{padding:14px 18px 16px}
+.contrib h4, .parity h4, .frag h4{margin:0 0 10px;font-size:13px;font-family:ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:400}
+.crow{display:grid;grid-template-columns:minmax(90px,150px) 1fr 58px;gap:10px;align-items:center;font-size:12.5px;padding:3px 0}
+.crow .cname{line-height:1.25}
+.crow .cname small{display:block;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:9.5px;color:var(--muted)}
+.ctrack{position:relative;height:14px;background:var(--faint);border-radius:3px;overflow:hidden}
+.ctrack .zero{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line)}
+.cbar{position:absolute;top:2px;bottom:2px;border-radius:2px}
+.cbar.toA{left:50%;background:var(--a)}
+.cbar.toB{right:50%;background:var(--b)}
+.cval{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-variant-numeric:tabular-nums;font-size:11.5px;text-align:right;color:var(--muted)}
+.claxis{display:flex;justify-content:space-between;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:10px;color:var(--muted);margin-top:6px}
+.claxis .la{color:var(--b)}.claxis .lb{color:var(--a)}
+.parity{padding:14px 18px 16px;border-top:1px solid var(--line)}
+.parity .path{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin-bottom:8px;font-size:13.5px}
+.parity .path .arrow{font-family:ui-monospace,'SF Mono',Menlo,monospace;color:var(--b);font-weight:700;flex:0 0 auto}
+.parity .dead{color:var(--muted);font-size:13px;border:1px dashed var(--line);border-radius:6px;padding:8px 12px}
+.frag{padding:14px 18px 16px;border-top:1px solid var(--line);font-size:13.5px}
+.okpip{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--a);margin-right:7px}
+
+/* ---------- stop 5 : honesty ---------- */
+.honesty{display:flex;flex-direction:column;gap:22px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{
+  font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;letter-spacing:.05em;
+  border:1px solid var(--line);background:var(--card);color:var(--muted);
+  border-radius:999px;padding:6px 14px;cursor:pointer;
+}
+.tabs button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.tabs button:focus-visible{outline:2px solid var(--lit);outline-offset:1px}
+.hpane{display:none}
+.hpane.on{display:block;animation:rise .3s ease}
+.tcc{padding:18px}
+.tccline{font-size:21px;font-weight:700;color:var(--warn-ink);margin:4px 0 8px}
+.banner01{
+  display:flex;gap:10px;align-items:flex-start;background:var(--warn-bg);
+  border:1px solid var(--warn-line);color:var(--warn-ink);
+  border-radius:6px;padding:10px 14px;font-size:13.5px;
+}
+.banner01 .bmark{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-weight:700;flex:0 0 auto}
+.judge{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
+.judge th,.judge td{padding:6px 8px;border-bottom:1px solid var(--faint);text-align:right}
+.judge th:first-child,.judge td:first-child{text-align:left}
+.judge th{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:400}
+.judge td.v{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-variant-numeric:tabular-nums}
+.judge td.delta{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-variant-numeric:tabular-nums;color:var(--muted)}
+.gauges{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}
+.gauge{border:1px solid var(--line);border-radius:6px;padding:10px 14px;min-width:130px;background:var(--card)}
+.gauge .gl{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.gauge .gv{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-variant-numeric:tabular-nums;font-size:22px;margin-top:2px}
+.gauge .gs{font-size:11.5px;color:var(--muted);margin-top:2px}
+
+/* ---------- stop 6 : close ---------- */
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:16px}
+@media (max-width:760px){.twocol{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:18px 20px;box-shadow:var(--shadow)}
+.panel h3{margin:0 0 10px;font-size:13px;font-family:ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:400}
+.panel ul{margin:0;padding-left:18px;font-size:14.5px}
+.panel li{margin-bottom:7px}
+.panel li:last-child{margin-bottom:0}
+.refuse li::marker{content:"× ";color:var(--b);font-family:ui-monospace,monospace}
+.get li::marker{content:"— ";color:var(--a);font-family:ui-monospace,monospace}
+.ladder{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+.ladder th,.ladder td{padding:7px 8px;text-align:left;border-bottom:1px solid var(--faint)}
+.ladder th{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:400}
+.ladder td.m{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-weight:700}
+.ladder tr.now td{background:var(--a-soft)}
+.closing{margin-top:26px;padding:22px 24px;border-left:3px solid var(--a);background:var(--card);border-radius:0 8px 8px 0;box-shadow:var(--shadow)}
+.closing p{font-size:17px;margin:0 0 8px}
+.closing .mono{font-size:12.5px;color:var(--muted)}
+
+/* ---------- footer nav ---------- */
+.navbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:20;
+  background:var(--card);border-top:1px solid var(--line);
+}
+.navbar .in{max-width:1180px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:14px}
+.navbtn{
+  font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;letter-spacing:.07em;text-transform:uppercase;
+  border:1px solid var(--line);background:var(--card);color:var(--ink);
+  border-radius:5px;padding:9px 18px;cursor:pointer;
+}
+.navbtn.primary{background:var(--a);border-color:var(--a);color:#FBFCFB}
+:root[data-theme="dark"] .navbtn.primary{color:#0E2A30}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .navbtn.primary{color:#0E2A30}}
+.navbtn:disabled{opacity:.4;cursor:default}
+.navbtn:not(:disabled):hover{filter:brightness(1.05)}
+.navbtn:focus-visible{outline:2px solid var(--lit);outline-offset:1px}
+.prog{flex:1;display:flex;align-items:center;gap:10px}
+.prog .bar{flex:1;height:3px;background:var(--faint);border-radius:2px;overflow:hidden}
+.prog .fill{height:100%;background:var(--a);width:0;transition:width .3s ease}
+@media (prefers-reduced-motion:reduce){.prog .fill{transition:none}}
+.prog .ct{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;color:var(--muted);letter-spacing:.06em;white-space:nowrap}
+.kbd{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:10.5px;color:var(--muted);white-space:nowrap}
+@media (max-width:640px){.kbd{display:none}}
+.scrollwrap{overflow-x:auto}
+</style>
+</head>
+<body>
+
+<div class="frame">
+  <header class="top">
+    <div class="wordmark">Pairwise<b>PM</b> · guided tour</div>
+    <div class="topmeta" id="topmeta">stop 0 / 6</div>
+  </header>
+
+  <div class="layout">
+    <nav class="rail" aria-label="Tour stops">
+      <ol id="rail"></ol>
+      <div class="railfoot">← → keys work<br>~5 minutes total</div>
+    </nav>
+
+    <main id="stage">
+
+      <!-- ============ STOP 0 · COVER ============ -->
+      <section class="stop" data-title="Start here">
+        <div class="cover">
+          <p class="eyebrow">A five-minute walkthrough · one real comparison</p>
+          <h1>Two ideas walk in. One policy decides.</h1>
+          <p class="lede">PairwisePM is a mechanical judge for product managers choosing between
+          two competing Generative&nbsp;AI ideas. Both ideas enter on one questionnaire, on one
+          screen, in one sitting. Out comes a winner, a win probability with an interval, and
+          the exact levers that would flip the verdict.</p>
+          <p class="lede dim">There is no LLM at runtime. The runtime is weights and a bias term
+          — the LLM's job ended at build time. The model applies <em>your own stated policy</em>
+          more consistently than you can. It removes the Tuesdays.</p>
+          <div class="coverfacts">
+            <span>runs fully offline</span>
+            <span>no API key</span>
+            <span>your log stays in your hands</span>
+            <span>numpy, not neural</span>
+          </div>
+          <button class="go" id="startbtn">Start the tour →</button>
+          <div class="rule"></div>
+          <p class="dim" style="font-size:13.5px;max-width:64ch">In the next six stops you will follow one seeded
+          comparison end to end: a PM on an established support product weighing
+          <span class="idea-a">A&nbsp;·&nbsp;Reply Drafts</span> against
+          <span class="idea-b">B&nbsp;·&nbsp;Instant Summaries</span> in 1→N (allocation) mode.
+          Every number you'll see is computed by the model exactly as specified — nothing is mocked up.</p>
+        </div>
+      </section>
+
+      <!-- ============ STOP 1 · THE NOISE PROBLEM ============ -->
+      <section class="stop" data-title="The noise problem">
+        <p class="eyebrow">Stop 1 · Why this exists</p>
+        <h2>Same PM. Different Tuesday. Different call.</h2>
+        <div class="stopgrid">
+          <div>
+            <p class="lede">Here is a real week in the life of a prioritization spreadsheet.
+            One PM, the same two GenAI ideas, scored twice with RICE — three days apart.</p>
+            <ul class="notes" data-scope="s1">
+              <li data-target="s1-mon" tabindex="0"><span class="k">1</span><span class="t"><b>Occasion noise.</b> Nothing about the ideas changed between Monday and Thursday. The judge did — mood, anchors, which demo they saw last. The same PM quietly disagrees with themselves.</span></li>
+              <li data-target="s1-gap" tabindex="0"><span class="k">2</span><span class="t"><b>False precision.</b> 47.3 versus 44.1 looks like a measurement. It's four soft 1–10 guesses multiplied together. The decimal places dress noise up as signal.</span></li>
+              <li data-target="s1-flip" tabindex="0"><span class="k">3</span><span class="t"><b>The verdict flips.</b> Thursday's spreadsheet reverses Monday's roadmap. Add a second PM and the disagreement gets worse, not better.</span></li>
+            </ul>
+            <p class="notehint">hover a note to spotlight it in the screen →</p>
+            <p style="margin-top:16px;font-size:14.5px">The fix is not better guessing. It's a
+            structure where noise <em>cancels</em>: score both ideas together, in one sitting,
+            and judge only the <b>difference</b>. Whatever mood you're in, you're in it for both
+            ideas — the pairwise delta subtracts it out.</p>
+          </div>
+          <div>
+            <div class="mock" aria-label="A week of RICE scoring">
+              <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span>roadmap_scoring_q3.xlsx — one PM, twice</span></div>
+              <div class="week">
+                <div class="day spot" data-n="1" id="s1-mon">
+                  <h4>Monday, 10:04</h4>
+                  <div class="sub">fresh coffee · after the board prep</div>
+                  <table class="rice">
+                    <tr><th>Idea</th><th>R</th><th>I</th><th>C</th><th>E</th><th>RICE</th></tr>
+                    <tr><td class="idea-a">A · Reply Drafts</td><td class="v">7</td><td class="v">8</td><td class="v">.8</td><td class="v">.95</td><td class="v spot" data-n="2" id="s1-gap"><b>47.3</b></td></tr>
+                    <tr><td class="idea-b">B · Summaries</td><td class="v">8</td><td class="v">7</td><td class="v">.7</td><td class="v">.89</td><td class="v"><b>44.1</b></td></tr>
+                  </table>
+                  <p class="pickline">Pick: <span class="pick-a">A</span> — "clearly stronger."</p>
+                </div>
+                <div class="day spot" data-n="3" id="s1-flip">
+                  <h4>Thursday, 16:40</h4>
+                  <div class="sub">same PM · after a rough support-escalation review</div>
+                  <table class="rice">
+                    <tr><th>Idea</th><th>R</th><th>I</th><th>C</th><th>E</th><th>RICE</th></tr>
+                    <tr><td class="idea-a">A · Reply Drafts</td><td class="v">6</td><td class="v">8</td><td class="v">.7</td><td class="v">.97</td><td class="v"><b>41.8</b></td></tr>
+                    <tr><td class="idea-b">B · Summaries</td><td class="v">8</td><td class="v">8</td><td class="v">.7</td><td class="v">.92</td><td class="v"><b>45.9</b></td></tr>
+                  </table>
+                  <p class="pickline">Pick: <span class="pick-b">B</span> — "clearly stronger."</p>
+                </div>
+              </div>
+              <div class="noisefoot">"When I compare two ideas on a Monday I pick one. Give me the
+              same two ideas on Thursday and I'm honestly not sure I'd pick the same one." — the
+              problem statement this product is built on</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ STOP 2 · THE QUESTIONNAIRE ============ -->
+      <section class="stop" data-title="One-screen questionnaire">
+        <p class="eyebrow">Stop 2 · The input</p>
+        <h2>Both ideas. One screen. One sitting.</h2>
+        <div class="stopgrid">
+          <div>
+            <p class="lede">The whole interview fits on one screen, by design — splitting it
+            across sessions would let occasion noise back in. Seven factors in 1→N mode, each
+            with an anchored scale, a stated prior weight, and a written rationale.</p>
+            <ul class="notes" data-scope="s2">
+              <li data-target="s2-mode" tabindex="0"><span class="k">1</span><span class="t"><b>Two modes, different factor sets.</b> 0→1 for PMF search, 1→N for roadmap allocation. This comparison runs in 1→N.</span></li>
+              <li data-target="s2-anchor" tabindex="0"><span class="k">2</span><span class="t"><b>Anchored scales, not 1–10 vibes.</b> Impact is scored against a named past launch. Feasibility is your eval's pass rate, not optimism.</span></li>
+              <li data-target="s2-tag" tabindex="0"><span class="k">3</span><span class="t"><b>Every factor is tagged lever or fact.</b> A lever can be moved by working; a fact is what it is. The leverage panel at Stop 4 runs on these tags.</span></li>
+              <li data-target="s2-ev" tabindex="0"><span class="k">4</span><span class="t"><b>Strategic fit never touches the score.</b> Evaluative judgments are captured and displayed as labeled override inputs — excluded from the mechanical arithmetic, on purpose.</span></li>
+              <li data-target="s2-w" tabindex="0"><span class="k">5</span><span class="t"><b>The weights are a policy, not a fit.</b> They ship as editable config with a rationale per factor. You can read them, argue with them, change them.</span></li>
+            </ul>
+            <p class="notehint">hover a note to spotlight it in the screen →</p>
+          </div>
+          <div>
+            <div class="mock" aria-label="The one-screen questionnaire">
+              <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span>pairwisepm · new comparison</span></div>
+              <div class="pad">
+                <div class="qhead">
+                  <div class="modetoggle spot" data-n="1" id="s2-mode"><span>0→1 search</span><span class="onmode">1→N allocation</span></div>
+                  <span class="badge">both ideas scored now — no saving for later</span>
+                </div>
+                <div class="qcols">
+                  <div class="hd">Factor<small>prior w · tag</small></div>
+                  <div class="hd"><span class="idea-a">A · Reply Drafts</span><small>agent-assist drafts in the composer</small></div>
+                  <div class="hd"><span class="idea-b">B · Instant Summaries</span><small>thread summary on ticket open</small></div>
+
+                  <div class="spot" data-n="2" id="s2-anchor"><span class="fname">Impact on primary metric</span><span class="fscale">vs. Macros v2 launch · −2..+2 · w .25</span><span class="tag lever">lever</span></div>
+                  <div><span class="fin">+1.0 <small>“about Macros v2 again, on resolution time”</small></span></div>
+                  <div><span class="fin">+0.5 <small>“half that — helps triage, not resolution”</small></span></div>
+
+                  <div><span class="fname">Capability feasibility</span><span class="fscale">golden-set eval pass · 0–4 · w .20</span><span class="tag lever">lever</span></div>
+                  <div><span class="fin">2.9 <small>prototype: 72% pass on 50-ticket set</small></span></div>
+                  <div><span class="fin">2.5 <small>63% pass — misnames people on long threads</small></span></div>
+
+                  <div><span class="fname">Reach</span><span class="fscale">users touched / quarter · w .15</span><span class="tag fact">fact</span></div>
+                  <div><span class="fin">8,400 <small>agents who compose replies</small></span></div>
+                  <div><span class="fin">8,800 <small>agents who open tickets</small></span></div>
+
+                  <div><span class="fname">Unit economics</span><span class="fscale">value per use vs. inference cost · 0–4 · w .15</span><span class="tag lever">lever</span></div>
+                  <div><span class="fin">2.7 <small>≈40s saved per accepted draft · ~$0.004</small></span></div>
+                  <div><span class="fin">2.0 <small>runs on every open · ~$0.011/ticket</small></span></div>
+
+                  <div><span class="fname">Data flywheel</span><span class="fscale">usage→data→better feature · 0–4 · w .10</span><span class="tag fact">fact</span></div>
+                  <div><span class="fin">2.3 <small>accept/edit = labeled training signal</small></span></div>
+                  <div><span class="fin">1.5 <small>no correction signal comes back</small></span></div>
+
+                  <div class="spot" data-n="3" id="s2-tag"><span class="fname">Risk surface</span><span class="fscale">hallucination/compliance exposure · 0–4 reversed (4 = lowest exposure) · w .05</span><span class="tag lever">lever</span></div>
+                  <div><span class="fin">1.0 <small>high exposure: customer-facing text if agent doesn't catch it</small></span></div>
+                  <div><span class="fin">1.5 <small>internal-facing, can still mislead an agent</small></span></div>
+
+                  <div><span class="fname">Effort</span><span class="fscale">person-weeks, reference-class adj. · w −.10</span><span class="tag lever">lever</span></div>
+                  <div><span class="fin">9 <small>two sprints incl. eval harness</small></span></div>
+                  <div><span class="fin">9 <small>two sprints incl. context plumbing</small></span></div>
+                </div>
+
+                <div class="evbox spot" data-n="4" id="s2-ev">
+                  <b>Evaluative inputs</b> <span class="badge">captured · displayed · excluded from score</span>
+                  <div class="evrow"><span class="idea-a">A:</span><span>“core to our assist strategy”</span><span class="idea-b">B:</span><span>“adjacent — nice to have”</span></div>
+                </div>
+                <div class="wnote spot" data-n="5" id="s2-w">weights = configs/one_to_n.yaml · every factor carries a written rationale · raw values z-scored against the log (seed distributions until your log grows; heavy-tailed counts like Reach enter as log10(1+x))</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ STOP 3 · THE VERDICT ============ -->
+      <section class="stop" data-title="The verdict card">
+        <p class="eyebrow">Stop 3 · The output</p>
+        <h2>A probability with an interval — never a 47.3</h2>
+        <div class="stopgrid">
+          <div>
+            <p class="lede">The judge takes the difference between the two z-scored factor
+            vectors, applies the stated weights, and passes it through a logistic. What comes
+            out is a claim sized to what the model actually knows.</p>
+            <ul class="notes" data-scope="s3">
+              <li data-target="s3-p" tabindex="0"><span class="k">1</span><span class="t"><b>59%, not "A wins."</b> Read it as: <em>your stated policy</em> favors A about three times in five. That is a claim about consistency with your policy — not a prediction that A will succeed in the market.</span></li>
+              <li data-target="s3-int" tabindex="0"><span class="k">2</span><span class="t"><b>The interval is always shown.</b> A bootstrap over the seven factor contributions puts this verdict at 52–64%. If that band ever straddles 50%, no winner is declared — you'll see that at Stop 5.</span></li>
+              <li data-target="s3-m0" tabindex="0"><span class="k">3</span><span class="t"><b>M0 badge: this model trains on nothing.</b> It is your stated prior weights applied mechanically. After 10 logged decisions in a mode, M1 starts learning your <em>revealed</em> weights from your own picks.</span></li>
+              <li data-target="s3-f" tabindex="0"><span class="k">4</span><span class="t"><b>The whole model fits in one line.</b> Auditable in a glance. An equal-weight ablation toggle is one click away — the scientific control that famously performs near the optimum.</span></li>
+            </ul>
+            <p class="notehint">hover a note to spotlight it in the card →</p>
+          </div>
+          <div>
+            <div class="mock" aria-label="The verdict card">
+              <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span>pairwisepm · verdict</span></div>
+              <div class="verdict">
+                <div class="vwho">verdict · 1→N allocation</div>
+                <div class="vline">PairwisePM prefers <span class="idea-a">A · Reply Drafts</span></div>
+                <div class="vp spot" data-n="1" id="s3-p">p(A beats B) = <b>59%</b></div>
+                <div class="spot" data-n="2" id="s3-int">
+                  <div class="ibar">
+                    <div class="track"></div>
+                    <div class="mid"></div>
+                    <span class="lab" style="left:50%;transform:translateX(-50%)">50%</span>
+                    <div class="band" style="left:52%;width:12%"></div>
+                    <div class="pt" style="left:calc(59% - 8px)"></div>
+                  </div>
+                  <div class="iscale"><span>0%</span><span>90% interval: 52–64% · clear of the 50% line → a verdict is allowed</span><span>100%</span></div>
+                </div>
+                <p class="vread">Reads as: <b>the policy you wrote down favors A, modestly.</b>
+                Consistency, not clairvoyance — the same inputs will give the same answer on any
+                Tuesday.</p>
+                <div class="vmeta">
+                  <span class="badge spot" data-n="3" id="s3-m0">M0 · prior-weight policy · trains on nothing</span>
+                  <span class="badge">equal-weight ablation: off</span>
+                  <span class="badge">effort delta = 0 — cancels out of the score</span>
+                </div>
+                <div class="formula spot" data-n="4" id="s3-f">p = σ( wᵀ(z_A − z_B) ) = σ(0.345) = 0.585 &nbsp;·&nbsp; intercept pinned to 0, so swapping A and B flips p exactly</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ STOP 4 · THE LEVERAGE PANEL ============ -->
+      <section class="stop" data-title="What would flip this">
+        <p class="eyebrow">Stop 4 · The actionable part</p>
+        <h2>Not just who won — what would flip it</h2>
+        <div class="stopgrid">
+          <div>
+            <p class="lede">A verdict you can't act on is trivia. Because the score is linear,
+            every factor's exact contribution is visible, and the smallest change that would
+            reach parity is computable in raw units — no statistics degree required.</p>
+            <ul class="notes" data-scope="s4">
+              <li data-target="s4-bars" tabindex="0"><span class="k">1</span><span class="t"><b>Where the margin comes from.</b> A wins on impact, unit economics, feasibility and flywheel; B claws back a little on reach and risk. Effort contributes nothing — both are two-sprint builds, so the delta cancels.</span></li>
+              <li data-target="s4-path" tabindex="0"><span class="k">2</span><span class="t"><b>Path to parity, in B's own units.</b> The cheapest single-factor route to 50/50 runs through impact — and the panel is honest that it sits near the top of the scale. There is <em>no</em> single-lever route to 60/40.</span></li>
+              <li data-target="s4-filter" tabindex="0"><span class="k">3</span><span class="t"><b>Levers only.</b> Reach and flywheel are tagged facts, so no parity path is proposed through them — the tool never advises you to wish a fact were different. If <em>every</em> path ran through facts, it would say so: "loses on fundamentals."</span></li>
+              <li data-target="s4-frag" tabindex="0"><span class="k">4</span><span class="t"><b>Fragility check.</b> The panel probes whether one small, plausible re-estimate (up to 0.75σ on a single factor) flips the winner. Here the smallest verdict-flipping move is far larger — so the flag stays quiet. When it wouldn't be, it says: re-estimate before committing.</span></li>
+            </ul>
+            <p class="notehint">hover a note to spotlight it in the panel →</p>
+          </div>
+          <div>
+            <div class="mock levgrid" aria-label="The leverage panel">
+              <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span>pairwisepm · leverage</span></div>
+              <div class="contrib spot" data-n="1" id="s4-bars">
+                <h4>Signed contribution to the margin (w·Δz)</h4>
+                <div class="crow"><span class="cname">Impact<small>lever</small></span><div class="ctrack"><div class="zero"></div><div class="cbar toA" style="width:42%"></div></div><span class="cval">+.125</span></div>
+                <div class="crow"><span class="cname">Unit economics<small>lever</small></span><div class="ctrack"><div class="zero"></div><div class="cbar toA" style="width:35%"></div></div><span class="cval">+.105</span></div>
+                <div class="crow"><span class="cname">Feasibility<small>lever</small></span><div class="ctrack"><div class="zero"></div><div class="cbar toA" style="width:27%"></div></div><span class="cval">+.080</span></div>
+                <div class="crow"><span class="cname">Data flywheel<small>fact</small></span><div class="ctrack"><div class="zero"></div><div class="cbar toA" style="width:27%"></div></div><span class="cval">+.080</span></div>
+                <div class="crow"><span class="cname">Risk surface<small>lever</small></span><div class="ctrack"><div class="zero"></div><div class="cbar toB" style="width:8%"></div></div><span class="cval">−.025</span></div>
+                <div class="crow"><span class="cname">Reach<small>fact</small></span><div class="ctrack"><div class="zero"></div><div class="cbar toB" style="width:7%"></div></div><span class="cval">−.020</span></div>
+                <div class="crow"><span class="cname">Effort<small>lever</small></span><div class="ctrack"><div class="zero"></div></div><span class="cval">.000</span></div>
+                <div class="claxis"><span class="la">← favors B</span><span>total margin L = +0.345</span><span class="lb">favors A →</span></div>
+              </div>
+              <div class="parity spot" data-n="2" id="s4-path">
+                <h4>Path to parity — for <span class="idea-b" style="text-transform:none">B · Instant Summaries</span>, levers only</h4>
+                <div class="path"><span class="arrow">50/50</span><span>Move <b>impact</b> from +0.5 to <b>+1.88</b> on the −2..+2 anchor scale — i.e. make the case that summaries nearly match the Macros v2 launch on resolution time. <span class="dim">Reachable, but at the very top of the scale: that case needs evidence, not enthusiasm.</span></span></div>
+                <div class="path"><span class="arrow">50/50</span><span>Or move <b>feasibility</b> from 2.5 to <b>≈4.2</b> — off the top of the 0–4 scale, so the panel refuses to propose it. <span class="dim">Not reachable on this lever alone.</span></span></div>
+                <div class="dead spot" data-n="3" id="s4-filter">60/40 in B's favor: no single-lever path exists — that would take movement on two or more factors. Facts (reach, flywheel) are never proposed as paths.</div>
+              </div>
+              <div class="frag spot" data-n="4" id="s4-frag">
+                <h4>Fragility check</h4>
+                <span class="okpip"></span><b>Not fragile.</b> The smallest single-factor move that flips
+                this verdict is 1.38σ on impact — far above the 0.75σ "small plausible move"
+                threshold, so the flag stays quiet. The interval, not this flag, is what narrows
+                first — see the next stop.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ STOP 5 · HONESTY ============ -->
+      <section class="stop" data-title="Honest by construction">
+        <p class="eyebrow">Stop 5 · The part that makes it trustworthy</p>
+        <h2>A judge that knows when to shut up</h2>
+        <p class="lede" style="margin-bottom:16px">A judge that overstates its confidence is worse
+        than no judge — PMs learn to ignore it, or worse, obey it. Three behaviors are built in
+        as construction, not policy.</p>
+        <div class="tabs" role="tablist" aria-label="Honesty features">
+          <button class="on" data-pane="h1" role="tab" aria-selected="true">Too close to call</button>
+          <button data-pane="h2" role="tab" aria-selected="false">The 0→1 banner</button>
+          <button data-pane="h3" role="tab" aria-selected="false">Model of the judge</button>
+        </div>
+
+        <div class="hpane on" id="h1" role="tabpanel">
+          <div class="stopgrid">
+            <div>
+              <ul class="notes" data-scope="s5a">
+                <li data-target="s5-tcc" tabindex="0"><span class="k">1</span><span class="t"><b>The verdict is withheld, mechanically.</b> Remember Stop 4's advice to re-estimate B's feasibility? Suppose the summary eval is re-run with name-handling fixed and B's pass rate rises to 3.3. The margin shrinks to σ(0.185)&nbsp;=&nbsp;55% — and now the 90% interval, 47–62%, straddles the 50% line.</span></li>
+                <li data-target="s5-gather" tabindex="0"><span class="k">2</span><span class="t"><b>It tells you what to do instead.</b> Not "pick anyway" — gather evidence, and the leverage panel already told you which evidence moves the needle most.</span></li>
+              </ul>
+            </div>
+            <div>
+              <div class="mock">
+                <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span>pairwisepm · verdict (after feasibility re-estimate)</span></div>
+                <div class="tcc">
+                  <div class="vwho">verdict · 1→N allocation</div>
+                  <div class="tccline spot" data-n="1" id="s5-tcc">Too close to call — gather evidence.</div>
+                  <div class="vp">p(A beats B) = <b style="font-size:22px">55%</b> <span class="dim num">· 90% interval 47–62% straddles 50%</span></div>
+                  <div class="ibar">
+                    <div class="track"></div>
+                    <div class="mid"></div>
+                    <span class="lab" style="left:50%;transform:translateX(-50%)">50%</span>
+                    <div class="band" style="left:47%;width:15%;background:var(--warn-bg);border-color:var(--warn-line)"></div>
+                    <div class="pt" style="left:calc(55% - 8px);background:var(--warn-ink)"></div>
+                  </div>
+                  <p class="vread spot" data-n="2" id="s5-gather">No winner is declared. Cheapest
+                  evidence per the leverage panel: firm up <b>B's impact anchor</b> (a one-week
+                  shadow test against Macros v2 baselines) before this pair is judged again.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hpane" id="h2" role="tabpanel">
+          <div class="stopgrid">
+            <div>
+              <ul class="notes" data-scope="s5b">
+                <li data-target="s5-ban" tabindex="0"><span class="k">1</span><span class="t"><b>0→1 mode never claims predictive accuracy.</b> Searching for product–market fit is a domain where nobody's model predicts outcomes — so this one refuses to pretend. The banner is permanent, not dismissible.</span></li>
+                <li data-target="s5-ceil" tabindex="0"><span class="k">2</span><span class="t"><b>The ceiling flag routes around the math — and the card says why.</b> A potential outlier idea is precisely the thing a weighted average destroys, and the verdict card explains that in its own words. Top-box ceiling never enters the score — it routes the idea to human portfolio judgment instead.</span></li>
+              </ul>
+            </div>
+            <div>
+              <div class="mock">
+                <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span>pairwisepm · 0→1 search mode</span></div>
+                <div class="pad">
+                  <div class="banner01 spot" data-n="1" id="s5-ban"><span class="bmark">0→1</span>
+                    <span><b>0→1 mode structures your search. It does not predict product–market
+                    fit.</b> There is no dataset of ideas like yours, so this tool makes no claim
+                    about which idea will succeed. What it does: makes your comparison explicit,
+                    applies your policy identically to both ideas, and shows you the levers. The
+                    judgment stays yours.</span></div>
+                  <div style="margin-top:6px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:10px;letter-spacing:.05em;color:var(--muted)">verbatim runtime copy · str.banner.01 — bold sentence is the compliance-pinned banner (T-NEG-04)</div>
+                  <div style="margin-top:14px" class="spot" data-n="2" id="s5-ceil">
+                    <span class="badge">ceiling flag · unweighted</span>
+                    <div style="margin-top:8px;background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn-ink);border-radius:6px;padding:8px 12px;font-size:13px">High-ceiling outlier — portfolio decision, not averaged in. You flagged Idea A as a possible top-box outcome. Averages are exactly what destroy outliers, so this flag never enters the score. Take Idea A to portfolio judgment: what does the portfolio look like if it works?</div>
+                    <div style="margin-top:8px;background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn-ink);border-radius:6px;padding:8px 12px;font-size:13px">Idea A carries the Ceiling flag: high-ceiling outlier — portfolio decision, not averaged in. The flag is unweighted and did not enter the score. Mechanical comparison below, ceiling flag excluded — use it as context, not as the decision.</div>
+                    <div style="margin-top:6px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:10px;letter-spacing:.05em;color:var(--muted)">verbatim runtime copy, in the card's render order · str.ceiling.strip (routing strip, formatted for Idea A) · then engine note (compliance-pinned, T-CEIL-02) + str.ceiling.mech_label</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hpane" id="h3" role="tabpanel">
+          <div class="stopgrid">
+            <div>
+              <ul class="notes" data-scope="s5c">
+                <li data-target="s5-moj" tabindex="0"><span class="k">1</span><span class="t"><b>At decision 10, the judge starts judging you back.</b> M1 refits the weights on your own logged picks (ridge Bradley–Terry, shrunk toward your stated priors) and shows the gap: what your revealed policy weighs versus what you <em>say</em> you weigh.</span></li>
+                <li data-target="s5-zeta" tabindex="0"><span class="k">2</span><span class="t"><b>Your noise has a number.</b> ζ counts circular triads (A&gt;B&gt;C&gt;A) in your log — a live consistency meter from decision 1. Brier tracks how well the model's probabilities line up with your actual picks.</span></li>
+                <li data-target="s5-order" tabindex="0"><span class="k">3</span><span class="t"><b>Even the form is audited.</b> A free intercept is fit purely as a diagnostic: if it drifts from zero, you have a measured left-column bias, and the audit report says so.</span></li>
+              </ul>
+            </div>
+            <div>
+              <div class="mock">
+                <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span>pairwisepm · audit view</span><span class="badge sample" style="margin-left:auto">sample: seeded demo log · 14 decisions</span></div>
+                <div class="pad">
+                  <div class="spot" data-n="1" id="s5-moj">
+                    <table class="judge">
+                      <tr><th>Factor</th><th>you say (M0)</th><th>you reveal (M1)</th><th>drift</th></tr>
+                      <tr><td>Impact</td><td class="v">.25</td><td class="v">.21</td><td class="delta">−.04</td></tr>
+                      <tr><td>Feasibility</td><td class="v">.20</td><td class="v">.24</td><td class="delta">+.04</td></tr>
+                      <tr><td>Reach</td><td class="v">.15</td><td class="v">.11</td><td class="delta">−.04</td></tr>
+                      <tr><td>Unit economics</td><td class="v">.15</td><td class="v">.14</td><td class="delta">−.01</td></tr>
+                      <tr><td>Data flywheel</td><td class="v">.10</td><td class="v">.13</td><td class="delta">+.03</td></tr>
+                      <tr><td>Risk surface</td><td class="v">.05</td><td class="v">.04</td><td class="delta">−.01</td></tr>
+                      <tr><td>Effort</td><td class="v">−.10</td><td class="v">−.15</td><td class="delta">−.05</td></tr>
+                    </table>
+                    <p style="font-size:13px;margin:8px 0 0" class="dim">Reading: this judge <em>says</em> impact
+                    rules, but their picks lean harder on feasibility and punish effort more than
+                    their stated policy admits.</p>
+                  </div>
+                  <div class="gauges">
+                    <div class="gauge spot" data-n="2" id="s5-zeta"><div class="gl">ζ consistency</div><div class="gv">0.89</div><div class="gs">1 circular triad in the log</div></div>
+                    <div class="gauge"><div class="gl">Brier vs. your picks</div><div class="gv">0.21</div><div class="gs">accumulating since decision 1</div></div>
+                    <div class="gauge spot" data-n="3" id="s5-order"><div class="gl">order-bias intercept</div><div class="gv">+0.03</div><div class="gs">≈ 0 — no left-column bias detected</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ STOP 6 · CLOSE ============ -->
+      <section class="stop" data-title="What you get · what it refuses">
+        <p class="eyebrow">Stop 6 · The offer</p>
+        <h2>Small tool. Hard spine.</h2>
+        <div class="twocol">
+          <div class="panel">
+            <h3>What you get</h3>
+            <ul class="get">
+              <li>A Hugging Face Gradio Space — and the same repo <span class="mono" style="font-size:13px">pip install</span>s locally.</li>
+              <li>Fully offline runtime — in the app's own words: "Runs entirely in this app. No API key, no server, nothing stored anywhere but your own log file." (numpy, no LLM, no network calls.)</li>
+              <li>Your decision log as downloadable JSONL — nothing stored server-side, ever. The log is yours and it is the training set.</li>
+              <li>Editable factor configs with written rationales — the policy is yours to argue with.</li>
+              <li>Designed so a full A-vs-B comparison, blank form to verdict card, lands in under five minutes.</li>
+            </ul>
+          </div>
+          <div class="panel">
+            <h3>What it refuses — on purpose</h3>
+            <ul class="refuse">
+              <li>No LLM in the runtime loop.</li>
+              <li>No ranking of three-plus ideas; v1 is strictly A-vs-B.</li>
+              <li>No accuracy claims in 0→1 mode. In 1→N, accuracy is <em>earned</em> through calibration on your log — never asserted up front.</li>
+              <li>No strategic-fit or brand terms inside the mechanical score — displayed, labeled, excluded.</li>
+              <li>No forced winner when the interval straddles 50%.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:22px">
+          <h3>Where the model goes from here</h3>
+          <div class="scrollwrap">
+          <table class="ladder">
+            <tr><th>Rung</th><th>Model</th><th>Trains on</th><th>Active</th></tr>
+            <tr class="now"><td class="m">M0</td><td>Your stated prior weights, applied mechanically</td><td>nothing</td><td>day one — what this tour showed</td></tr>
+            <tr><td class="m">M1</td><td>Ridge Bradley–Terry on your picks, shrunk toward M0</td><td>your logged picks</td><td>decision 10 (per mode)</td></tr>
+            <tr><td class="m">M2</td><td>Same regression against labeled outcomes</td><td>outcome labels</td><td>≈ 45 outcomes — future</td></tr>
+            <tr><td class="m">M3</td><td>Nonlinear ML</td><td>hundreds of outcomes</td><td>future, gated</td></tr>
+          </table>
+          </div>
+        </div>
+        <div class="closing">
+          <p><b>The pitch in one breath:</b> your prioritization spreadsheet is a random-number
+          generator with a confident font. PairwisePM replaces it with your own policy, applied
+          the same way every time, that says <em>exactly</em> how sure it is and what would change
+          its mind.</p>
+          <p class="mono">The LLM's job ended at build time. The runtime is weights and a bias term.
+          It removes the Tuesdays.</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<div class="navbar">
+  <div class="in">
+    <button class="navbtn" id="backbtn">← Back</button>
+    <div class="prog"><div class="bar"><div class="fill" id="progfill"></div></div><span class="ct" id="progct"></span></div>
+    <span class="kbd">← → arrow keys</span>
+    <button class="navbtn primary" id="nextbtn">Next →</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var stops = Array.prototype.slice.call(document.querySelectorAll('section.stop'));
+  var rail = document.getElementById('rail');
+  var back = document.getElementById('backbtn');
+  var next = document.getElementById('nextbtn');
+  var fill = document.getElementById('progfill');
+  var ct = document.getElementById('progct');
+  var topmeta = document.getElementById('topmeta');
+  var cur = 0;
+
+  stops.forEach(function(s, i){
+    var li = document.createElement('li');
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.innerHTML = '<span class="n">' + i + '</span><span>' + s.getAttribute('data-title') + '</span>';
+    b.addEventListener('click', function(){ go(i); });
+    li.appendChild(b);
+    rail.appendChild(li);
+  });
+  var railItems = Array.prototype.slice.call(rail.children);
+
+  function go(i){
+    if (i < 0 || i >= stops.length) return;
+    cur = i;
+    stops.forEach(function(s, k){ s.classList.toggle('on', k === i); });
+    railItems.forEach(function(li, k){ li.classList.toggle('on', k === i); });
+    back.disabled = (i === 0);
+    next.textContent = (i === stops.length - 1) ? 'Start over' : 'Next →';
+    fill.style.width = (i / (stops.length - 1) * 100) + '%';
+    ct.textContent = 'stop ' + i + ' of ' + (stops.length - 1);
+    topmeta.textContent = 'stop ' + i + ' / ' + (stops.length - 1);
+    window.scrollTo(0, 0);
+    // brief entrance pulse on this stop's first spotlight
+    var first = stops[i].querySelector('.spot');
+    if (first){
+      first.classList.add('lit');
+      setTimeout(function(){ if (!first.classList.contains('hold')) first.classList.remove('lit'); }, 1400);
+    }
+  }
+
+  next.addEventListener('click', function(){
+    if (cur === stops.length - 1) go(0); else go(cur + 1);
+  });
+  back.addEventListener('click', function(){ go(cur - 1); });
+  var start = document.getElementById('startbtn');
+  if (start) start.addEventListener('click', function(){ go(1); });
+
+  document.addEventListener('keydown', function(e){
+    if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    if (e.key === 'ArrowRight'){ if (cur < stops.length - 1) go(cur + 1); }
+    else if (e.key === 'ArrowLeft'){ go(cur - 1); }
+  });
+
+  // note <-> spotlight linking
+  function bindNotes(){
+    var notes = document.querySelectorAll('ul.notes li[data-target]');
+    Array.prototype.forEach.call(notes, function(li){
+      var t = document.getElementById(li.getAttribute('data-target'));
+      if (!t) return;
+      function on(){ t.classList.add('lit','hold'); li.classList.add('hot'); }
+      function off(){ t.classList.remove('lit','hold'); li.classList.remove('hot'); }
+      li.addEventListener('mouseenter', on);
+      li.addEventListener('mouseleave', off);
+      li.addEventListener('focus', on);
+      li.addEventListener('blur', off);
+      li.addEventListener('click', function(){
+        // tap support: toggle
+        if (t.classList.contains('lit') && t.classList.contains('tapped')){
+          t.classList.remove('lit','hold','tapped'); li.classList.remove('hot');
+        } else {
+          document.querySelectorAll('.spot.tapped').forEach(function(o){ o.classList.remove('lit','hold','tapped'); });
+          t.classList.add('lit','hold','tapped'); li.classList.add('hot');
+        }
+      });
+    });
+  }
+  bindNotes();
+
+  // honesty tabs
+  var tabs = document.querySelectorAll('.tabs button');
+  Array.prototype.forEach.call(tabs, function(tb){
+    tb.addEventListener('click', function(){
+      Array.prototype.forEach.call(tabs, function(o){ o.classList.remove('on'); o.setAttribute('aria-selected','false'); });
+      tb.classList.add('on'); tb.setAttribute('aria-selected','true');
+      document.querySelectorAll('.hpane').forEach(function(p){ p.classList.remove('on'); });
+      document.getElementById(tb.getAttribute('data-pane')).classList.add('on');
+    });
+  });
+
+  go(0);
+})();
+</script>
+</body>
+</html>

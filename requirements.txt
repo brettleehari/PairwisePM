@@ -1,0 +1,26 @@
+# PairwisePM runtime — mechanical, offline. numpy is the only math dependency;
+# gradio is UI-only (imported solely in app.py); pyyaml reads the factor configs.
+#
+# gradio is MAJOR-BOUNDED, not open-ended. app.py passes the M-UX-03 banner rule
+# through `gr.Blocks(css=...)`, which gradio 6 deprecated and honors only via
+# launch()'s `_deprecated_css` fallback (verified this round in the installed
+# tree: gradio/blocks.py:2785 `css = css if css is not None else
+# self._deprecated_css`). A future major that drops that fallback would take
+# the constructor kwarg with NO error and NO failing test — every M-UX-03 guard
+# is a static assertion on app.py's source, so the rule would still read as
+# APPLIED while being structurally ineffective: the exact sticky-was-applied-
+# yet-inert failure recorded in design states.md §6.9, one layer down. The Space
+# is pinned (README sdk_version 6.26.0); this bound gives the pip-install path
+# the same floor. Lower bound is 6.0 because the fallback is what is verified.
+#
+# IF YOU WIDEN OR REMOVE THE BOUND BELOW, you have fired ENG-CSS-MIGRATION-01
+# (registered 2026-08-31, owner engineering, stated in full at app.py's
+# build_app): move `css=` off the gr.Blocks constructor into `launch(css=...)`
+# in the same push. The bound is declared TWICE — here and in pyproject.toml
+# [project.optional-dependencies] app — and widening either one fires it.
+# The reason it is a trigger and not already done: it is a layout-rule change
+# and fires design §6.12's bidirectional retrigger, which must not land in the
+# hours before the M-UX-02a sitting.
+numpy>=1.24
+PyYAML>=6.0
+gradio>=6.0,<7

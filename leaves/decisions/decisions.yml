@@ -1,0 +1,2060 @@
+# Decisions Leaf — PairwisePM
+# Per Spine and Leaf §5.9: 2-day SLA, then AI adjudication with full Spine/Leaf
+# context; 24-hour human override window after an AI resolution.
+#
+# RESOLVER'S OBLIGATION (accepted round 8, compliance's demand — binding on
+# Hari and adjudicator alike): every resolution recorded on D1–D6 carries a
+# per-entry `resolution_source: hari | ai_adjudication` field alongside
+# `resolved_at`. Mixed outcomes are expected (Hari may resolve some entries
+# before the 2026-09-01 expiry and adjudication the rest), so the source is
+# named PER ENTRY, never per batch. Reason: compliance's regeneration duty
+# (T-M0-01/T-PAR pinned constants, every T-FRAG fixture) writes a provenance
+# line on each regenerated constant citing who resolved the value it pins —
+# a fixture whose provenance cannot name its resolver is an untraceable
+# constant, which the traceability matrix exists to forbid. A resolution
+# record lacking this field does not lift G-D1D2.
+#
+# EXECUTION ORDERING (accepted round 12 from sequencing, boundary stated
+# round 13 — binding on tomorrow's resolver): at the 2026-09-01 expiry the
+# adjudication of whatever D1-D6 entries remain pending executes SAME DAY.
+# Exactly ONE event defers it: if the M-UX-02 witnessed sitting is convening
+# in the FIRST HOUR of 2026-09-01, the resolution round runs after that
+# sitting ends (zero SLA cost — the obligation is same-day, not first-hour).
+# Nothing else defers it. A sitting arriving later in the day, an unconvened
+# window, or any other pending human event does NOT pause, delay, or reopen
+# the resolution round; entries stay adjudicated on their own clock, with
+# Hari's own resolutions recorded `resolution_source: hari` per entry and the
+# adjudicated remainder overridable through 2026-09-02.
+#
+# RESOLUTION-ROUND HAZARD — VERIFIED FROM THIS SEAT, DELIBERATELY NOT QUEUED
+# (round 17, 2026-08-31). D1 and D2 resolve INTO configs/*.yaml, and this
+# machine carries a SECOND copy of those two files, at
+# `.venv/lib/python3.11/site-packages/configs/`. Checked here rather than taken
+# from a packet: the install is EDITABLE — its dist-info `direct_url.json` reads
+# `{"dir_info": {"editable": true}, "url": "file:///Users/brettleehary/mcparea/ProMgtAI"}`
+# — and that same dist-info's RECORD lists both YAML files
+# (`configs/one_to_n.yaml,sha256=RL_7s3pRSc-…,3894`;
+# `configs/zero_to_one.yaml,sha256=ALjXJGEI5gzIuZthbIbfhVKmpQ6nKf4y-uBFj0B_aRQ,4149`),
+# digests this seat recomputed against the repo's own `configs/` this round —
+# identical, both files. The duplicate is therefore NOT an artifact of some
+# other, hypothetical non-editable install: it exists right now, under the
+# install this repo has today, created by the wheel force-include
+# (`[tool.hatch.build.targets.wheel.force-include] "configs" = "configs"`) that
+# the editable target inherits. The moment resolved values land in the repo's
+# configs/*.yaml, that second copy holds the OLD policy.
+#
+# Three consequences, written HERE because the round is this Leaf's:
+#  (1) The round-3 compliance covenant above guards the PINNED CONSTANTS
+#      (T-CFG-01/T-M0-01/T-PAR/T-FRAG). A stale second copy of the VALUES is a
+#      different object, which no fixture regeneration touches — it sits inside
+#      that covenant's blind spot, which is why the resolver should not meet it
+#      first in another seat's file.
+#  (2) `pytest tests/test_vendoring.py` is EXPECTED TO RED on T-VEND-06 on the
+#      next suite run after the write, with no reinstall involved. That red is
+#      the guard working, not a broken environment. Baseline pinned from this
+#      seat BEFORE any write: `.venv/bin/python -m pytest tests/test_vendoring.py`
+#      → 7 passed, 0.03s, 0 skipped — T-VEND-06 RUNS here and passes, because
+#      both copies are currently byte-identical. Full suite 73 passed, 1.53s.
+#      Pin caveat this seat earned the hard way inside this round: an earlier
+#      run of mine used the SYSTEM python3, which has no gradio and silently
+#      skipped seven packaging clauses (66 passed, 7 skipped) — the pinned
+#      numbers on this board are venv-interpreter numbers, and a suite count
+#      reported without the interpreter that produced it is not a pin.
+#      ROUND-18 RE-PIN, ADDED RATHER THAN OVERWRITTEN because the number
+#      moved under this seat inside one round and that is the fact worth
+#      keeping: `tests/test_vendoring.py` still reads 7 passed, 0 skipped
+#      (the pre-write baseline above is UNCHANGED and is the one the
+#      resolution round is measured against), while the FULL suite read 73
+#      passed at the start of this round and 78 passed at its end — five
+#      clauses landed from other seats while this Leaf edited two markdown
+#      and YAML files and no test. Sequence of record on this board:
+#      59 → 60 → 64 → 65 → 67 → 72 → 73 → 78. What the resolution round
+#      needs from this line is the vendoring file's 7/0, not the suite
+#      integer; a suite count is evidence of an hour, not a property.
+
+
+#  (3) The remedy is refresh-or-remove — re-run `pip install -e .`, or
+#      `pip uninstall pairwisepm` — NEVER a hand-edit of the site-packages copy,
+#      and never deleting the force-include to make the red go away: that clause
+#      is the only reason `pip install pairwisepm` finds its schemas at all, so
+#      deleting it trades a red test for a broken install path.
+#
+# WHY THIS IS RECORDED AND NOT QUEUED, on this Leaf's own standing rule: it is a
+# verified FACT with a named owner (compliance, for the F-31/T-VEND-06 docstring
+# wording, which currently says "any NON-editable install") and a demand already
+# filed against that owner by architecture. Defects with owners and filed demands
+# are not queue entries here; queueing this one would be the trivia half of this
+# Leaf's job to refuse. It is noted on the resolution round because the round is
+# ours, not because the fact is contested.
+
+decisions:
+  - id: D1
+    title: Prior weight magnitudes for the 1→N factor table
+    raised_at: 2026-08-30
+    sla_expires_at: 2026-09-01
+    spine_commitment: "Solution Direction — mechanical judge applies a stated, editable policy"
+    stakeholders:
+      - name: Hari (PM)
+        factors: [domain judgment on GenAI allocation decisions, lived decision history]
+      - name: Build
+        factors: [literature-defensible rankings, flat-maximum insensitivity to decimals]
+    options:
+      - proposed defaults (Impact .25, Feasibility .20, Reach .15, Unit econ .15, Flywheel .10, Risk .05, Effort −.10)
+      - PM-revised magnitudes (rankings preserved)
+      - PM-revised rankings
+    status: pending
+    notes: >
+      Build proceeds on the proposed defaults; weights are config, not code.
+      Flat-maximum argument: rankings matter far more than decimals.
+      Defaults are wired in configs/one_to_n.yaml (Engineering) — sign-off edits
+      land in that YAML file only, never in code.
+    on_resolution_notify:
+      - engineering: "edit configs/one_to_n.yaml only"
+      - compliance: >
+          regenerate pinned test constants T-M0-01 (L=0.26,
+          p=0.5646362918030292), T-PAR-01 (z-shifts 1.04 / 2.66186), and all
+          T-FRAG fixtures. Covenant (accepted round 3, same terms as gtm's): if
+          any value changes from the shipped defaults, this flag is issued IN
+          THE SAME ROUND as the resolution — written into the resolution note
+          itself — and fixtures must regenerate before any push on the new
+          values, else green tests silently test the wrong policy.
+      - gtm: >
+          recompute tour.html and seed-comparison.json displayed numbers
+          (weights, L=0.345, p=59%, CI 52–64%, contributions, parity paths,
+          too-close variant). Covenant (accepted round 2): if any prior weight
+          changes from the shipped defaults, this notification is issued IN THE
+          SAME ROUND as the resolution — written into the resolution note
+          itself, which is possible by construction because decisions.yml
+          status fields are what gate G-D1D2 — so sequencing cannot lift
+          G-D1D2 on a resolution whose note lacks it.
+      - sequencing: "do not lift G-D1D2 on a weight-changing resolution until the gtm recompute notification above appears in the resolution note"
+
+  - id: D2
+    title: Weight of capability-trajectory exposure in 0→1 mode
+    raised_at: 2026-08-30
+    sla_expires_at: 2026-09-01
+    spine_commitment: "The User — PM searching for PMF in GenAI"
+    stakeholders:
+      - name: Hari (PM)
+        factors: [how decisive wrapper-risk has been in real 0→1 GenAI calls]
+      - name: Build
+        factors: [second-heaviest weight proposed (.20) on the argument that model-absorption risk is the defining GenAI search question]
+    options:
+      - keep .20 (second-heaviest)
+      - demote (~.10) — treat as one factor among peers
+      - promote to a gate — top-box absorption risk vetoes regardless of score
+    status: pending
+    notes: >
+      The "gate" option would be a fast-and-frugal-tree exit, not a weight — a
+      structural change to the 0→1 scorer if chosen. LOUD FLAG (requested by
+      Compliance and Sequencing): if the gate option wins, that is NOT a config
+      change — it modifies engine-m0, requires a technical-spec (and possibly
+      Spine) update FIRST, a new Compliance test group and matrix rows, and it
+      must land before space-push, because real 0→1 logs must not accumulate
+      against a scorer that is about to change shape. The other two options are
+      one-line edits to configs/zero_to_one.yaml. GTM's tour is deliberately
+      D2-invariant (0→1 screen shows banner + ceiling routing only, no numbers).
+    on_resolution_notify:
+      - engineering: "options 1–2: edit configs/zero_to_one.yaml only; gate option: engine-m0 change, blocks space-push"
+      - compliance: >
+          gate option requires new test group + matrix rows; raise spec update
+          before any code moves. Additionally (covenant accepted round 3): ANY
+          resolution that changes a shipped 0→1 weight — options 1–2 included,
+          not just the gate — is flagged to compliance in the resolution note
+          in the same round, since T-CFG-01 pins the shipped weight tables and
+          fixtures must regenerate before any push on the new values.
+      - sequencing: "gate option inserts an engineering node before space-push"
+      - gtm: >
+          same-round notification if any weight changes from the shipped
+          defaults (covenant accepted round 2, same terms as D1). The tour is
+          deliberately D2-invariant (0→1 screen shows banner + ceiling routing,
+          no numbers), so the expected action on options 1–2 is a one-line
+          confirmation that invariance still holds; the gate option requires
+          re-checking the tour's 0→1 stop narration.
+
+  - id: D3
+    title: Does a portfolio/knapsack layer ever enter scope, and if so at what trigger?
+    raised_at: 2026-08-30
+    sla_expires_at: 2026-09-01
+    spine_commitment: "Scope Boundaries — 'portfolio/knapsack automation (flagged, not decided)'"
+    stakeholders:
+      - name: Hari (PM)
+        factors: [whether real allocation decisions stay pairwise in practice or force a budget-constrained ranking, appetite for v2 scope]
+      - name: Build
+        factors: [strict A-vs-B keeps the noise-cancellation guarantee clean, a knapsack layer would need transitive scores the pairwise model deliberately does not promise, log schema already stores everything a future layer would need]
+    options:
+      - never — remove the flag, make the refusal permanent in the Spine at next version bump
+      - deferred with a stated trigger — enters scope only when M2 activates (≥ ~45 labeled outcomes), since portfolio optimization over uncalibrated scores would violate the overstated-confidence refusal
+      - deferred indefinitely — keep the flag as-is, revisit only on user pull; no Leaf designs for it
+    status: pending
+    notes: >
+      The Spine itself marks this "flagged, not decided" — the only Scope
+      Boundaries item left explicitly open. No build work depends on it in v1;
+      the decision governs whether Architecture/Engineering must keep the log
+      and engine interfaces knapsack-ready or may optimize them for strict
+      pairwise. Build proceeds as if option 3 (nothing designed for it).
+
+  - id: D4
+    title: Calibration-report cadence and the n threshold for the reliability curve
+    raised_at: 2026-08-30
+    sla_expires_at: 2026-09-01
+    spine_commitment: "Success Metrics — 'ζ (transitivity) and Brier accumulate from decision 1' / honesty-by-construction"
+    stakeholders:
+      - name: Hari (PM)
+        factors: [how often a working PM will actually open an audit view, tolerance for being nagged about their own noise]
+      - name: Build
+        factors: [spec says reliability curve 'when n permits' without defining n, binned reliability curves below ~30 decisions are themselves overconfident — an uncalibrated calibration report violates the Spine's core refusal]
+    options:
+      - passive only — audit view always available on demand, ζ and Brier live from decision 1, reliability curve unlocks at n ≥ 30 with bin counts shown; no push cadence
+      - milestone cadence — audit summary surfaced on the verdict card at decisions 10, 25, 50 (aligned with the M1 activation moment), reliability curve at n ≥ 30
+      - every-verdict footer — one-line ζ/Brier readout on every verdict card, full report on demand, curve at n ≥ 30
+    status: pending
+    notes: >
+      The spec fixes WHAT accumulates (Brier from decision 1, ζ live, reliability
+      curve 'when n permits') but not WHEN it is shown or what n permits the
+      curve. Cross-leaf: Design owns the surface, Engineering owns the
+      thresholds, both need one answer. Build proceeds on option 1 as the
+      least-commitment default; thresholds are config, not code.
+      Exchange-round status: Engineering shipped option-1 behavior (audit
+      section always available in app.py; ζ/Brier from decision 1); the n≥30
+      reliability-curve unlock is NOT yet a wired config constant — Engineering
+      should add it as config before the curve itself is built. Design keeps the
+      verdict card able to absorb a one-line ζ/Brier footer without redesign in
+      case option 2 or 3 wins.
+
+  - id: D5
+    title: Cutover rule from shipped seed distributions to user-log statistics for z-scoring
+    raised_at: 2026-08-30
+    sla_expires_at: 2026-09-01
+    spine_commitment: "Solution Direction — 'model-of-the-judge activates from the user's own log' / 'applies the PM's own policy'"
+    stakeholders:
+      - name: Hari (PM)
+        factors: [whether early verdicts should be comparable to later ones, how confusing a silent shift in scoring basis is to a non-statistician]
+      - name: Build
+        factors: [spec says seed distributions ship 'until the log grows' with no rule, per-factor std from fewer than ~10 log entries is noisier than the seed it replaces, cutover changes every subsequent z-score and therefore parity-path raw units]
+    options:
+      - hard cutover per factor at n ≥ 10 logged values, noted once in the audit view
+      - Bayesian blend — seed acts as a pseudo-sample (e.g. weight 10) that the log gradually swamps; no discontinuity, converges to pure-log
+      - never cut over in v1 — seeds are the permanent z-basis, log stats shown in the audit view as a diagnostic only
+    status: pending
+    notes: >
+      The spec commits to both endpoints (seeds at first, the user's log
+      eventually) but not the transition. It is load-bearing: z-scores feed the
+      score, the interval, AND the path-to-parity raw-unit conversion, so a
+      discontinuous cutover can silently flip a near-tie verdict between
+      sessions — the exact Tuesday-noise the product exists to remove. Build
+      proceeds on option 2 (blend) as the only discontinuity-free default;
+      the pseudo-sample weight is config, not code.
+      Exchange-round status: what Engineering actually shipped in v1 is
+      seeds-only (no discontinuity risk at all — a safe interim), with
+      log_derived_stats + ModeConfig.with_updated_distributions implemented and
+      tested but deliberately NOT wired into app.py. Note that helper is a HARD
+      replacement, not a blend: if option 2 stands it must not be wired as-is —
+      the blend (seed as pseudo-sample, default pseudo-weight 10, config) still
+      needs implementing before any switchover ships. Wiring the hard helper
+      would silently choose option 1.
+
+  - id: D6
+    title: Fragility-flag threshold — what counts as a "small plausible move" of one factor
+    raised_at: 2026-08-30
+    sla_expires_at: 2026-09-01
+    spine_commitment: "Success Metrics — 'the verdict is honest by construction' / spec §5.4 fragility flag"
+    stakeholders:
+      - name: Hari (PM)
+        factors: [how twitchy the fragility warning should feel in real use — a flag that fires constantly gets ignored, one that never fires is decoration]
+      - name: Build
+        factors: [three leaves shipped three different thresholds in the same build round — a genuine cross-leaf disagreement, not a convention]
+    options:
+      - 0.75 z-units, one global constant (Engineering's shipped FRAGILITY_Z=0.75 in pairwisepm/engine.py — the code as built)
+      - 0.5 z-units, one global constant (Compliance's provisional FRAGILITY_EPS_Z=0.5 in tests/test_engine_spec.md — fires more often, the more conservative honesty posture)
+      - per-factor epsilon derived from each factor's scale bounds / anchor rungs (GTM's tour reasons in one-rung swings; Compliance explicitly allows engineering to re-derive per factor)
+    status: pending
+    notes: >
+      The spec (§5.4) says "small plausible move" without a number, and the
+      build round produced a real three-way divergence: engine code uses 0.75σ,
+      the compliance test spec pins 0.5σ, the GTM tour narrates one-rung
+      (~0.25-contribution) swings. This is exactly what the queue is for.
+      Build-meanwhile default: the code as shipped, 0.75σ (Engineering's
+      constant), because tests bind to code at integration and the flag is a
+      warning, not a score input — no logged number changes with the threshold.
+      Whichever option wins, the constant becomes config, Compliance regenerates
+      every T-FRAG fixture, and GTM re-checks the tour's fragility narration.
+    on_resolution_notify:
+      - engineering: "move the chosen epsilon into config; keep FRAGILITY_Z as the default only"
+      - compliance: >
+          regenerate T-FRAG constants against the resolved epsilon (every
+          T-FRAG fixture is built on FRAGILITY_Z = 0.75). Covenant (accepted
+          round 3): a resolution choosing any epsilon other than 0.75σ carries
+          this flag in the resolution note itself, same round, and fixtures
+          regenerate before any push on the new value.
+      - gtm: "align the tour's fragility narration (Stop 5) with the resolved rule"
+
+  - id: D7
+    title: Is R-8 (browser-side imputation void) release-gating pre-pilot-live, with R-9 (dark-theme MP-1 illegibility) riding as second priority?
+    raised_at: 2026-08-30
+    sla_expires_at: 2026-09-01
+    spine_commitment: >
+      Success metric #4 "The verdict is honest by construction" and the
+      Scope-Boundaries refusal "A judge that overstates its confidence is worse
+      than no judge" — a verdict computed from 12 silently-imputed factor
+      scores the user never entered is a fabricated-input verdict.
+    stakeholders:
+      - name: Design
+        factors: [browser-verified defect against an already-admitted commitment (states.md §6.4 delta (d), closed round 1 as "unfilled factors block computation with no defaulting", now shown void in gradio 6.26 — gr.Number(value=None) renders and submits literal 0), MP-1 "survive a squint" fails entirely in the served dark theme (R-9)]
+      - name: Engineering
+        factors: [fix owner; mechanism is their call (empty-string Textbox-backed inputs, sentinel, or a Gradio version/config rendering None as empty); minimal-complexity agenda weighs the mechanism choice]
+      - name: Sequencing
+        factors: [graph admission bar — R-8 matches the defect-not-new-scope class written for R-1/R-2 and costs zero elapsed time in parallel with the human-gated D1/D2 path, but critical-path admission is sequencing's to grant, not design's to assert]
+      - name: Compliance
+        factors: [the green 54-test suite is structurally blind to this bug class (tests pass handlers Python None directly); a fix without a serialization-level regression guard recreates the honor-system gap twice converted to enforced tests this build (T-VEND-01, T-CUST-01)]
+      - name: GTM
+        factors: [second stakeholder supporting release-gating for R-8 and pre-pilot priority for R-9 on distinct Spine lines — metric 1 (blank-to-verdict under 5 minutes) and metric 4 (honest by construction) both broken in the served UI, demo-path harms on the record — first paint shows pre-filled 0s with red invalid borders, Compare on an incomplete form fabricates a verdict from 12 never-entered scores, the demo script's 0→1 ceiling beat (step 6) would run against a fabricated baseline because the seed pair is 1toN-only (recorded round 5 on GTM's demand)]
+    options:
+      - release-gating as claimed — engineering fixes R-8 (behavioral acceptance — an untouched factor never reaches the handler as a value; Compare on an incomplete form renders str.partial.verdict_placeholder) plus R-9's one-line-per-block CSS pre-pilot-live, sequencing admits the node in parallel with G-D1D2, compliance registers a serialization-level regression guard
+      - split priority — R-8's blocking fix plus regression guard gate pilot-live; R-9 and the placeholder-rendering polish land as an immediate fast-follow with a no-dark-theme-demo caution standing until then
+      - not gating — R-8/R-9 join the post-Pilot backlog and the pilot proceeds on a documented known-defect caveat (requires a stakeholder to actually argue that a verdict fabricated from 12 unentered scores is pilotable; none has)
+    status: resolved_uncontested
+    notes: >
+      Registered round 4 on design's demand, per the round-2 process: a claimed
+      gate goes through this queue with a Spine line and named stakeholders,
+      never attached to the critical path by the claimant. The contested
+      question is NARROW — not "is R-8 a bug" (browser-reproduced, undisputed
+      evidence in states.md §6.4/§6.5) but "does it gate pilot-live" — and it
+      may not stay contested: if engineering accepts the fix on-record and
+      sequencing admits the node under its own R-1/R-2 defect bar before the
+      SLA, this entry resolves as option 1 or 2 WITHOUT adjudication, recorded
+      as dissolved-bilaterally exactly like the round-3 R-1 record. The queue
+      holds the claim so it cannot be closed silently in either direction —
+      neither baked onto the path by edit-order nor waved off the path by
+      inaction. Build-meanwhile: no demo or pilot session on dark theme (R-9),
+      and the green suite is NOT citable as evidence that no-imputation
+      blocking works in the served UI (R-8) — status claims citing delta (d)
+      as closed are suspended until the fix lands.
+    on_resolution_notify:
+      - engineering: "fix per the winning option; mechanism engineering's call, acceptance behavioral"
+      - sequencing: "admit or refuse the node per the resolution; a gating resolution parallels G-D1D2 at zero elapsed-time cost"
+      - compliance: "regression guard required at the serialization level (gradio-client or schema-level check that an untouched Number field does not submit 0) — the existing suite cannot red on this class"
+      - design: "re-run M-UX-01/M-UX-03 checks in one session once fixes land (states.md §6.5); flip R-5's downstream note"
+      - gtm: "Stop 2 / Stops 3+5 tour divergences (states.md §6.3) close app-side when R-8/R-9 land; re-verify the ceiling-mock render then"
+    resolved_at: 2026-08-31
+    resolution: >
+      Option 1 (release-gating as claimed), dissolved bilaterally per the entry's
+      own dissolution clause — no adjudication was needed because the contested
+      question stopped being contested: in round 5 engineering accepted both
+      demands on-record as defects against its round-1 delta (d) commitment and
+      SHIPPED them (R-8: gr.Number removed from the path entirely — Textbox
+      inputs screened by _coerce_raw/_screen_factors, untouched payload is '',
+      an explicit 0 still scores, incomplete Compare renders
+      str.partial.verdict_placeholder; R-9: every forced-light-background block
+      forces its text color in the same style attribute), and sequencing
+      admitted both nodes onto the graph under its own R-1/R-2 defect bar
+      (imputation-blocking-fix blocks pilot-live; verdict-legibility-fix blocks
+      release-audit) at zero elapsed-time cost parallel to G-D1D2. Every named
+      stakeholder concurs with gating; option 3 never found an advocate.
+    resolution_rationale: >
+      Traced: Spine metric #4 ("honest by construction") and the
+      Scope-Boundaries refusal ("a judge that overstates its confidence is
+      worse than no judge") — a verdict computed from 12 silently-imputed
+      scores is a fabricated-input verdict, and GTM's independent line (Spine
+      metric #1, blank-to-verdict under 5 minutes, broken by first-paint error
+      styling) corroborates on a second commitment. Evidence: states.md
+      §6.4/§6.5 (browser-verified defect), engineering's round-5 shipped fix,
+      suite 56/56 green in the project venv with T-SER-01 demonstrated
+      red-first against the pre-fix build. GUARD PAIRING (binding, per
+      compliance's covenant, written here so no resolution can authorize a
+      guard-less fix): R-8's fix ships only WITH T-SER-01
+      (tests/test_packaging.py::test_untouched_factor_never_scores, spec §20,
+      red-first demonstrated) and R-9's only with T-THEME-01
+      (test_forced_light_backgrounds_force_text_color, spec §21) — satisfied
+      as landed in the same change, per pre-push gate P-10; no future change
+      may decouple fix from guard.
+    verification_record: >
+      2026-08-31, round 6 — the reopen-clause oracle RAN (design's browser
+      render session 2, states.md §6.7, dated append-only row-set, real Chrome,
+      served dark theme). Outcome, recorded so the closing bracket actually
+      closes on evidence rather than on the fix having merely landed:
+      (1) R-8 half — CLOSED, browser-verified: all four acceptance behaviors
+      PASS (untouched Textboxes submit empty, incomplete Compare renders
+      str.partial.verdict_placeholder with the per-factor list, explicit 0
+      scores, no red borders or raw toasts). Design flipped its §6.4 row
+      resolved-as-built. Nothing reopens.
+      (2) R-9 half — acceptance PARTIALLY UNMET in the served theme: amber
+      strips PASS, but gradio 6.26's `.prose * { color: var(--body-text-color) }`
+      rule defeats inheritance on nested elements, leaving the S3/S4 verdict
+      headline (the MP-1 token), the runner-up chip, and the S1/S2 placeholders
+      near-invisible while T-THEME-01 stays green. Per this entry's reopen
+      clause this is a DEFECT against engineering's accepted commitment —
+      filed by design as R-9b with root cause and computed-style evidence,
+      same-round fix owed, NO new D-entry, because the gating classification
+      itself is uncontested (design explicitly framed it as the unmet half of
+      an accepted bar, not a dispute). D7 status is unchanged:
+      resolved_uncontested stands; what the clause routes is the residue.
+      (3) Consequences carried by this record: the no-dark-theme-demo caution
+      STANDS until R-9b lands (unchanged from the clause); the GUARD PAIRING
+      paragraph binds R-9b too — T-THEME-01 was demonstrated green while the
+      browser showed an illegible token (the third green-guard/browser-false
+      coexistence this build), so the R-9b fix ships only WITH a strengthened
+      T-THEME-01 in the same change, per the no-decoupling sentence already in
+      resolution_rationale. M-UX-03 (sticky banner) also verified unshipped —
+      that lives on sequencing's release-audit node, not here.
+      (4) Watched, not queued: compliance flipped F-29 to verified-mechanism
+      in round 5 in parallel with design's session-2 FAIL evidence; design
+      demands the flip not stand on T-THEME-01's green alone. Both leaves
+      hold the same thesis (guards can be blind to the browser), so this is
+      presumed packet lag, not disagreement — but if compliance maintains
+      F-29 verified against design's standing §6.7 FAIL row in round 6, that
+      becomes a genuine cross-leaf conflict and enters this queue with both
+      stakeholders. It does not get settled by whichever matrix edit lands
+      last.
+      2026-08-31, round 7 addendum — two closures, both verified in the repo
+      by this Leaf, not taken from the packet:
+      (5) The F-29 watch is CLOSED, no D-entry needed. Compliance reconciled
+      on-record in round 6 exactly as demanded: F-29 DEMOTED verified→partial
+      (R-9b residual) citing §6.7 (traceability.md row F-29: "a green guard
+      never outranks a citable browser FAIL"), strengthened contract written
+      as spec §21b BEFORE the fix, and new pre-push gate P-11 blocking until
+      fix + T-THEME-01b land same-change AND render session 3 passes. The
+      presumed packet lag was packet lag; the mismatch was resolved by the
+      stakeholder's own move, which is the watch's designed outcome — the
+      matrix and the render record agree again, and neither was settled by
+      whoever edited last.
+      (6) R-9b's same-round-owed fix LANDED per the GUARD PAIRING covenant —
+      verified in code: every nested text-bearing element in the forced-light
+      blocks now carries its own inline color (app.py ~176-200, with the
+      .prose* root cause cited in the code comment), strengthened guard
+      T-THEME-01b (tests/test_packaging.py::
+      test_forced_light_blocks_color_every_nested_element, render-level,
+      red-by-construction against the pre-fix shape) in the SAME change; the
+      M-UX-03 sticky banner also landed (app.py _CSS "#pwpm-banner
+      { position: sticky ... }", elem_id wired) with static pin T-BANNER-01.
+      No decoupling occurred. The residue's closing bracket is now render
+      session 3 ONLY: this record closes the R-9b residue when design's
+      session-3 dated rows show the previously-failing surfaces legible
+      (matching compliance's P-11 clearance terms); a session-3 FAIL routes
+      again as a defect against the same accepted commitment per the reopen
+      clause — still no new D-entry unless the gating classification itself
+      is re-contested, which nobody has done.
+      2026-08-31, round 8 addendum — THE RESIDUE'S BRACKET IS CLOSED.
+      (7) Design ran render session 3 in round 7 exactly at its trigger and
+      reported the rows to this queue as demanded; this Leaf verified the
+      record in the repo (states.md §6.9, dated, append-only, per-check-ID,
+      computed-style evidence): R-9b PASS on EVERY surface §6.7 enumerated —
+      S3 headline div + nested <b> MP-1 token rgb(28,25,23), runner-up chip,
+      S4 headline/body, S1/S2 placeholder inner divs rgb(87,83,78), stale
+      notice, plus the S5 whole-screen parity rider. Per item (6)'s terms the
+      R-9b residue closes PERMANENTLY on this citation: the reopen clause's
+      oracle has confirmed the behavioral acceptance, matching compliance's
+      P-11 clearance terms. D7 is now fully discharged — resolution,
+      guard-pairing, oracle, residue, and closing bracket all on evidence.
+      (8) NOT reopened here: M-UX-03 failed its third re-check in the same
+      session (rule applied — computed position:sticky — but structurally
+      inert behind gradio's overflow:hidden container; the fourth
+      green-guard/browser-false instance, rule-applied vs rule-effective).
+      That defect lives on sequencing's release-audit node, as items (3) of
+      the round-6 record and this record have said since the start — it was
+      never D7's residue, and it needs no D-entry: nobody contests its
+      classification, engineering pre-committed the position:fixed fallback
+      on exactly the evidence §6.9 delivered (clipping ancestor named,
+      fixed-viability confirmed), and the guard-pairing discipline (updated
+      T-BANNER-01 in the same change) is already the accepted covenant. This
+      Leaf WATCHES one thing only: the pre-committed fallback landing per its
+      own same-round terms — a pre-accepted fix left unlanded with no
+      on-record reason would be the polite-rot failure mode, and would route
+      as a defect against an accepted commitment, still not a new decision.
+      2026-08-31, round 9 addendum — THE WATCH IS CLOSED on evidence.
+      (9) Engineering landed the pre-committed M-UX-03 fallback in round 8
+      per its own same-round terms, verified in the repo by this Leaf, not
+      taken from the packet: app.py _CSS now reads "#pwpm-banner { position:
+      fixed; top: 0; left: 0; right: 0; z-index: 100 }" (app.py:769), height
+      reserved by an in-flow hidden content-exact spacer (BANNER_SPACER_HTML,
+      elem_id pwpm-banner-spacer, toggled with the banner on mode change),
+      and T-BANNER-01 was rewritten IN THE SAME CHANGE per spec §22b with the
+      rule-applied-vs-rule-effective lesson in its docstring
+      (tests/test_packaging.py test_banner_scroll_persistent_static) —
+      red-first by construction against the prior sticky rule. Suite 59/59
+      (own run). No polite rot occurred: the pre-accepted fix landed on the
+      clause's own schedule with the guard paired, so nothing routes as a
+      defect and nothing enters the queue. The behavioral closing bracket —
+      design's render session 4, ONE check (banner rect within viewport at
+      scrollY 1500, pre-scoped in states.md as §6.11) — lives on sequencing's
+      release-audit node as it always has; a session-4 FAIL would route as a
+      defect against the same accepted commitment, still never a new
+      D-entry. This queue holds nothing further on M-UX-03. Also observed,
+      deliberately NOT queued: engineering declined to wire the catalogued
+      str.log.loaded_one / str.m1.progress_zero IDs (no rendering call site);
+      design's own round-7 terms left wiring scope to engineering's stated
+      choice, so no stakeholder contests it — no disagreement exists, and
+      manufacturing an entry from it would be queueing trivia.
+      2026-08-31, round 10 addendum — THE BEHAVIORAL BRACKET IS CLOSED.
+      (10) Design ran render session 4 in round 9 exactly at its trigger,
+      and this Leaf verified the record in the repo (states.md §6.11 —
+      dated, append-only, per-check-ID, computed-style plus rect evidence),
+      not from the packet: the pre-scoped single check PASSED (banner rect
+      top 0 / bottom 77.2, fully within the 792px viewport at scrollY 1500
+      in served 0→1 dark theme; computed position: fixed), with the
+      height-reservation and opaque-background riders PASS and both R-10
+      honesty fixes confirmed on screen (singular placeholder; corrected
+      stale tail, false 'Recomputing…' claim gone). Own-run corroboration
+      this round: suite 59/59 (1.38s), strings mirror byte-identical (cmp).
+      With that row, M-UX-03's whole arc — accepted commitment, guard
+      pairing, fallback, and behavioral oracle — is closed on evidence,
+      and the reopen clause has no live trigger: it re-fires only if a
+      future copy or layout change lands, per §6.11's own ledger-closing
+      terms. D7 and everything it ever routed is now fully discharged with
+      ZERO adjudication cycles across the entry's life. This queue holds
+      no open watches. The sole remaining agent-checkable item anywhere
+      (M-UX-02's witnessed timed run) lives on sequencing's release-audit
+      node with gtm's named slot — it was never a decision and does not
+      become one.
+      Design's browser re-verification (render session 2, the round-5/6
+      one-glance check engineering itself demanded) is the closing bracket.
+      If it finds the behavioral acceptance unmet, that reopens as a DEFECT
+      against engineering's accepted commitment — same-round fix owed, no new
+      D-entry — per engineering's own round-5 on-record framing. Only if the
+      gating classification itself becomes contested again does this queue
+      reopen the question. Until render session 2 confirms, the
+      no-dark-theme-demo caution stands (R-9 half of the old build-meanwhile);
+      the suspension on citing the suite as serialization-blocking evidence is
+      LIFTED, because T-SER-01 now drives the handlers with real frontend
+      payloads (empty strings, not Python None). Residual verification
+      (render session 2, M-UX-02) lives on sequencing's release-audit node,
+      not in this queue.
+
+  - id: D8
+    title: Does the release claim Spine success metric #1 (blank-to-verdict under 5 minutes) on a 1→N-only measurement, and does anyone own measuring 0→1?
+    raised_at: 2026-08-31
+    sla_expires_at: 2026-09-02
+    spine_commitment: >
+      Success Metrics #1 — "A PM completes a full A-vs-B comparison, from blank
+      questionnaire to verdict card, in under 5 minutes" — which names no mode,
+      while the Spine's User section names both (0→1 search and 1→N
+      allocation); read against the Scope-Boundaries refusal "a judge that
+      overstates its confidence is worse than no judge."
+    stakeholders:
+      - name: Compliance
+        factors:
+          - "its own self-reported round-13 scope correction is what created this question: M-UX-02 splits into M-UX-02a (1→N, instrumented) and M-UX-02b (0→1, matrix wording 'NO instrument, NO scheduled sitting'), so F-17 can convert at most half of SC-06"
+          - "total-traceability standard — the b-half's disposition should rest on a citable ruling, not on the absence of one"
+      - name: GTM
+        factors:
+          - "owns claim-ledger row 4, the 1c-i witness template, and the recruitment ask"
+          - "has already mode-scoped the claim (verified this seat's own read of launch-copy.md), so the WORDING half has converged and only the COVERAGE half is open"
+          - "is the seat that would have to recruit a second fresh user, or ask the first one for a second leg"
+      - name: Design
+        factors:
+          - "owns the instrument; §6.12/§6.13 fix ONE 1→N blank-to-verdict run, so an 0→1 leg needs a protocol and a branch text that do not exist today"
+          - "refuses to mint a record before a witnessed run exists — which is exactly why silence on the 0→1 half cannot become evidence in either direction"
+      - name: Hari (PM)
+        factors:
+          - "the only stakeholder who can supply a fresh user at all — option 2's cost is entirely his"
+          - "option 1's cost is also his: shipping a headline Spine metric measured on half its stated user population"
+      - name: Sequencing
+        factors:
+          - "owns the M-UX-02b node state; a node with no instrument and no scheduled sitting is the perpetually-imminent shape its own agenda forbids"
+          - "the alternative label (permanently unmeasured) is a release posture, not a graph fact, so the graph should not be the thing that decides it"
+    options:
+      - >
+        Ship the mode-named claim and close the b-half explicitly: SC-06
+        converts for 1→N only (if the sitting converts at all), 0→1 carries
+        "designed so, not yet timed" at release with NO further sitting
+        scheduled, and M-UX-02b is recorded as a deliberate, owned
+        non-measurement rather than an open node. This is the real
+        do-nothing option — it is what happens by default if nobody rules —
+        and choosing it explicitly costs nothing but names an owner for it.
+        INSTRUMENT ON RULING (compliance's round-15 demand, accepted; this
+        option is the one that most needs it): "no instrument, by decision,
+        owner <named seat — Hari unless he delegates>, revisit on <event>",
+        where the event is stated concretely rather than left to memory —
+        the suggested trigger is the first 0→1 change that would move the
+        number anyway (a 0→1 factor-set edit, a 0→1 questionnaire layout
+        change, or the first pilot 0→1 log arriving). Option 1 without those
+        three fields is not option 1; it is the omission this entry was
+        raised against, wearing a resolution's clothes.
+      - >
+        Schedule a second witnessed sitting for 0→1 under the identical
+        §6.12 protocol with a second fresh user, before the release audit;
+        gtm owns recruitment, design extends §6.12/§6.13 with an 0→1 branch,
+        compliance registers the instrument for M-UX-02b before the run.
+        FUNDING DEPENDENCY, RECORDED 2026-08-31 AND VISIBLE ON THE OPTION
+        ITSELF (gtm's round-15 demand — accepted in its second form, marked
+        rather than struck; see notes for why the option is not deleted):
+        **UNFUNDABLE FROM GTM.** gtm has answered on the record at
+        launch-copy.md 1c-i item 10 that a second separately recruited FRESH
+        user is not obtainable from that seat — it does not own the
+        recruitment channel, and the FIRST fresh user has not materialised
+        across rounds 10-15 with the witness standing by all day. This
+        option is therefore HARI-FUNDED ONLY: choosing it commits the one
+        stakeholder who can supply a fresh user, and choosing it without
+        saying so would settle the 0→1 half by omission one level down,
+        which is the exact defect this entry exists to prevent.
+        INSTRUMENT ON RULING: an M-UX-02b sitting with a named date and
+        witness, design's 0→1 §6.12/§6.13 leg, and compliance's registered
+        M-UX-02b instrument, all three IN PLACE BEFORE the run — not after.
+      - >
+        Add an 0→1 leg to the SAME sitting, run after the 1→N leg and
+        recorded as an explicitly NON-fresh-user secondary datum that does
+        NOT convert M-UX-02b and does not touch the canonical phrase —
+        labeled evidence where today there is none, at the cost of a few
+        minutes of the recruited user's time and zero protocol relaxation.
+        STATUS 2026-08-31: PRE-STAGED ON BOTH OWNING SEATS, so this option
+        is decidable at the hour and costs no leaf-round if it wins — gtm
+        pre-staged the ask at 1c-i item 10 (runs only AFTER the 1→N leg,
+        abandoned if that run voids, number NOT sayable in any payload), and
+        design pre-wrote the leg INACTIVE at §6.15(vi) with the
+        disqualifier inside the record line ("user was NOT fresh … therefore
+        this datum does NOT discharge M-UX-02b"), to be DELETED rather than
+        left dormant if option 1 wins. INSTRUMENT ON RULING: design's
+        §6.15(vi) record line plus compliance registering the datum's
+        NON-converting status BEFORE the run; and, because the hazard here
+        is quotation rather than measurement, gtm's standing bar on the
+        number appearing in any payload is part of the instrument, not a
+        courtesy.
+    status: pending
+    notes: >
+      What this entry is NOT: it is not the M-UX-02 sitting. That sitting has
+      always been schedule, not a decision, and this queue has said so through
+      three conceded rounds — nothing here defers it, reopens it, or converts
+      it into a D-entry. What is queued is the coverage question compliance's
+      own round-13 correction created: both pre-registered instruments measure
+      1→N, so whatever tomorrow's backstop produces, half of a Spine success
+      metric ends the build unmeasured with no instrument, no scheduled
+      sitting and no named owner. That half is currently being answered by
+      omission, which is the one way a question gets settled here without
+      anybody deciding it.
+      Raised now rather than after the backstop because the answer is cheapest
+      before the sitting (option 3 costs minutes if it is decided before the
+      user is in the room, and is unavailable afterwards) and because a
+      question raised after its own window has closed is a question already
+      answered.
+      BUILD-MEANWHILE DEFAULT: option 1 exactly as the board already has it —
+      compliance's M-UX-02a/b split as written, gtm's mode-named row-4 claim,
+      0→1 carrying the canonical phrase "designed so, not yet timed". No leaf
+      changes anything, no branch text is rewritten, and no record is minted
+      early on account of this entry.
+      ROUND-16 · THE ONE PERISHABLE QUESTION IS ANSWERED, AND THE ANSWER
+      NARROWS THE ENTRY WITHOUT CLOSING IT. This entry asked gtm, before the
+      sitting rather than after, whether a second fresh user is obtainable.
+      It is answered on their own record (1c-i item 10, read from this seat):
+      NO from that seat, with the reason stated — gtm does not own the
+      recruitment channel — and YES to the short 0→1 leg from the recruited
+      user if one ever arrives. Both halves are now carried on the options
+      themselves: option 2 is marked UNFUNDABLE FROM GTM / Hari-funded only,
+      option 3 is marked pre-staged on both owning seats.
+      WHY OPTION 2 IS MARKED AND NOT STRUCK (gtm asked for either; this seat
+      takes the second and states the refusal openly rather than banking the
+      easier edit). A seat's inability to fund an option is a COST, not a
+      disqualification, and this entry's own stakeholder list already names
+      Hari as the only person who can supply a fresh user — option 2's cost
+      was his from the day it was written. Deleting it would let one seat's
+      capacity retire a branch that belongs to a stakeholder who has not yet
+      spoken, and "the option nobody could afford was quietly removed before
+      the decider saw it" is the same failure as "the coverage half was
+      settled by nobody having asked", one level down. Marked, it costs a
+      reader four words and keeps the choice honest; struck, it saves nothing
+      and pre-empts Hari. The marking is dated and cites gtm's own line, so
+      if the recruitment situation changes the mark is falsifiable rather
+      than permanent.
+      EVERY RULING NAMES ITS INSTRUMENT (compliance's round-15 demand,
+      accepted whole and generalised rather than granted once). Each option
+      above now carries the instrument that would make its consequence
+      checkable later, and option 1 — the one that changes nothing — carries
+      the hardest version: "no instrument, by decision, owner <seat>, revisit
+      on <event>", all three fields required. The demand's argument is this
+      queue's own standard pointed at itself and it is adopted as a standing
+      rule in the Leaf README (`resolution_instrument`, mandatory on any
+      entry that closes), because a rule that only ever applied to D8 would
+      itself be an instrument registered against one row.
+      NON-DEFERRAL (self-applied, binding on this Leaf): D8 does NOT gate
+      G-D1D2 and does NOT defer, pause or reopen the D1–D6 resolution round.
+      The round-13 boundary named exactly one permitted deferral (a first-hour
+      M-UX-02 sitting); an entry of this Leaf's own making does not get to
+      become the second one. If D8 is still pending when the resolution round
+      executes, the round executes anyway.
+    on_resolution_notify:
+      - compliance: >
+          record the ruling on F-17/SC-06 as the basis for M-UX-02b's
+          disposition, replacing the current no-instrument-no-sitting state
+          with a cited one; if option 2 or 3 wins, register the 0→1
+          instrument (and, for option 3, its explicit non-converting status)
+          BEFORE the run, not after. Round 16: the ruling will arrive with a
+          `resolution_instrument` field filled on whichever option wins,
+          including option 1 — register THAT string in the row, so the
+          b-half's state cites both the decision and the way anyone checks
+          later that it held
+      - gtm: >
+          claim-ledger row 4 and 1c-i follow the ruling; option 2 or 3 puts a
+          recruitment or same-sitting ask on this seat, and option 1 makes the
+          permanent 0→1 fallback an owned release posture rather than a
+          leftover
+      - design: >
+          option 2 or 3 requires an 0→1 protocol leg in §6.12 and its own
+          pre-written branch text in §6.13; option 1 requires nothing
+      - sequencing: >
+          M-UX-02b's node state follows this ruling and nothing else. Encode
+          the non-deferral clause above with the entry: D8 does not gate
+          G-D1D2 and does not defer the D1–D6 resolution round
+
+  - id: D9
+    title: Does the M-UX-02a witness record carry a launch-environment VOIDING condition, and on which predicate?
+    raised_at: 2026-08-31
+    resolved_at: 2026-08-31
+    sla_expires_at: 2026-09-02
+    spine_commitment: >
+      Success Metrics #1 (blank-to-verdict under 5 minutes) read against the
+      Scope-Boundaries refusal "a judge that overstates its confidence is
+      worse than no judge" — applied to the tool's own measurement. Whether a
+      timed run counts as a record decides whether SC-06 converts, so the
+      voiding rule is part of the claim, not housekeeping around it.
+    stakeholders:
+      - name: GTM
+        factors:
+          - "owns the 1c-i witness template; launch-copy.md item 6 currently lists 'the launch hazard at item 7' among the causes that make a run NO RECORD, and item 7 declares a launch-from-repo-root PRECONDITION binding every demo — the first new gate opened on this surface since round 8"
+          - "item 7 carries its own deletion protocol (engineering's per-line notification that the install is editable or absent AND architecture's re-run), so this seat may retire the cwd clause on its own evidence — which is precisely the moment the residual question below gets answered by deletion rather than by ruling"
+      - name: Design
+        factors:
+          - "owns the acceptance protocol; §6.14 adds a voiding condition on a DIFFERENT predicate — 'a run whose app was launched against a bound module that is not the authority's bytes is no record' — plus 'the sitting is launched from the repository root'"
+          - "the bytes predicate survives the packaging fix that retires the cwd predicate; it is about which copy the browser was served, not about a directory"
+      - name: Sequencing
+        factors:
+          - "owns the node's acceptance definition; work-items.yaml records the working directory as 'a recorded FIELD, never as a precondition the sitting must satisfy', on the stated ground that a blocking precondition bought with a disconfirmed premise lengthens the path for free"
+          - "that refusal is on record against gtm's cwd clause; it was written without design's bytes clause in view, so it is not obvious the refusal reaches both"
+      - name: Compliance
+        factors:
+          - "F-17's registered voiding list reads 'coaching beyond mode selection, non-fresh user' and nothing about launch (verified from this seat this round)"
+          - "gtm's round-14 demand asks for the launch precondition to be registered INSIDE that list; granting it would settle the rule in the matrix while sequencing's refusal stands unrecorded in the same matrix"
+          - "owns T-VEND-02/03/04, which make design's bytes/identity predicate checkable in one command instead of adjudicable after the fact"
+      - name: Architecture
+        factors:
+          - "authored the finding the cwd clause was built on; sequencing has demanded it be narrowed, and this Leaf's own test agrees with sequencing on the mechanism (below)"
+      - name: Engineering
+        factors:
+          - "made the install editable, which is what puts the cwd clause up for deletion; owns whether a pre-clock guard run is a trivial ask (it is one pytest invocation)"
+    options:
+      - >
+        RECORD-ONLY (sequencing's position). Launch environment is a recorded
+        field on the witness line and no launch-environment voiding condition
+        exists. Residual risk sits with pre-push gate P-12 / T-VEND-02/03/04
+        and with the fact that a mis-bound copy now fails loudly rather than
+        silently. gtm deletes item 7's voiding clause; design's §6.14 clause
+        is withdrawn to a note.
+      - >
+        VOID ON A CHECKED PREDICATE (design's condition made operational).
+        Immediately before the clock starts, `pytest tests/test_vendoring.py`
+        is run and its result recorded on the witness line; the run is void on
+        this ground only if that check is red, or if the app fails to reach
+        first paint. This keeps design's bytes predicate, drops the cwd proxy,
+        and answers sequencing's objection — the condition is tested at the
+        hour rather than argued after it. Cost: one command, before the clock.
+      - >
+        VOID ON CWD (gtm's clause as written). An off-root launch voids the
+        run regardless of install state, kept as a presenter-facing rule
+        because presenters do not inspect `direct_url.json`. Simplest to say,
+        but it is now a proxy this Leaf has tested and found loose in both
+        directions.
+    status: resolved_uncontested
+    notes: >
+      WHAT IS NOT CONTESTED, so the entry is not mistaken for a defect report.
+      Architecture's A-13-01 is a defect with a named owner and an executed
+      fix. Verified from this seat this round with the project interpreter:
+      from /tmp, `import pairwisepm.strings` binds
+      /Users/brettleehary/mcparea/ProMgtAI/pairwisepm/strings.py with
+      'str.empty.example_cta' present — the hazard item 7 was opened on is not
+      reachable on this machine now. The disputed MECHANISM is also settled,
+      and settled against the seat this Leaf would otherwise be quoting: a
+      script launched from another directory gets sys.path[0] = the SCRIPT's
+      directory (own run, printed), so `python /abs/path/app.py` puts the repo
+      root first and sequencing's narrowing of the blast radius is correct.
+      Neither of those is queued. What is queued is the RULE that outlives
+      them.
+      WHY IT IS A RULE AND NOT TRIVIA. Three files now carry three different
+      dispositions of the same acceptance question, each written by the seat
+      that owns a different half of the instrument: gtm's template voids on
+      cwd, design's protocol voids on bound bytes, sequencing's graph refuses
+      preconditions of that class outright. A voided run and a valid run are
+      not the same event — one leaves SC-06 unconverted with a dated cause,
+      the other converts it or flips it to measured-FAILED — so at the hour
+      this resolves by whoever speaks first, or by whichever file the reader
+      opened. The packaging fix retires gtm's predicate and does NOT retire
+      design's, so the likely path is that the cwd clause is deleted on
+      evidence and the bytes clause is left standing unexamined, with
+      sequencing's refusal on record against a clause it was not aimed at.
+      That is settlement by edit order, which is the one outcome this queue
+      exists to prevent.
+      BUILD-MEANWHILE DEFAULT, and it is the OPERATIVE RULE AT THE SITTING
+      because the sitting may precede this SLA: the sitting is launched from
+      the repository root and the directory is recorded beside theme and mode
+      — every seat either requires that or permits it, so it is uncontested
+      and costs nothing. While D9 is pending, no run is voided on a
+      launch-environment ground unless the run actually failed to reach first
+      paint or the vendoring guards were red at the hour. A rule still under
+      dispute does not retroactively unmake a record.
+      NON-DEFERRAL (self-applied, same terms as D8): D9 does NOT gate G-D1D2,
+      does NOT defer, pause or reopen the D1–D6 resolution round, and — stated
+      because it is the obvious way this entry could do harm — does NOT delay,
+      block, re-schedule or add a precondition to the M-UX-02a sitting. The
+      sitting proceeds under the default above whatever D9's status is.
+      DISSOLUTION CLAUSE (D7's precedent, invoked deliberately): this entry
+      may not need adjudicating. If the seats converge before the SLA — one
+      predicate standing in gtm's template, design's §6.13/§6.14 list,
+      sequencing's acceptance definition and compliance's F-17 row, each
+      recorded from its own seat — D9 resolves `resolved_uncontested`,
+      dissolved bilaterally, with no ruling and no ceremony. Held open for one
+      round so the convergence is a convergence and not a deletion nobody
+      noticed.
+      ROUND-16 · THE DISSOLUTION CLAUSE FIRES, AND IT FIRES ON FOUR FILES
+      READ FROM THIS SEAT, NOT ON FOUR PACKETS. The clause named the exact
+      condition: one predicate standing in gtm's template, design's
+      §6.13/§6.14 list, sequencing's acceptance definition and compliance's
+      F-17 row, each recorded from its own seat. Checked here, in the files,
+      2026-08-31 round 16:
+      · gtm — launch-copy.md item 7: gate DELETED, the round-14 cwd mechanism
+        RETRACTED in place (not narrowed), and design's condition adopted
+        VERBATIM as what survives: "a run whose app was launched against a
+        bound module that is not the design authority's bytes is NO RECORD."
+        Item 6's voiding list carries the same predicate, and the witness
+        template's field now reads "bound module = design authority's bytes".
+      · design — states.md §6.14(iv)/§6.15(ii): the same predicate, unchanged
+        by the mechanism correction because it never had the working
+        directory as its predicate; the launch directory is explicitly
+        demoted to "a disambiguating field for a voided run, not a
+        precondition of a valid one."
+      · compliance — traceability.md F-17(iii)/(iv) and new gate P-14: gtm's
+        stated MECHANISM refused as false and design's formulation registered
+        in its place, made machine-checkable by `pytest tests/test_vendoring.py`
+        as a pre-flight whose RESULT is recorded on the witness line.
+      · sequencing — work-items.yaml (F)/(iii) and graph.md: working
+        directory is a recorded field and no launch-location gate is
+        encoded; a voided run of any registered cause routes to WINDOW
+        CLOSED with the cause named, minting no fourth node state.
+      That is one predicate in four files, with the instrument named in two
+      of them. The three-way split this entry was raised on is GONE, and it
+      went the way the entry hoped rather than the way it feared: the cwd
+      clause was retired by the seat that opened it, IN THE SAME EDIT that
+      adopted the surviving predicate by name — so the deletion did not carry
+      the bytes clause out with it, which was the specific harm this entry
+      was opened to prevent. It also converged on the shape of option 2
+      rather than option 1: the predicate is kept AND made checkable, which
+      is the version sequencing's objection could accept, because the
+      condition is now tested at the hour rather than adjudicated after it.
+      ROUND-17 · HOW THE CONTEST NARROWED, RECORDED BECAUSE "THE CONTEST
+      DISSOLVED" AND "A LEAF SETTLED IT" ARE DIFFERENT HISTORIES AND ONLY ONE
+      OF THEM IS TRUE (compliance's round-16 demand, accepted whole). The
+      compliance matrix did NOT pick a side in this entry and did not need to.
+      It never registered gtm's clause as settled; it refused gtm's stated
+      MECHANISM as false, re-derived the true one from its own seat, and
+      registered design's predicate with gate P-14 as its instrument — which is
+      this entry's option 2 arrived at from the instrument side rather than a
+      ruling on the contest. The three-way split narrowed by RETRACTION, not by
+      registration: gtm withdrew the cwd mechanism on gtm's own reproduction.
+      So no seat's position was recorded over another's, and no leaf — this one
+      included — adjudicated it. The distinction is load-bearing for anyone
+      auditing this close later: a dissolution that was really a registration
+      would mean the rule got set by whichever file the reader opened first,
+      which is precisely the harm D9 was raised against, and a close that
+      cannot tell those two apart is not evidence that the harm was avoided.
+      ROUND-17 · WHAT BINDS IF THIS ENTRY IS EVER REOPENED (gtm's round-16
+      demand, accepted; its operative half was already discharged). gtm asked
+      two things. (i) If option 2 wins, name P-14 as the instrument IN THE
+      RULING rather than only in someone's matrix — discharged as written:
+      `resolution` names `pytest tests/test_vendoring.py` green on the machine
+      that will run the app with the result recorded on the witness line, and
+      `resolution_instrument` names gate P-14 and the exact field an auditor
+      reads. (ii) Do not rule option 1 — no launch-environment ground at all —
+      without naming what replaces it on the demo surface. That half is
+      counterfactual today, and it is registered as a STANDING CONDITION rather
+      than allowed to lapse with the entry: any later move toward option 1, by
+      reopening, by human override, or by a seat deleting the ground from its
+      own file, must name the successor predicate on the demo surface IN THE
+      SAME EDIT, or it is settlement-by-deletion of exactly the class this entry
+      was raised against. This is not a hypothetical standard: gtm retired the
+      cwd clause and adopted the survivor by name in the same edit, and that is
+      the only reason the deletion did not carry design's bytes predicate out
+      with it. The condition binds whoever moves next, not gtm, who already met
+      it unprompted.
+      ROUND-17 · A GAP IN THIS LEAF'S OWN RULING, FOUND BY READING SEQUENCING'S
+      FILE RATHER THAN BY BEING TOLD, AND CLOSED HERE RATHER THAN QUEUED. The
+      ruled PREDICATE is about which copy was served — "a bound module that is
+      not the design authority's bytes". The named INSTRUMENT is the whole
+      six-clause file. Those are not the same set, and after the D1/D2 write
+      they come apart: T-VEND-06 reds on a STALE SECOND COPY OF THE POLICY
+      VALUES in site-packages (see the resolution-round hazard in this file's
+      header — verified from this seat, it will red on the next run after the
+      write, on today's editable install), which says nothing whatever about
+      whether the app served the design authority's bytes. Sequencing found the
+      path where this bites: branch [3] WINDOW CLOSED leaves the sitting
+      RE-OPENABLE, and a re-opened sitting falls AFTER the write. On that path
+      a presenter reading "P-14 red → NO RECORD" voids a run that satisfies the
+      D9 predicate completely. So the reading is narrowed, and the narrowing is
+      part of the ruling rather than a gloss on it: the command stays
+      `pytest tests/test_vendoring.py` entire, but the clauses that DECIDE the
+      D9 void are the bound-copy clauses — T-VEND-01/02/05, of which T-VEND-05
+      never skips and asserts the two R-10 facts on the bound module by value.
+      A red on T-VEND-03/04/06 is a real defect with a real remedy and MUST be
+      acted on before a push; it is NOT a D9 voiding ground, because voiding a
+      record is reserved for the thing that makes the record measure a
+      different product. Deciding this now costs one paragraph; deciding it at
+      the hour costs a sitting, and would be decided by whoever spoke first —
+      which is the harm this entry exists against, arriving through this
+      entry's own instrument.
+      RESIDUE, NAMED RATHER THAN SWALLOWED — and deliberately NOT re-queued,
+      because neither item is a disagreement and this queue does not carry
+      recording gaps as if they were. (a) sequencing's files do not yet name
+      P-14, though sequencing accepted it on the round-15 record ("a
+      precondition of the sitting, not a new node and not a blocker"); the
+      M-UX-02a acceptance definition therefore reaches the pre-flight only by
+      reference to design's §6.12. One line in the gate list closes it, and
+      it is NOT a gate on anything. (b) design's §6.13 per-check line does
+      not name the instrument that checks its own §6.14 predicate — the check
+      exists and is recorded twice (compliance P-14, gtm item 7 pre-flight),
+      so the condition is operational regardless; naming it in the protocol
+      file would make the seat that owns the predicate also carry its
+      instrument. Both are one line, both are optional, and neither may be
+      cited as a reason to delay, gate or void the sitting.
+    on_resolution_notify:
+      - gtm: >
+          item 6's voiding list and item 7 follow the ruling; if item 7 is
+          deleted on engineering's notification, say in the same line whether
+          anything replaces it, so the cwd clause's retirement does not
+          silently carry design's bytes clause out with it
+      - design: >
+          §6.14's voiding condition stands, narrows to a note, or gains the
+          pre-clock check per the ruling; option 2 puts one line in §6.13
+          (what is run, where its result is recorded)
+      - sequencing: >
+          the M-UX-02a acceptance definition names the ruled predicate; until
+          then it should read the launch-environment clause as CONTESTED (D9)
+          rather than as this seat's own refusal by default. ROUND 16 — D9 is
+          CLOSED `resolved_uncontested`, so nothing here is contested any
+          more: the standing predicate is design's bound-module condition,
+          your cwd refusal is honored (no launch-location gate exists in any
+          file), and the only item left on your surface is OPTIONAL — record
+          P-14 in the gate list beside P-12/P-13, which you already accepted
+          on the record. It gates nothing and this Leaf is not asking for it
+          as a condition of anything
+      - compliance: >
+          do not register a launch-environment voiding condition in F-17 as
+          settled while the seats disagree — register it as contested (D9), or
+          register all three positions with their owners; on option 2, F-17's
+          instrument list gains the pre-clock T-VEND run. ROUND 16 — this
+          Leaf's refusal is WITHDRAWN and the reason is recorded rather than
+          dropped: you did not register gtm's clause as settled, you refused
+          its stated mechanism, re-derived the true one from your own seat,
+          and registered design's predicate with P-14 as its instrument. That
+          is the entry's own option 2 arrived at from the instrument side.
+          F-17 may now read the launch-environment voiding condition as
+          SETTLED (D9 resolved_uncontested, 2026-08-31) rather than contested
+      - architecture: >
+          §5.14's blast-radius statement follows the mechanism finding
+          (sys.path[0] is the script's directory), independent of which
+          predicate wins. ROUND 16: done from your own seat at r15 (§5.14
+          carries the correction inline as a marked block); nothing further
+          is owed to this entry
+    resolution: >
+      Option 2 in substance — VOID ON A CHECKED PREDICATE — reached by
+      bilateral dissolution, RECORDED not ruled. The standing rule across
+      every file that owns a piece of the instrument: a run whose app was
+      launched against a bound module that is not the design authority's
+      bytes produces NO RECORD; it routes to WINDOW CLOSED with its cause
+      named, never to MEASURED-TARGET-MISSED and never to a FAIL. The
+      predicate is checked, not argued: `pytest tests/test_vendoring.py`
+      green on the machine that will run the app, before the clock starts,
+      with the result recorded on the witness line (compliance's gate P-14,
+      gtm's item-7 pre-flight). The working directory is a RECORDED FIELD
+      beside theme and mode — never a precondition — which is sequencing's
+      position honored in full, and no launch-location gate exists in any
+      file. The cwd predicate (option 3) is retired by the seat that authored
+      it, on that seat's own re-reproduction, with its overbroad mechanism
+      claim retracted in place rather than narrowed.
+    resolution_rationale: >
+      Traced to Spine Success Metric #1 (blank-to-verdict under five minutes)
+      read against the Scope-Boundaries refusal "a judge that overstates its
+      confidence is worse than no judge", pointed at our own measurement:
+      whether a timed run counts as a record decides whether SC-06 converts,
+      so the voiding rule is part of the claim. Two Spine-traced properties
+      decided this and neither is a preference. (1) The predicate must name
+      the thing that actually threatens the claim. A record timed against a
+      build serving copy this catalogue did not specify measures a different
+      product — and, as design established, a crash standing in front of an
+      overstatement is not a fix: had the KeyError been repaired before the
+      copy was, the same launch would have painted a stale verdict line
+      asserting an auto-recompute the build does not perform, with every test
+      green. The bound-module predicate names that; a directory does not, and
+      the directory proxy was tested from this seat and found loose in both
+      directions (`python /abs/path/app.py` puts the SCRIPT's directory on
+      sys.path[0]). (2) A voiding condition must be decidable at the hour by
+      a machine, not adjudicated afterwards by whoever reads it — otherwise
+      the rule that decides whether a Spine metric converts is itself
+      untestable, which is the failure mode this whole build keeps finding in
+      its own instruments. P-14 makes it one command. Evidence base: all four
+      owning files read from this seat this round (see the round-16 block in
+      notes), plus this Leaf's own independent test of the disputed
+      mechanism. No stakeholder's position was overruled — gtm retired its
+      own clause on its own evidence while adopting the survivor by name,
+      sequencing's refusal of a cwd precondition is satisfied exactly as
+      written, design's predicate stands unchanged, compliance registered it
+      with an instrument. There is nothing here to override, which is why
+      this closes `resolved_uncontested` and carries no override window.
+    resolution_instrument: >
+      `pytest tests/test_vendoring.py` (T-VEND-01..06), run pre-flight on the
+      sitting machine and its RESULT recorded in gtm's 1c-i witness line
+      beside theme, mode and working directory — registered as compliance's
+      pre-push/pre-sitting gate P-14 and as gtm's item-7 pre-flight. Anyone
+      auditing later can check the ruling held by reading one field on the
+      witness record; a sitting whose record lacks it is a record whose
+      voiding condition was never checked.
+      WHICH CLAUSES DECIDE THE VOID (round-17 narrowing, stated in the
+      instrument because that is where it will be read): the command is the
+      whole file, the D9 voiding ground is T-VEND-01/02/05 — the bound-copy
+      clauses, T-VEND-05 never skipping and asserting both R-10 facts on the
+      bound module by value. A red on T-VEND-03/04/06 is a genuine defect and
+      blocks a push, but is NOT a D9 void; after the D1/D2 write T-VEND-06 is
+      EXPECTED to red until the install is refreshed, and a re-opened sitting
+      falls after that write. T-VEND-07 (round 17) is what makes a green here
+      mean assertions ran at all — it is the floor under the instrument, not a
+      voiding clause: green = exit 0 AND 0 skipped, skip count recorded beside
+      the result on the witness line.
+      ROUND-17 RESIDUE UPDATE — both items CLOSED, verified in the owning files
+      from this seat rather than accepted from a packet, and recorded because
+      residue reported once and never re-checked is how a closed item keeps
+      being cited as open: (a) sequencing's gate list now names P-14 in a single
+      stated list (`P-5 · P-6 · P-10 · P-11 · P-12 · P-13 · P-14`, graph.md, with
+      P-14 labelled the only pre-clock precondition on the sitting); (b) design's
+      §6.13 per-check line now names the check for its own §6.14 predicate
+      (states.md — "before the sitting, from any directory, run
+      `pytest tests/test_vendoring.py`", with the result a recorded field). No
+      non-instrumented residue remains on this entry. The third item — pytest
+      exits 0 on an all-skipped file, so a P-14 green was satisfiable by a run
+      that asserted nothing — is ALSO closed, and closed better than the caveat
+      sequencing asked for: compliance registered T-VEND-07 this round, which
+      reads this file's own AST and reds unless T-VEND-04 and T-VEND-05 carry no
+      skip predicate and every skipping clause skips on a predicate naming its
+      own subject. Read from this seat in the source, not taken from a packet.
+      That matters to THIS entry specifically: `resolution_instrument` below
+      names P-14, so a P-14 green that could hide zero assertions would have
+      been this Leaf's own ruling resting on an instrument that can report a
+      success it never measured. It cannot now. Own run: 7 passed, 0 skipped.
+      ROUND-18 · TWO SCOPE FACTS ABOUT THIS RULING'S OWN CLAUSE LIST — ONE
+      ACCEPTED FROM ANOTHER SEAT, ONE HANDED TO A NEW ENTRY RATHER THAN
+      SETTLED HERE.
+      (i) ACCEPTED, and it is a correction to this ruling made by the seat
+      that has to read it at the hour. gtm answered the round-17 narrowing in
+      their own file rather than transcribing it: launch-copy.md's 1c-i line
+      now reads the voiding set as T-VEND-01/02/03/05, adding T-VEND-03 and
+      flagging the change openly as theirs instead of slipping it in. The
+      addition is right, and for this entry's own stated reason rather than
+      for convenience: the ruled PREDICATE names the design authority's bytes,
+      but the property that makes a void a void is written one line further
+      down in `resolution_rationale` — a record timed against a build serving
+      something this board did not specify measures a DIFFERENT PRODUCT. A run
+      whose engine resolved some other `configs/` tree is exactly that, and
+      T-VEND-03 is the only clause that names it. The D9 voiding set is
+      therefore T-VEND-01/02/03/05. Unchanged: T-VEND-04/06 remain real
+      defects that block a push and are NOT voiding grounds, and the
+      expected T-VEND-06 red after the D1/D2 write is still not a void.
+      (ii) NOT settled here, because it is a live disagreement and not a
+      residue. THREE of those four clauses can SKIP: T-VEND-01/02 where
+      `leaves/design/strings.py` is absent, T-VEND-03 where `<root>/configs`
+      is. On a tree carrying no design leaf this ruling's voiding set
+      collapses to T-VEND-05 alone — which design's §6.13 pre-flight box
+      already says in so many words ("T-VEND-02 is welcome when it runs and
+      is not required, because it skips on a stripped tree"), while gtm's
+      template and compliance's P-14 row say a skip is not a green at all.
+      Reproduced from this seat this round in a scratch sdist-shaped tree
+      (package and configs symlinked, `tests/test_vendoring.py` copied, no
+      repo file mutated, project interpreter): **exit code 0, 5 passed, 2
+      skipped**, with T-VEND-05 asserting. So the same command, on a tree
+      this project actually ships, hands the presenter a result that two
+      owning files call NO RECORD and a third calls fine. That divergence was
+      created AFTER this entry closed, by the round-17 skip-aware clause, and
+      it is raised as **D10** rather than answered inside a resolved entry.
+      D9 is untouched by it: predicate, command and voiding set all stand
+      whatever D10 rules.
+
+  - id: D10
+    title: Does a SKIP in the P-14 pre-flight make the run NO RECORD, or is the floor a named clause set rather than a skip count?
+    raised_at: 2026-08-31
+    sla_expires_at: 2026-09-02
+    spine_commitment: >
+      Success Metrics #1 (blank-to-verdict under five minutes) read against
+      the Scope-Boundaries refusal "a judge that overstates its confidence is
+      worse than no judge", pointed at our own measurement — the same trace as
+      D9, one notch further in. D9 settled WHICH PREDICATE voids a witnessed
+      sitting. It did not settle WHAT COUNTS AS THE INSTRUMENT ANSWERING, and
+      whether a run counts as a record still decides whether SC-06 converts.
+    stakeholders:
+      - name: Compliance
+        factors:
+          - "owns the P-14 row and authored the operative form: green means exit code 0 AND `0 skipped`, with the skip count recorded beside the result"
+          - "stated the consequence in the row itself and ruled on it there — if the presenter's tree lacks `leaves/`, the two design-authority clauses skip and P-14 is NOT green, and the row says in terms that this is 'the intended answer, not a defect'"
+          - "also owns T-VEND-07, which makes the floor structural — T-VEND-04/05 can never acquire a skip predicate — and that guard is an argument for reading the floor as a clause set rather than as a count"
+      - name: Design
+        factors:
+          - "owns the §6.13/§6.14 acceptance protocol and its pre-flight box, which says the opposite in so many words: run it 'from any directory', 'the governing clause is T-VEND-05; T-VEND-02 is welcome when it runs and is not required, because it skips on a stripped tree'"
+          - "framed the arrangement as 'one command, three instruments, no third procedure invented here' — which is what makes the divergence load-bearing rather than academic, since the three instruments now read one result differently"
+      - name: GTM
+        factors:
+          - "owns the 1c-i witness template and the presenter-facing voiding list; adopted compliance's reading in round 18 ('a run in which any vendoring guard skipped is not a green P-14 — it is a machine this seat does not recognise')"
+          - "is the seat that would have to write NO RECORD on the line at the hour, and the seat whose own standard is that a voiding condition must be executable by the witness at that hour rather than argued afterwards"
+      - name: Sequencing
+        factors:
+          - "owns the M-UX-02a acceptance definition, records P-14 as the ONLY pre-clock precondition on the sitting, and encodes no launch-location gate in any file"
+          - "the `0 skipped` reading makes the presenter's TREE SHAPE a precondition of the sitting by a side door — a launch-environment precondition of the class this seat refused on record, arriving through the instrument rather than through a clause"
+      - name: Decisions
+        factors:
+          - "D9's ruled voiding set is T-VEND-01/02/03/05 and three of those four can skip, so this entry's answer decides what this Leaf's own closed ruling reports on a stripped tree"
+      - name: Hari (PM)
+        factors:
+          - "the sitting is his to convene and his record to lose; a sitting voided on a tree-shape technicality and a sitting waved through on a pre-flight that asserted less than the board believes are both his cost"
+    options:
+      - >
+        ANY SKIP IS NOT GREEN — compliance's row and gtm's template as they
+        stand today. P-14 green = exit 0 AND `0 skipped`; any skip at the hour
+        means the sitting does not start until it is explained, and an
+        unexplained skip routes the run to NO RECORD. Consequence stated
+        rather than left implicit: this registers a TREE-SHAPE PRECONDITION on
+        the sitting (the machine must carry `leaves/`, i.e. be a repo
+        checkout), which is a launch-environment precondition of the class
+        sequencing refused and D9 retired — so choosing it means choosing to
+        re-admit that class knowingly, on the ground that the sitting should
+        be timed against the build the matrix describes. INSTRUMENT ON
+        RULING: design's §6.13 box amends to drop "from any directory" and the
+        "T-VEND-02 is not required" sentence, so the three instruments read
+        one result the same way; the P-14 field's two-token form already
+        records what is needed.
+      - >
+        FLOOR IS A NAMED CLAUSE SET, NOT A COUNT — design's reading made
+        general. P-14 is green when exit code is 0, the unskippable floor
+        asserted (T-VEND-04/05, which T-VEND-07 guarantees can never skip),
+        and every other clause either asserted or skipped on a predicate
+        naming its OWN absent subject. A skip that says "this tree has no
+        design leaf" is an honest report about the tree, not a failure of the
+        check, and it does not void; a RED in the D9 voiding set does. This
+        keeps the pre-flight portable to any tree the app can actually be
+        launched from, which is what design's box already promises and what
+        the wheel/sdist packaging makes concrete. INSTRUMENT ON RULING: the
+        skip count stays a recorded witness field; the voiding read becomes
+        the named clause list already written into D9's `resolution_instrument`
+        and into gtm's item 6, and compliance's P-14 row states the floor as
+        clauses rather than as a number.
+      - >
+        SKIP IS RECORDED, NEVER VOIDING — the sequencing-shaped option, stated
+        here so it has an advocate rather than being the one nobody wrote
+        down. The skip count is a recorded field exactly like the working
+        directory, and no skip in this file ever voids a record; the only
+        P-14 voiding ground is a RED in the D9 set. Strongest protection
+        against losing a sitting to a tree-shape accident, and the weakest
+        against a presenter's machine that quietly asserted less than the
+        board thinks it did. INSTRUMENT ON RULING: the recorded skip count
+        plus T-VEND-07, which is what makes an all-skipped green structurally
+        unreachable and therefore makes this option survivable at all — it
+        would not have been before round 17.
+    status: pending
+    notes: >
+      WHAT IS NOT CONTESTED, so this is not mistaken for a defect report and
+      nobody's round-17 work is being re-opened. The guards are right.
+      T-VEND-07 is right and is the reason option 3 is even sayable. D9's
+      predicate, command and voiding set are settled and this entry does not
+      touch them. The skip count belongs on the witness line — all three
+      seats agree, and it is already there. NONE of that is queued.
+      WHAT IS CONTESTED is one sentence: what a SKIP in that file means at
+      the hour. Three files, three answers, each written by the seat that owns
+      a different third of the same instrument, and none of the three cites
+      either of the others.
+      · compliance, traceability.md P-14 row — "green means exit 0 AND `0
+        skipped`", and, on the stripped-tree case, "P-14 is NOT green under
+        this reading. That is the intended answer, not a defect."
+      · design, states.md §6.13 pre-flight box — "from any directory ... The
+        governing clause is T-VEND-05; T-VEND-02 is welcome when it runs and
+        is not required, because it skips on a stripped tree."
+      · gtm, launch-copy.md 1c-i — "a run in which any vendoring guard
+        skipped is not a green P-14 ... the honest act at the hour is to
+        write that on the line, not to record a pass", and item 6 turns a
+        non-green P-14 into NO RECORD.
+      REPRODUCED FROM THIS SEAT RATHER THAN ARGUED, because an entry raised on
+      three quotations and no run would be the honor system with citations.
+      Scratch sdist-shaped tree built in the scratchpad — `pairwisepm/` and
+      `configs/` symlinked, `tests/test_vendoring.py` copied, NO repo file
+      mutated, project interpreter: `5 passed, 2 skipped`, EXIT CODE 0, the
+      two skips being T-VEND-01/02 on "stripped deployment: design leaf not
+      present", with T-VEND-05 asserting. Repo checkout for contrast, same
+      interpreter: 7 passed, 0 skipped; full suite 73 passed. The tree is not
+      hypothetical — `pyproject.toml`'s sdist `include` ships `pairwisepm`,
+      `configs` and `tests` and NOT `leaves`, so an unpacked sdist is exactly
+      that shape, while the wheel ships no `tests` at all and cannot run the
+      pre-flight in the first place.
+      WHY THIS IS A RULE AND NOT TRIVIA, on this Leaf's own standing test. The
+      probability of reaching it tomorrow is LOW and that is said plainly: the
+      scheduled sitting runs from a repo checkout, where all seven clauses run
+      and all three readings agree. But the same was true of D9 — the launch
+      hazard it was raised on was already unreachable on this machine, and
+      what was queued was the rule that outlived it. What makes this an entry
+      is not the odds, it is the shape: a voided run and a valid run are
+      different events (one leaves SC-06 unconverted with a dated cause, the
+      other converts it), the answer currently depends on WHICH FILE THE
+      READER OPENED, and one seat closed it inside its own row by writing
+      that the consequence is intended. That is settlement by edit order,
+      reaching the board through the very instrument D9 installed to prevent
+      settlement by edit order.
+      WHY IT IS NOT A REOPENING OF D9, stated because that is the obvious
+      objection and it deserves an answer rather than a denial. D9 closed
+      `resolved_uncontested` on 2026-08-31 and stays closed. Its question was
+      WHICH PREDICATE voids; this one is WHAT THE INSTRUMENT'S OUTPUT MEANS,
+      and it did not exist when D9 closed — compliance's skip-aware clause
+      landed in round 17, after the close, and design's "not required"
+      sentence was written for a different purpose in round 17 as well.
+      Re-opening a resolved entry to absorb a question raised after it would
+      make the close mean less, not more.
+      NOBODY'S POSITION SHOULD BE DELETED TO END THIS. All three readings are
+      defensible and each was written for a good reason — compliance's guards
+      a false green, design's keeps the pre-flight portable, gtm's keeps the
+      witness from having to judge. The failure mode this entry is watching
+      for is not that the wrong one wins; it is that two of them quietly
+      disappear in a tidy-up before anyone notices they disagreed. A seat that
+      wants to change its own reading should say so and why; a seat that
+      deletes its reading to make the contest go away has settled it.
+      BUILD-MEANWHILE DEFAULT, and it is the OPERATIVE RULE AT THE SITTING
+      because the sitting may precede this SLA. The sitting is run from the
+      repository root of a repo checkout — where every reading agrees, the
+      pre-flight reads `7 passed, 0 skipped`, and this entry costs nothing.
+      P-14's result is recorded in gtm's two-token form exactly as the
+      template already says. While D10 is pending, NO run is voided on a SKIP
+      ground: the voiding grounds are unchanged from D9 — a RED in
+      T-VEND-01/02/03/05, or the app failing to reach first paint. T-VEND-05
+      cannot skip, so the default is not a loophole; it is the reading every
+      seat can live with for one day.
+      NON-DEFERRAL (self-applied, same terms as D8 and D9, and it matters more
+      here than on either of them because this entry touches the sitting's own
+      pre-flight): D10 does NOT gate G-D1D2, does NOT defer, pause or reopen
+      the D1-D6 resolution round, and does NOT delay, block, re-schedule, void
+      or add any precondition to the M-UX-02a sitting. The sitting proceeds
+      under the default above whatever D10's status is. An entry raised to
+      stop a rule from being settled by accident must not become the reason
+      the thing it governs never happens.
+      ROUND-19 STATUS — TWO OF THE THREE FILES HAVE MARKED AND NOBODY'S
+      SENTENCE WAS DELETED, which is the outcome this entry was built to make
+      possible and deserves recording as precisely as the divergence was. Read
+      from the files at 21:08 local, not from packets.
+      · design, states.md:1918 — the §6.13 pre-flight box now opens
+        "CONTESTED (D10) — the next sentence is this seat's reading of what a
+        SKIP in that command means; compliance's row reads it the other way
+        and the entry is open with SLA 2026-09-02. It stands as written,
+        unamended and undeleted, per §6.19(iv)". The "T-VEND-02 is welcome
+        when it runs and is not required" sentence is intact beneath it.
+        Marked and KEPT — the exact form asked for, and the harder half.
+      · gtm, launch-copy.md:705 — "SKIP-AWARE READING OF P-14 — CONTESTED
+        (D10, decisions, round 19), AND OPERATIVE FOR TOMORROW UNCHANGED",
+        with the presenter's instruction unweakened and the reason stated:
+        from a checkout the command reads 0 skipped and all three readings
+        agree.
+      · compliance, traceability.md P-14 row — NO MARK as of 21:08 local
+        (`grep -c D10` returns 0 on a file last written 21:04 this round).
+        The sentence "That is the intended answer, not a defect" is now the
+        one cell on this board where a question two other owners have marked
+        contested is recorded as settled, inside the row of a seat holding
+        one of the three readings. Re-pressed once, unchanged; last time.
+      · sequencing — no position filed as of 21:08. SUPERSEDED THE SAME
+        ROUND, and the answer is better than the demand asked for: graph.md
+        now files it from their own seat, in both directions. They do NOT
+        stretch the old refusal to cover it — "the tree-shape condition is not
+        disconfirmed … the condition is real and my refusal does not cover it,
+        and I will not let an old refusal be read wide enough to swallow a
+        live fact" — and they price it rather than rule it: zero on every
+        encoded branch, so it earns a recorded fact and no edge, with the
+        general form they still refuse restated testably (a precondition that
+        requires establishing a machine property no encoded branch guarantees,
+        or that is not decidable off a command already run). That is exactly
+        what was asked: the answer is theirs and written, in either direction,
+        with nothing encoded. Demand DISCHARGED.
+      A SECOND CORRECTION TO THIS ENTRY'S REACHABILITY FACT, from sequencing,
+      and it runs OPPOSITE to gtm's — recorded that way rather than averaged,
+      because two corrections that point in different directions are two
+      facts and not one revision. gtm's enlarged option 1's cost (four skips,
+      two from the non-voiding file). Sequencing's SHRINKS the entry's
+      reachability: they rebuilt the scratch sdist tree and ran it against
+      THIS machine's project interpreter, getting `1 failed, 4 passed, 2
+      skipped, exit 1` — T-VEND-04 reds, because the venv's editable `.pth`
+      puts a second importable copy of the package on `sys.path`. On an
+      unambiguous RED all three readings agree, so the ambiguous state needs a
+      SECOND condition this entry did not state: the machine must be both not
+      a checkout AND not an install of this project. They reproduced this
+      Leaf's `5 passed, 2 skipped` only by emulating a foreign interpreter and
+      said so as a caveat on their own evidence rather than letting the figure
+      stand unqualified. The honest net: D10's divergent state is rarer than
+      the entry priced it and option 1's cost is larger than the entry priced
+      it. Neither correction changes the question, and the entry is left open
+      with both on the page rather than re-scoped to whichever helps it.
+      CORRECTION TO THIS ENTRY'S OWN REACHABILITY FACT — from gtm, verified
+      here rather than transcribed, and it ENLARGES the entry rather than
+      shrinking it. The paragraph above states the divergent tree as an
+      unpacked sdist where the command exits 0 with `5 passed, 2 skipped`.
+      That was measured on `tests/test_vendoring.py` ALONE. The label gtm's
+      template actually carries is a TWO-FILE command, and
+      `tests/test_copy_surfaces.py` gates two of its own clauses on the same
+      missing `leaves/`. Own run, round 19: scratch tree built by copying
+      `pairwisepm/ configs/ app.py tests/ pyproject.toml` with `leaves/`
+      absent, NO repo file mutated, project interpreter, `-rs` to force skip
+      reporting — FOUR skips: `test_vendoring.py:90` and `:107` ("stripped
+      deployment: design leaf not present") plus two at
+      `test_copy_surfaces.py:242` ("no design copy authority in this tree
+      (stripped install)"). Every one names its own subject, which is
+      T-VEND-07's floor doing its job. ARTIFACT OF MY METHOD, disclosed
+      because it is in the same output and is NOT a repo defect: copying
+      rather than symlinking the package created a second `pairwisepm`
+      authority beside the editable install, so that run also reports
+      `1 failed` on T-VEND-04. The skip lines are the load-bearing half and
+      the count is gtm's.
+      CONSEQUENCE, recorded AGAINST option 1 rather than folded into its
+      text, which stays as authored: under the two-file label, two of the
+      four skips belong to a file whose reds this board has already agreed
+      are NEVER a void (D9's set is T-VEND-01/02/03/05; nothing in
+      `test_copy_surfaces.py` is in it). So a presenter on a non-checkout
+      machine, holding "any skip is not green", would write NO RECORD partly
+      on skips from the non-voiding half. Option 1's cost is therefore larger
+      than this entry priced it, which is the direction a raiser's own
+      estimate should be corrected in public.
+      ROUND-19 PINS, own runs, repo checkout, project interpreter, 21:08:
+      `pytest tests/test_vendoring.py` → 7 passed, 0 skipped;
+      `pytest tests/test_vendoring.py tests/test_copy_surfaces.py` → 17
+      passed, 0 skipped, 0.10s; full suite 78 passed. The build-meanwhile
+      default and the non-deferral clause above are unchanged by any of this.
+      ROUND-20 RE-PIN, and the suite figure above is CORRECTED IN PLACE rather
+      than left to be quoted: the full suite is **1 failed, 79 passed** and has
+      been since 21:10 — `test_engine.py::test_no_llm_or_network_imports`, now
+      queued as D11 and unrelated to this entry. THE PRE-FLIGHT IS UNAFFECTED
+      and that is the only figure D10 and D9 rest on: both labels re-run this
+      round, `pytest tests/test_vendoring.py` → 7 passed / 0 skipped, and
+      `pytest tests/test_vendoring.py tests/test_copy_surfaces.py` → 17 passed
+      / 0 skipped. Recorded here because this entry's whole subject is a
+      presenter reading two printed numbers, and a Leaf that let its own stale
+      suite pin stand while arguing about theirs would be making the board's
+      case against itself.
+      ROUND-20 CORRECTION TO THAT RE-PIN, which is now stale in its turn and is
+      corrected rather than quoted forward: the suite is 81 passed, 0 failed
+      (own run, project interpreter, repo root, 2026-09-01 07:57). D11 dissolved
+      `resolved_uncontested` on the day it was raised — compliance narrowed the
+      guard's subject in the open — so the "1 failed, 79 passed" figure above is
+      an hour's reading and not a property, which is what this entry has said
+      about every suite integer since round 18. The figures D10 and D9 actually
+      rest on, re-run at that same minute: `pytest tests/test_vendoring.py` →
+      7 passed / 0 skipped; `pytest tests/test_vendoring.py
+      tests/test_copy_surfaces.py` → 18 passed / 0 skipped (17 last round;
+      T-COPY-02e landed between). Both unchanged in kind, and the
+      build-meanwhile default above is untouched by any of it.
+      ROUND-20 STATUS — THE THIRD FILE HAS MARKED, AND THE FAILURE MODE THIS
+      ENTRY WAS RAISED AGAINST DID NOT OCCUR. Read from compliance's file at
+      07:55 local, not from a packet. `traceability.md:1247`, the P-14 row,
+      now carries "CONTESTED — D10, SLA 2026-09-02 (decisions' demand, accepted
+      round 19; this seat's position below is UNCHANGED and stands as D10's
+      option 1)", with BOTH counter-artifacts cited inside the cell so it is
+      falsifiable from itself — design's §6.13 sentence quoted verbatim against
+      it, and this Leaf's scratch reproduction — and with a half nobody demanded:
+      "the cost of the position, stated because a position whose cost is unlisted
+      is an assertion — it makes the presenter's tree SHAPE a de facto
+      precondition of this gate, which is a precondition of the class sequencing
+      refused, arriving through an instrument rather than through a clause".
+      Their round summary at `traceability.md:722` records the same. So all three
+      divergent files are marked, and — the part this entry exists for — NOT ONE
+      OF THE THREE READINGS WAS DELETED, SOFTENED OR HARMONISED. Design's
+      "T-VEND-02 is welcome when it runs and is not required" stands unamended
+      under its mark; gtm's presenter instruction stands unweakened under its
+      mark; compliance's "that is the intended answer, not a defect" stands at
+      full strength under its mark. This entry was raised on the risk that two of
+      the three would quietly disappear in a tidy-up. Instead three seats each
+      marked and KEPT, and one of them wrote down what its own position costs.
+      The round-19 re-press on compliance is WITHDRAWN AS ANSWERED rather than
+      left standing as an unmet ask.
+      WHAT THIS DOES NOT DO, said because it is the inference a later reader is
+      most likely to draw from the paragraph above: marking is not converging.
+      Three marked positions are still three positions; the contested sentence —
+      what a SKIP in that command means at the hour — is still open; and D10 goes
+      to its SLA of 2026-09-02 UNRESOLVED, with all three readings and both
+      reachability corrections on the page and no seat's sentence removed. The
+      dissolution clause below stays available and was NOT taken.
+      D10 CROSSES THE LAST EXCHANGE ROUND OPEN, DELIBERATELY. Round 20 is the
+      final negotiation round on this board. The end of the rounds is not an
+      event that resolves anything: this entry's clock is the SLA, and the SLA
+      belongs to the human (Leaf README §1). Nobody should read the absence of a
+      round 21 as a close, and no seat may close this by editing after the
+      exchange stops — the standard for a change of reading is unchanged and is
+      stated above: say so, from your own seat, and say what you moved from.
+      DISSOLUTION CLAUSE (D7's precedent, invoked deliberately, and it is the
+      likely path). This entry may not need adjudicating. If the three files
+      converge on ONE reading before the SLA — each recorded from its own
+      seat, with the seats that move saying what they moved from — D10
+      resolves `resolved_uncontested`, dissolved bilaterally, with no ruling
+      and no ceremony. It is held open rather than closed early so that the
+      convergence is a convergence and not two deletions nobody read.
+    on_resolution_notify:
+      - compliance: >
+          the P-14 row states the floor in the ruled form — a skip count or a
+          named clause set — and, if option 1 wins, says openly that a
+          tree-shape precondition on the sitting is being registered, since
+          that is the half sequencing's acceptance definition currently
+          refuses for this class
+      - design: >
+          §6.13's pre-flight box follows the ruling; option 1 costs it "from
+          any directory" and the "T-VEND-02 is not required" sentence, option
+          2 or 3 costs it nothing and makes its current wording the board's
+      - gtm: >
+          item 6's voiding list and the 1c-i P-14 field follow the ruling.
+          Whichever way it goes, the presenter must be able to read the answer
+          off the two printed numbers without judgment — that is this seat's
+          own standard and it is the reason the entry is worth closing
+      - sequencing: >
+          the M-UX-02a acceptance definition follows the ruling. Option 1
+          re-admits a launch-environment precondition by a side door and
+          should be encoded as one if it wins, rather than left implicit in
+          another seat's gate; options 2 and 3 leave the encoded position
+          exactly as written
+      - decisions: >
+          D9's `resolution_instrument` gains one clause naming what its
+          voiding set reports on a tree where three of its four clauses skip.
+          D9 is not reopened by this and its ruling does not change
+
+  - id: D11
+    title: What is the SUBJECT of the no-LLM/no-network guard — the running process, or the engine's own import graph?
+    raised_at: 2026-09-01
+    sla_expires_at: 2026-09-02
+    spine_commitment: >
+      Scope Boundaries, the construction refusal stated first and hardest:
+      "Out — refused, deliberately: any LLM in the runtime loop … server-side
+      storage of any user data", read with Solution Direction ("no LLM, no API
+      key") and locked spec §1 ("numpy-only, no LLM, no API key, no network
+      calls"). This is the refusal the README, the tour and the Space blurb all
+      rest on. What is at stake here is not whether the refusal holds — it does
+      — but WHAT THE INSTRUMENT CHECKS IT AGAINST, and an instrument that
+      asserts less than it did yesterday about a Spine refusal is a change to
+      the refusal's coverage whether or not anyone calls it one.
+    stakeholders:
+      - name: Compliance
+        factors:
+          - "owns tests/test_engine.py (the guard) AND tests/test_audit_honesty.py (the file whose run pollutes the process), so both remedies are executable from one seat — which is exactly why this can be closed in a single edit with no second seat in the room"
+          - "owns gate P-1 (traceability.md:1153, `pytest tests/ -k \"no_llm or no_network\"`), which is the registered instrument for this refusal and which reads GREEN right now: own run, `2 passed, 78 deselected`. Deselected tests are collected but never executed, and the pollution happens at RUN time, so P-1 structurally cannot observe this class of defect"
+      - name: Engineering
+        factors:
+          - "owns the runtime the refusal binds; the guard's process-global half is the only clause on this board that asserts anything about what the RUNNING process has imported, as opposed to what the source text says"
+      - name: Architecture
+        factors:
+          - "owns the census that would have to state which subject is asserted; a census cell reading 'no forbidden imports' means two different things under the two options"
+      - name: GTM
+        factors:
+          - "filed the red in launch-copy.md and stated the reason it matters disproportionately to this seat: a stranger clones the repo, runs `pytest`, and the one line they read is a failure on the test named for the promise the whole tour is built on"
+          - "its own standing caveat is the honest frame and is quoted rather than improved on: the demo is not ready because the SUITE is green, it is ready because THIS CHECK is green"
+      - name: Decisions
+        factors:
+          - "this entry contradicts this Leaf's own standing bar — a defect with a named owner and a filed demand is not a contested value — and the departure is argued in the notes rather than hidden"
+    options:
+      - >
+        FIX THE IMPORT, SUBJECT UNCHANGED. `tests/test_audit_honesty.py` loads
+        `app.py` through `importlib` inside its clauses (:106-109); run it in a
+        subprocess, or run the guard in one, so the process the guard inspects
+        is not the process a UI test polluted. The guard keeps asserting what it
+        asserted this morning: no forbidden module is present in THIS process.
+        Cost: one helper, in a file its owner wrote tonight. Keeps the strongest
+        reading of the Spine refusal and keeps the full suite the thing a
+        stranger runs.
+      - >
+        NARROW THE SUBJECT to the engine's own import graph — assert that
+        importing `pairwisepm` (and its modules) pulls no forbidden module, and
+        keep the existing source-text scan of `pairwisepm/*.py` + `app.py`
+        unchanged. The honest case FOR it, which no seat has yet made and which
+        this entry makes on its behalf: a process that has imported gradio has
+        imported httpx BY CONSTRUCTION, the Spine's refusal is about the RUNTIME
+        LOOP and not about a pytest session, and the board's own registered gate
+        P-1 already reads only the narrow subject — its `-k` form deselects
+        every polluter, so the wide reading has never been what P-1 checked.
+        The cost, stated at full strength: the one clause that could catch a
+        genuine runtime network dependency arriving through a NEW dependency of
+        the shipped app stops being able to catch it.
+      - >
+        SPLIT INTO TWO CLAUSES, both named. (a) source scan + engine import
+        graph, in-process, always run; (b) the process-global assertion, run in
+        an isolated subprocess that imports `app` and nothing else — which is
+        the configuration an actual user's Space runs. Strictly more coverage
+        than either single option and the only one that makes the guard's
+        subject readable off its own name. Cost: the most code, on the night
+        before a sitting, against engineering's registered RED-FIRST ADMISSION
+        STANDARD — though that standard binds procedure steps, not test clauses.
+    status: resolved_uncontested
+    resolved_at: 2026-09-01
+    resolution: >
+      OPTION 2 IN SUBSTANCE, TAKEN IN THE OPEN, WITH A PIECE OF OPTION 3 —
+      dissolved on this entry's own stated condition, RECORDED and not ruled,
+      inside the round it was raised. Compliance narrowed the guard's subject
+      from the pytest process to THE ENGINE'S IMPORT GRAPH IN A FRESH
+      INTERPRETER, and met every term the dissolution clause set: the old
+      subject is quoted in the clause that replaces it, the order-dependence is
+      demonstrated with a runnable command rather than asserted, the reason is
+      stated where the next reader hits it, and the change is labelled a
+      subject correction rather than folded into a green suite. Read from
+      `tests/test_engine.py:718-783` from this seat, not from a packet.
+      It is also STRONGER than the option as this entry wrote it, and that
+      belongs in the resolution rather than in a compliment: the narrowed claim
+      is asserted in a CHILD PROCESS (`subprocess` + a five-module import
+      probe), so it is order-independent by construction rather than by
+      collection accident — which is the isolation half of option 3 bought
+      without option 3's cost. Verified from this seat by running the probe
+      directly, nothing mutated: fresh interpreter, 217 modules, engine loaded
+      True, numpy True, `httpx` False, `gradio` False. The clause is not
+      vacuous and it asserts a property the shipped package must have and a
+      `pip install` can break. Full suite **81 passed**, and the P-14
+      pre-flight is 18 passed / 0 skipped under the two-file label.
+      NOBODY WAS OVERRULED AND NOTHING WAS RE-OPENED. No seat held a position
+      against another on this and the entry said so in its first line; what it
+      guarded was a fork whose two branches look identical from outside. The
+      fork was taken visibly, so there is nothing to adjudicate — which is the
+      outcome this entry declared likely and the one it was built to make
+      possible rather than to prevent.
+    resolution_rationale: >
+      Traced to Scope Boundaries ("Out — refused, deliberately: any LLM in the
+      runtime loop") with Solution Direction and locked spec §1. The narrowing
+      is right on the merits and this Leaf says so rather than merely accepting
+      it: the refusal is about the RUNTIME LOOP, gradio is a legitimate UI
+      dependency and a process that has imported gradio has imported `httpx` by
+      construction, so the wide subject was asserting a property the product
+      never claimed and could only stay green by accident of collection order.
+      A guard whose red reads "some other test imported the UI" is a guard
+      whose honest remedy at 11pm is to delete the line — which is a worse
+      exposure than the coverage it bought. Two independent instruments survive
+      on the true subject: the source scan over `pairwisepm/*.py` + `app.py`,
+      and `test_no_network_calls_at_runtime`'s socket kill-switch over a full
+      cycle in both modes.
+    resolution_instrument: >
+      `tests/test_engine.py::test_no_llm_or_network_imports` — a child-process
+      import probe over `pairwisepm`, `.engine`, `.config`, `.log`, `.strings`
+      asserting none of FORBIDDEN_IMPORTS is reachable, plus the unchanged
+      source-text scan of `pairwisepm/*.py` and `app.py`. Registered by
+      compliance as spec §27i. Gate P-1 (`pytest tests/ -k "no_llm or
+      no_network"`) is its gate and now MEANS what it reads: under the old
+      subject P-1 was green only because `-k` deselected every polluter, so the
+      gate could not observe the defect its own clause was red on. That is
+      resolved as a side effect of the subject correction and is the cleanest
+      evidence the correction was right.
+      ONE RESIDUE, NAMED RATHER THAN SWALLOWED, AND DELIBERATELY NOT REQUEUED —
+      it is a scope word with a named owner, which is this Leaf's own bar for
+      refusing a row. The probe's subject is the ENGINE. `app.py`'s TRANSITIVE
+      import graph is now asserted by nothing: the source scan covers `app.py`
+      but catches DIRECT imports only, and a fresh interpreter that execs
+      `app.py` does pull `httpx` — verified from this seat this round, prints
+      True. That is correct and expected (gradio), and no instrument should red
+      on it. The scope word that is owed is one sentence in the docstring,
+      because "the source scan is unchanged and still covers `app.py`" is true
+      of the text and not of the graph, and the difference is exactly the
+      species this board has corrected in five instruments this cycle. Filed as
+      a demand on compliance, not as an entry, and it gates nothing.
+    notes: >
+      WHAT IS NOT CONTESTED, first, so this is not read as an alarm or as a
+      complaint about another seat's good file. The product is not affected:
+      `httpx` is in the process because a sibling TEST imported the UI, not
+      because the engine reaches a network — the source-text half of the same
+      clause still passes, `test_no_network_calls_at_runtime` (the socket
+      kill-switch over a full cycle in both modes) still passes, and
+      `tests/test_audit_honesty.py` is a good file registering a real Spine
+      finding. Nobody's work is being re-opened and no seat has done anything
+      wrong. NONE of that is queued.
+      WHAT IS CONTESTED is one thing and it is not yet a disagreement between
+      seats: which subject the guard asserts over, after tonight made the wide
+      subject order-dependent. Option 1 and option 2 both produce a green suite
+      tomorrow and they do NOT assert the same thing, and the difference is
+      invisible from the outside — both look like "the red is fixed".
+      WHY THIS IS QUEUED THOUGH IT FAILS THIS LEAF'S OWN BAR, ARGUED RATHER
+      THAN ASSERTED, because the departure is real and a reader should be able
+      to judge it. This Leaf refused four candidates in round 19 on the rule
+      that a defect with a NAMED OWNER and a FILED DEMAND is not a contested
+      value, and this defect has both. What it also has is a structural feature
+      none of the four had: the trigger written to catch it — "if the narrowing
+      is taken silently, that is D11" — CANNOT FIRE, because round 20 is the
+      last round and there is no round after it in which to observe what was
+      taken. A trigger whose condition can only be evaluated after the last
+      observation is not an instrument; it is a promise to have noticed. That
+      is the same defect this board has now named in five other instruments,
+      arriving in this Leaf's own, and the honest remedy is to raise the
+      question BEFORE the edit rather than to reserve the right to object after
+      it. If the fix lands as option 1 or option 3, this entry dissolves the
+      same day and costs the board a paragraph.
+      TWO CORRECTIONS TO THE ROUND-19 REPORT, both to claims this seat
+      published, both from own runs on the project interpreter at the repo root
+      with nothing mutated.
+      (i) THE MECHANISM WAS STATED WRONG BY THIS SEAT AND BY GTM, IN THE SAME
+      WORDS. Both files say `tests/test_audit_honesty.py` "imports `app` at
+      module scope". It does not. Its module-level imports are `ast`,
+      `pathlib`, `pytest` and `pairwisepm` (:46-53); `app.py` is loaded through
+      `importlib.util.spec_from_file_location` INSIDE the clauses that need it
+      (:106-109). Demonstrated: `python -c "import tests.test_audit_honesty;
+      'httpx' in sys.modules"` prints **False** — importing the module pulls
+      nothing. The pollution therefore happens at RUN time, not at COLLECTION
+      time, and the alphabetical-ordering half of the story is correct for the
+      wrong reason: it is the ORDER OF EXECUTION that matters, not the order of
+      import.
+      (ii) THE CONSEQUENCE OF (i) IS THE FACT THAT MAKES THIS AN ENTRY. Because
+      the pollution is run-time and not collection-time, a command that COLLECTS
+      the polluter but does not RUN it stays green. Gate P-1 is exactly such a
+      command: `pytest tests/ -k "no_llm or no_network"` → **2 passed, 78
+      deselected**, own run, with the full suite red in the same tree at the
+      same minute. So the registered gate on the Spine's hardest refusal reads
+      GREEN tonight and would have read green all week regardless — it cannot
+      observe this class of defect at all, by construction. That is not an
+      argument against P-1 and is not filed as a defect in it; it is the
+      strongest argument FOR option 2 that exists, and it belongs in the entry
+      on the side it helps rather than in a packet.
+      PINS, own runs, project interpreter, repo root, 2026-09-01, nothing
+      mutated: full suite **1 failed, 79 passed** (`test_engine.py::
+      test_no_llm_or_network_imports`, `AssertionError: httpx`);
+      `pytest tests/test_engine.py` alone **45 passed**;
+      `pytest tests/test_audit_honesty.py tests/test_engine.py` **1 failed, 46
+      passed**; `pytest tests/ -k "no_llm or no_network"` **2 passed, 78
+      deselected**; the P-14 pre-flight, both labels,
+      `pytest tests/test_vendoring.py tests/test_copy_surfaces.py` **17 passed,
+      0 skipped**. The red is invisible to the pre-flight, invisible to P-1,
+      and invisible to any seat that runs only its own file.
+      BUILD-MEANWHILE DEFAULT: the guard's subject is UNCHANGED — the running
+      process — and the red is a REAL red that blocks a push. While D11 is
+      pending, no seat may publish a full-suite pin without either naming this
+      clause as red or naming which option made it green. That is the whole of
+      the default and it costs nothing.
+      NON-DEFERRAL (self-applied, same terms as D8, D9 and D10, and stated
+      first because this entry is the one most likely to be mistaken for a
+      blocker): D11 does NOT gate G-D1D2, does NOT defer, pause or reopen the
+      D1-D6 resolution round, and does NOT delay, block, re-schedule, void or
+      add any precondition to the M-UX-02a sitting. It is NOT in the D9 voiding
+      set, NOT in the P-14 pre-flight, and NOT a ground on which any run is
+      voided — gtm ruled that from their own seat and this Leaf agrees without
+      qualification. The sitting proceeds whatever D11's status is.
+      DISSOLUTION CLAUSE (D7's precedent, and it is the LIKELY path — this
+      entry expects to die). If the red is closed by option 1 or option 3, with
+      the guard's process-global subject intact, D11 resolves
+      `resolved_uncontested`, dissolved, no ruling and no ceremony: there was
+      never a disagreement, only a fork that could have been taken invisibly.
+      If option 2 is taken, that is legitimate and may well be right — the
+      requirement is only that it be taken IN THE OPEN, with the old subject
+      quoted in the clause that replaces it, so a later reader can see that the
+      guard's reach was reduced and on what argument. An option-2 edit that
+      quotes what it narrows dissolves this entry too. The only outcome this
+      entry exists to prevent is the one where the suite goes green and nobody
+      can tell which of the two things was done.
+      ROUND-20 · THE DISSOLUTION CLAUSE FIRED WITHIN THE HOUR, AND THE PINS
+      ABOVE ARE STALE BY THE TIME YOU READ THEM — left standing with the
+      correction beneath rather than overwritten, because the sequence is the
+      evidence. The `1 failed, 79 passed` figures above were measured before
+      compliance's edit landed; the suite is now **81 passed**, the pre-flight
+      **18 passed / 0 skipped**, and the red is gone by the ONE PATH this entry
+      said would dissolve it — a narrowing taken visibly, with the old subject
+      quoted and the order-dependence demonstrated. See `resolution` above.
+      WHAT THE ENTRY COST AND WHETHER IT WAS WORTH RAISING, answered against
+      itself rather than left for a reader to score. It cost a paragraph and it
+      was raised roughly an hour before the thing it guarded happened, so it
+      never adjudicated anything and never could have. Two honest readings and
+      both are on the page: (a) it was unnecessary — compliance would have done
+      it in the open regardless, and the docstring they wrote is better than
+      the condition this entry set; (b) it was cheap insurance on the one night
+      when the board had no round left in which to notice. This Leaf believes
+      (a) is probably true and raised it anyway, because the cost of being
+      wrong in that direction is a paragraph and the cost of being wrong in the
+      other is a Spine refusal quietly checked against a smaller subject with
+      every instrument green. What it does NOT get to claim is credit for the
+      outcome: the narrowing was documented before this entry existed, and a
+      queue that reads its own entries as causes of the good behaviour that
+      followed them is a queue nobody should trust.
+    on_resolution_notify:
+      - compliance: >
+          the clause states its own subject in its own name or docstring, and
+          gate P-1's row says which subject it checks — the `-k` form's
+          structural blindness to run-time pollution is worth one sentence
+          whichever option wins, because it is the difference between "P-1 is
+          green" and "the refusal is checked"
+      - engineering: >
+          nothing is owed unless option 2 wins, in which case the runtime the
+          refusal binds is now guarded by a narrower instrument than it was on
+          2026-09-01 and the procedure should say so where a reader will hit it
+      - architecture: >
+          the census cell for this refusal names the asserted subject rather
+          than the clause name; under option 3 there are two subjects and two
+          clauses and the cell should carry both
+      - gtm: >
+          nothing follows for the tour, the pre-flight or the witness line —
+          this is not in the D9 set and not in P-14, exactly as your own file
+          already rules. Your mechanism sentence has one factual correction in
+          this entry's notes (the import is in-clause, not module-level); the
+          conclusion it supports is unaffected
+      - decisions: >
+          if option 2 lands with the old subject quoted, this entry closes
+          `resolved_uncontested` and the round-19 pre-declared trigger is
+          retired as SUPERSEDED rather than as satisfied — the trigger was
+          unfireable and that is recorded, not tidied away
+
+# ---------------------------------------------------------------------------
+# ROUND-19 — NOTHING NEW QUEUED, AND ONE TRIGGER PRE-DECLARED SO THE LAST ROUND
+# CANNOT SETTLE IT BY EDIT ORDER (2026-08-31, this Leaf's own standing rule).
+#
+# Three candidates were live this round and all three were refused, on the same
+# test that has kept this queue readable: a defect or a question with a NAMED
+# OWNER and a FILED DEMAND is not a contested value, and queueing it buys a row
+# that goes stale in under a day.
+#
+#  (a) `banner` missing from design's ratified fixture (architecture's finding,
+#      compliance's F-32 residue). ANSWERED IN THE OPEN DURING THIS ROUND, in
+#      the owner's own file, with reasons: `leaves/design/copy-authority.yaml`
+#      now carries a `banner:` render_map row reading "RENDERS — 0→1 ONLY …
+#      NOT RATIFIED IN THIS FILE, deliberately — AUTHORITY IS THE CATALOGUE'S
+#      str.banner.01", and the header's scope sentence was rewritten so a
+#      render_map row without bytes reads as "governed elsewhere" rather than
+#      as an omission. That is a ruling by the seat that owns the bytes,
+#      published where the next reader will hit it. Nothing to queue.
+#  (b) Design's audit-view finding (four statistics rendered POOLED ACROSS
+#      MODES, a pooled Brier one line above "no outcome data … exists").
+#      Owner named (engineering's `render_audit`), demonstration attached,
+#      compliance row requested, copy specified and IDs reserved. A defect with
+#      an owner is a row, not a decision — design stated the same trigger from
+#      their seat, and it is the right one: this becomes a D-entry only if a
+#      seat disputes that those statistics should be mode-scoped at all.
+#  (c) Compliance's P-14 row still recording D10's contested sentence as
+#      "intended" — already inside D10; a second entry about the same sentence
+#      would be this Leaf inflating its own queue.
+#  (d) A LIVE SUITE RED FOUND FROM THIS SEAT AT 21:10 AND REPORTED, NOT QUEUED
+#      — because it is a defect with one owner and no seat holding a contrary
+#      position, which is this Leaf's own bar. `tests/test_engine.py::
+#      test_no_llm_or_network_imports` — the guard on the Spine's hardest
+#      construction refusal, "any LLM in the runtime loop / no network calls" —
+#      asserts over PROCESS-GLOBAL `sys.modules`. Compliance's new
+#      `tests/test_audit_honesty.py` (landed 21:10, F-34/F-35 on design's
+#      §6.18 finding, and a good file) imports `app` at module scope, which
+#      pulls gradio → httpx, and it sorts BEFORE `test_engine.py`. Own runs,
+#      project interpreter, repo root, nothing mutated: full suite
+#      `1 failed, 79 passed`; `pytest tests/test_audit_honesty.py
+#      tests/test_engine.py` → `1 failed, 46 passed`; `pytest
+#      tests/test_engine.py` alone → 45 passed; `pytest tests/test_vendoring.py
+#      tests/test_copy_surfaces.py` (the P-14 pre-flight, both labels) → 17
+#      passed, 0 skipped. So the red is invisible to the pre-flight and to any
+#      seat that runs only its own file, and every "78/78" pin published on
+#      this board tonight — including this Leaf's, above — is stale as of
+#      21:10. Demand filed on compliance with both remedies named and NEITHER
+#      chosen by this seat.
+#      PRE-DECLARED TRIGGER on (d), and this one is narrow: the two remedies
+#      are not equivalent. Fixing the IMPORT (defer `app` to inside the
+#      clauses that need it, or isolate the guard in a subprocess) keeps the
+#      guard's subject where the Spine put it — the running process. NARROWING
+#      THE GUARD's subject instead, from process-global to "the engine's own
+#      import graph", makes a Spine-refusal instrument assert less than it
+#      asserted this morning, in order to accommodate a test written tonight.
+#      That may still be the right answer — a process that has imported gradio
+#      has imported httpx by construction, and the refusal is about the
+#      RUNTIME LOOP, not about a test session — but it is a change to what a
+#      Spine refusal is checked against, and if it is taken it must be taken in
+#      the open with the old subject quoted, not folded into a docstring while
+#      a green suite returns. If it is done silently, or if a seat records a
+#      position against it, that is D11 on this Leaf's queue: stakeholders
+#      compliance (owns both files), engineering (owns the runtime the refusal
+#      binds), architecture (the census that would have to state which subject
+#      is asserted).
+#      ROUND-20 · THAT TRIGGER IS RETIRED AS UNFIREABLE AND THE QUESTION IS
+#      RAISED AS **D11** INSTEAD. The trigger's condition — "if it is done
+#      silently" — could only be evaluated in a round AFTER the edit, and there
+#      is no round after the last one. This Leaf wrote an instrument that
+#      cannot observe its own subject, which is the exact species it has spent
+#      six rounds naming in other seats' files, so it is corrected the way the
+#      board corrects those: the false premise is left standing above with the
+#      retraction beneath it, not reworded away. D11 asks the question BEFORE
+#      the edit rather than reserving the right to object after it, carries
+#      both remedies with the best case for each, and dissolves the same day if
+#      the import is fixed with the guard's subject intact.
+#      TWO CORRECTIONS TO (d) ABOVE, both to this seat's own published claims,
+#      both from own runs and both material. (1) "imports `app` at module
+#      scope" is FALSE — `tests/test_audit_honesty.py`'s module-level imports
+#      are `ast`, `pathlib`, `pytest`, `pairwisepm`; `app.py` is loaded through
+#      `importlib` inside the clauses (:106-109), and
+#      `import tests.test_audit_honesty` leaves `httpx` out of `sys.modules`
+#      (printed False). The pollution is RUN-time, not COLLECTION-time. (2)
+#      Which is why gate **P-1** — `pytest tests/ -k "no_llm or no_network"`,
+#      the registered instrument for this refusal, traceability.md:1153 — reads
+#      **2 passed, 78 deselected** GREEN in the same tree at the same minute
+#      the full suite is red. Collected but not executed means not polluting.
+#      So the board's registered gate on the Spine's hardest refusal cannot see
+#      this class of defect at all, which is filed in D11 as the strongest
+#      argument FOR the narrowing option rather than against anything.
+#      OUTCOME, SAME ROUND: compliance corrected the guard's SUBJECT in the
+#      open — engine import graph, probed in a fresh child interpreter, source
+#      scan unchanged, old subject quoted and the order-dependence demonstrated
+#      — so D11 is `resolved_uncontested`, dissolved, no ruling. The suite is
+#      **81 passed** and the pre-flight 18 passed / 0 skipped; the "1 failed,
+#      79 passed" and "78/78" figures above are stale and are left standing
+#      with this correction beneath them rather than overwritten, which is the
+#      same handling this Leaf asked of every other seat this cycle.
+#
+# PRE-DECLARED TRIGGER — NOT AN ENTRY, and it exists because round 20 is the
+# last round and an unanswered demand in a last round is how a contested
+# placement gets baked in by whoever edits last. On (a), architecture DEMANDED
+# the banner's ratified text into the fixture; design RULED it out of the
+# fixture and into the catalogue's authority. Those are two seats with two
+# answers to one question — which is normally this queue's business — and it is
+# NOT queued for one reason only: architecture's own round-18 packet already
+# names the catalogue as the banner's authority ("Authority A is its authority;
+# the config holds a replica of design copy"), so design's ruling grants the
+# legibility architecture asked for while declining the byte replica, and no
+# seat has yet stated a position against it. IF architecture (or any seat)
+# records a position against §6.19(i)'s placement, that is a genuine two-seat
+# disagreement over which authority ratifies the single on-screen carrier of a
+# Spine refusal, and it enters this queue as **D12** (D11 is now taken) on that
+# event alone — stakeholders design (bytes), architecture (census), compliance
+# (T-COPY-02c holds the exemption and would move it under the diff),
+# engineering (a mint on strings.py is the only way to change the text).
+# ACCEPTANCE MUST BE WRITTEN, not inferred from silence: a seat that agrees
+# should say so in its own file, because "nobody objected in the last round"
+# and "everyone agreed" are different histories and this Leaf exists to keep
+# them apart.
+#
+# WHY THIS TRIGGER SURVIVES WHILE THE (d) TRIGGER WAS RETIRED AS UNFIREABLE —
+# asked and answered here rather than left as an inconsistency for a reader to
+# find, since the two were written in the same block on the same night. The (d)
+# fork is LIVE: two remedies are both available, both produce a green suite,
+# and the difference between them is invisible from the outside, so waiting to
+# observe which was taken is waiting for something unobservable. The banner
+# fork is CLOSED in the only direction that matters: architecture's own r18
+# packet already names the catalogue as the banner's authority in its own
+# words, and design's ruling grants the legibility architecture demanded while
+# declining the byte replica — so the two seats are not holding two answers,
+# they are holding one answer that one of them has not yet said out loud. A
+# trigger on a position nobody holds is cheap and honest; a trigger on a fork
+# both branches of which are live is a promise to have noticed. Raising the
+# second as an entry and leaving the first as a trigger is the same rule
+# applied twice, not two rules.
+#
+# ROUND-20 · THE D12 TRIGGER IS CLOSED, AND IT IS CLOSED BY THE THING IT ASKED
+# FOR RATHER THAN BY THE ROUNDS RUNNING OUT. The trigger set one standard —
+# "ACCEPTANCE MUST BE WRITTEN, not inferred from silence" — and that standard is
+# now MET, from the file rather than from a packet. Read at 07:52 local:
+# `leaves/architecture/architecture.md:536-550` carries architecture's own
+# ruling, published BEFORE design's, in their own words — "the two options are
+# not architecturally symmetric and the census should say which one preserves
+# the boundary: **(b)** … Under (a) a single rendered string would have TWO
+# ratification sites … which are not the same file, do not move together, and
+# would then need a THIRD guard asserting the two ratifications agree", with the
+# structural predicate stated at :553-556 ("does the field have a counterpart in
+# Authority A? `banner` does, and is therefore governed by `strings.py`"). Design
+# ruled the same way in §6.19(i); compliance took option (b), registered the
+# exemption, and built T-COPY-02e over the import assert that holds it
+# (`traceability.md:710`, `:1248`). Three seats, three files, three written
+# positions, all (b), each authored from its own seat. So the acceptance this
+# trigger required is on the record and is not this Leaf's inference from a
+# quiet last round.
+#
+# WHY IT IS CLOSED RATHER THAN CARRIED FORWARD, and this is the correction to
+# this Leaf's own procedure that round 20 owes: the trigger's condition — "IF any
+# seat records a position against §6.19(i)'s placement" — could only be evaluated
+# in a round AFTER this one, and there is no round after the last one. That is
+# the IDENTICAL defect for which the (d) trigger was retired as unfireable
+# eighteen lines above, and leaving this one live while retiring that one would
+# be this Leaf holding two standards in one file on one night. The distinction
+# drawn above (closed fork vs. live fork) was the right reason to prefer a
+# trigger to an ENTRY while rounds remained; it is not a reason a trigger can
+# outlive its own observation window. The honest close is therefore: condition
+# MET (written acceptance, three seats, cited above), trigger DISCHARGED, no
+# D12 entry raised, and the id D12 stays UNUSED and unreusable per the queue's
+# monotonic rule so a later reader who finds D11 followed by conventions is not
+# looking at a deletion.
+# WHAT REMAINS OPEN ON IT, stated so the close is not read wider than it holds:
+# nothing about the banner's PLACEMENT, and this Leaf holds no position of its
+# own on it — three owners agreed and the queue's job here was to make sure they
+# agreed out loud rather than to referee which authority won.
+#
+# ---------------------------------------------------------------------------
+# ROUND-20 HANDOFF — WHAT THE END OF THE EXCHANGE ROUNDS DOES AND DOES NOT MEAN
+# (2026-09-01 07:57, written from this seat on its last round).
+#
+# This block exists because of the one failure mode this Leaf was built to stop,
+# arriving in its last and cheapest form: a queue that goes quiet gets read as a
+# queue that emptied. It did not empty. Round 20 is the last NEGOTIATION round;
+# it is not a resolution event, it lifts no SLA, it closes no entry, and it
+# confers no authority on whoever edits last. Every clock below is a HUMAN clock
+# and keeps running after the seats stop writing (Leaf README §1: "no agent
+# resolves a pending entry early, no matter how obvious the answer looks").
+#
+# OPEN, WITH LIVE CLOCKS:
+#  · D1, D2 — prior-weight magnitudes, both tables. SLA 2026-09-01 (TODAY).
+#    The header's EXECUTION ORDERING binds the adjudication of whatever remains
+#    pending to run SAME DAY on expiry, with one and only one deferral (a
+#    sitting convening in the first hour). `resolution_source` is per-entry and
+#    mandatory; a resolution record lacking it does not lift G-D1D2.
+#  · D3, D4, D5, D6 — portfolio-layer trigger, calibration cadence, seed→log
+#    cutover, fragility threshold. Same SLA, same clock, same rule.
+#  · D8 — the under-5-minutes metric's measurement basis and owner. SLA
+#    2026-09-02, pending.
+#  · D10 — what a SKIP in the P-14 pre-flight means. SLA 2026-09-02, pending,
+#    and the ROUND-20 STATUS block inside it is the one a later reader should
+#    read first: three seats marked, three readings KEPT, nothing converged.
+# CLOSED, AND CLOSED ON THEIR MERITS RATHER THAN BY THE CALENDAR: D7, D9 and D11
+# — all `resolved_uncontested`, each dissolved bilaterally with no ruling, each
+# with the superseded position left standing above its correction.
+#
+# OPEN RESIDUES THAT ARE DELIBERATELY **NOT** QUEUE ENTRIES — named here with
+# their owners for one reason: after the last round, absence from this queue is
+# the thing most likely to be misread as absence of an issue, and this Leaf
+# refuses trivia in the queue precisely so that what IS in the queue means
+# something. None of these is a contested value; every one has a named owner and
+# a filed demand or a stated closing condition, which is this Leaf's standing bar
+# and the reason each was refused an entry:
+#  · **F-34** — `app.py`'s runtime-HTML surface, a second uncensused copy
+#    population, thirteen strings, some honesty-carrying. Owner DESIGN, closing
+#    condition design's own (enumerate in §6.18(i), or the first release after
+#    the sitting). Compliance's round-20 demand asks for the honesty-carrying
+#    subset as a CLOSED list. Registered at `traceability.md:866`.
+#  · **F-35** — `render_audit`'s four statistics render POOLED ACROSS MODES one
+#    line above a 0→1 caption that denies prediction. Owner ENGINEERING for the
+#    fix, censused meanwhile by T-NEG-09b (a census, not a freeze: the fix keeps
+#    it green). Registered at `traceability.md:867`. Unreachable at the sitting.
+#  · **`"Which do you actually pick?"` (`app.py:969`)** — design struck their own
+#    "covered by the eyes-on five" sentence when gtm disclosed that the check was
+#    retired, and declared the residue on the line (`states.md:2699`): zero
+#    instruments, one standing MP-2 obligation. Demand for an AST clause filed on
+#    COMPLIANCE; verified from this seat at 07:57 that it has not landed
+#    (`grep -rn "actually pick" tests/` → no match). This is the one residue on
+#    the board that is BOTH honesty-adjacent and currently uninstrumented, and it
+#    is recorded here rather than queued because no seat holds a position against
+#    closing it — an unanswered demand is not a disagreement.
+#    **CLOSED AT 08:00, THREE MINUTES AFTER THE SENTENCE ABOVE WAS
+#    WRITTEN, AND THE FALSE SENTENCE IS LEFT STANDING WITH THE CORRECTION
+#    BENEATH IT** — the handling this Leaf has asked of five other seats this
+#    cycle, now owed by itself on its own last block. Compliance landed the
+#    clause: `tests/test_copy_surfaces.py:89` pins `_PICK_QUESTION` and the
+#    clause at `:801` asserts by AST that EXACTLY ONE `gr.*` widget on the
+#    construction surface carries the literal — byte-exact, count-pinned, its
+#    OWN clause rather than an extension of T-NEG-08's `== 4` census, which is
+#    the boundary design demanded and the reason engineering's bounded
+#    ENG-COPY-EVALLABELS-01 trigger does not grow to five. Own runs: that file
+#    12 passed / 0 skipped, full suite 83 passed (81 at 07:57 — two clauses
+#    landed from other seats while this Leaf edited one YAML file and no test).
+#    So the residue list above is FOUR as of 08:00, not five, and the "one
+#    residue that is both honesty-adjacent and uninstrumented" is now none. The
+#    pin caveat this Leaf has repeated since round 18 applies to its own closing
+#    block: a suite count is evidence of a minute, not a property.
+#  · **The duplicate `configs/` tree under `.venv/…/site-packages/`** — the
+#    resolution-round hazard verified and written into this file's own header,
+#    owner compliance for the F-31 docstring wording. Not queued for the same
+#    reason, and re-flagged here because the round it warns about is TODAY.
+#  · **M-UX-02a** — the witness window elapsed unconvened; the node flips on
+#    gtm's dated line (filled record, or "window closed unconvened, <date>") and
+#    on nothing any agent writes. A missed human window is a fact with an owner,
+#    not a decision.
+#
+# WHAT A LATER READER MAY SAFELY CONCLUDE FROM THIS QUEUE, and what they may
+# not. May: that every entry here was raised because two or more seats held
+# different written positions on one checkable question, and that no entry was
+# closed by edit order, by silence, or by a seat deleting its own reading. May
+# NOT: that the absence of an entry means agreement — for the residues listed
+# above (five as written at 07:57, four as corrected at 08:00) it means a named
+# owner and a filed demand or a stated closing condition, which is a different
+# and weaker thing than agreement. The queue's silence is evidence about the queue, never about the build.
+#
+# ---------------------------------------------------------------------------
+# Ratified build conventions (exchange round, 2026-08-30)
+#
+# NOT decision-queue entries and NOT on the SLA clock. These are conventions
+# that other Leaves asked the Decisions Leaf to confirm, where the Spine or the
+# locked spec already settles the question, or where every leaf shipped the
+# same answer and no stakeholder disagrees. Ratification here makes them citable
+# ("per C<n>") so they stop being re-litigated. Contesting one = raise a new
+# D-entry referencing the convention id; do not edit these in place.
+# ---------------------------------------------------------------------------
+conventions:
+  - id: C1
+    title: M1 activation gate
+    ruling: >
+      M1 activates at EXACTLY 10 logged picks, counted per mode
+      (M1_ACTIVATION_N = 10). Override picks COUNT toward the gate and are
+      included in M1 training data: an override is the strongest
+      revealed-policy signal there is, and M1 is the model of the judge's
+      revealed policy, not of the tool's verdicts. Excluding overrides would
+      train M1 to agree with M0 — circular. (Answers Architecture's open
+      question (a); matches Engineering's shipped code, whose
+      DecisionLog.training_data uses every pick unfiltered, and Compliance's
+      n>=10 test.)
+    trace: "spec §3 'M1 active ≥ ~10 decisions'; Spine metric 3 'model-of-the-judge activates from the user's own log by roughly decision 10'"
+
+  - id: C2
+    title: Too-close band — no wider dead-band
+    ruling: >
+      "Too close to call" triggers exactly when the bootstrap interval
+      straddles 50%, boundary touching included (an endpoint exactly at 0.5
+      counts as straddling, breaking toward too_close, per Compliance
+      T-VERDICT). No wider fixed dead-band is wanted: the interval already
+      widens with genuine uncertainty, so a second margin would double-count
+      it, and the Spine fixes the trigger verbatim. (Answers Architecture's
+      open question (b).)
+    trace: "Spine metric 4: '\"too close to call\" when the interval straddles 50%'; spec §4"
+
+  - id: C3
+    title: Risk-surface entry direction
+    ruling: >
+      Risk surface is ENTERED already reversed on 0–4 (4 = lowest exposure),
+      sign +1, exactly as Engineering shipped in configs/one_to_n.yaml — one
+      scale direction for every 0–4 factor (higher = better for the idea), no
+      hidden 4−x flip inside the engine. UI copy and all demo material must
+      state the direction explicitly ("4 = lowest exposure"). GTM's
+      seed-comparison.json currently narrates the opposite convention (user
+      enters exposure, engine reverses); its SCORED values (A 1.0, B 1.5)
+      already match this ruling — only its entry-direction narration needs
+      aligning.
+    trace: "spec §2 1→N table: 'hallucination/compliance exposure, 0–4 reversed'"
+
+  - id: C4
+    title: Canonical seed z-scoring distributions
+    ruling: >
+      The seed distributions (means/stds, stated in transform space) as
+      shipped in configs/one_to_n.yaml and configs/zero_to_one.yaml are THE
+      canonical z-basis. Any demo, tour, sample log, or test that derives
+      displayed probabilities must use these exact values or reproduce
+      different numbers knowingly and say so. Exchange-round verification:
+      Engineering aligned the 1→N config to GTM's canonical demo
+      (leaves/gtm/seed-comparison.json) — Reach ships transform: identity with
+      μ5000/σ3000 and Effort σ4, matching the tour's numbers, so the tour's
+      p=59% / CI 52–64% reproduces inside the shipped app. The log10p
+      (log10(1+x)) transform remains implemented in pairwisepm/config.py as an
+      opt-in for heavy-tailed user bases, per the config's own rationale note;
+      switching Reach to it is a config edit that changes displayed numbers
+      and re-triggers GTM/Compliance recomputation exactly as a D1 resolution
+      would. The only remaining GTM divergence is the risk-surface
+      entry-direction narration, covered by C3.
+    trace: "spec §2 'seed distributions ship in config until the log grows'; weights-as-config hinge (Sequencing)"
+
+  - id: C5
+    title: Interval confidence level
+    ruling: >
+      The interval is a 90% percentile bootstrap over per-factor
+      contributions, as shipped. The 90% level is ratified as the default and
+      must live as a config/engine constant (it already is: level=0.90 in
+      pairwisepm/engine.py), not a magic number in UI copy — Design's
+      str.verdict.prob_gloss says "90% bootstrap interval", so a level change
+      is a paired config+copy change. No queue entry needed: no stakeholder
+      proposes a different level. (Answers Design's flag.)
+    trace: "spec §4 'bootstrap over factors → interval on the win probability'; Spine metric 4 'intervals shown always'"
+
+  - id: C6
+    title: Leverage-panel weight handoff at M1 activation
+    ruling: >
+      The leverage panel hard-switches from prior (M0) weights to M1 weights
+      at activation, with the regime label MANDATORY on the panel ("computed
+      from your stated priors" vs "computed from your revealed weights") — no
+      blend. Rationale: unlike the z-basis (D5), the weight regimes are
+      user-facing named policies whose difference the product deliberately
+      surfaces (revealed-vs-stated table); blending them would manufacture a
+      third policy nobody stated. The label converts the discontinuity from
+      silent noise into an explained regime change. (Answers Architecture's
+      open question (c) — no decision entry needed.)
+    trace: "spec §3 'M1 vs. M0 weight divergence displayed as what your revealed policy weighs vs. what you say you weigh'"
+
+  - id: C7
+    title: Fresh-load default mode (D-design-1 ratified)
+    ruling: >
+      Fresh load defaults to 1→N mode, so 0→1 — and its permanent
+      no-accuracy banner — is always an explicitly chosen context. Uncontested
+      across leaves; ratified as Design wrote it.
+    trace: "Spine metric 4 / spec §1: 0→1 permanent structure-not-prediction banner"
+
+  - id: C8
+    title: Override honored, never fought (D-design-2 ratified)
+    ruling: >
+      Picking against a computed verdict or a too-close-to-call is always
+      allowed and requires exactly one logged one-sentence rationale before
+      append — no extra friction, no nag. The record carries pick, both model
+      outputs, and the rationale verbatim; override picks still train M1 (C1).
+      Uncontested; ratified as Design wrote it.
+    trace: "Spine Solution Direction: the judge 'applies the PM's own policy' — it does not replace it; spec §6 override rationale field"

@@ -1,0 +1,2164 @@
+# Sequencing Leaf — PairwisePM work-item graph
+# The team self-routes from this file. Every node maps to a Spine commitment
+# (Traceability Anchor); anything that doesn't is scope creep or a missing
+# Spine update. Where this file and spine/SPINE.md conflict, the Spine wins.
+#
+# graph semantics:
+#   edges.blocks  — hard dependency: the target CANNOT start/finish until the
+#                   source is done. Absence of a blocks-edge means parallel is fine.
+#   edges.informs — soft dependency: the target should read the source's output
+#                   and may need rework if the source changes, but may proceed.
+#
+# status legend:
+#   done          — completed IN THIS BUILD RUN (build-run-2026-08-30). Every
+#                   done node also carries completed_in for audit.
+#   ready         — all blocking predecessors done; can start now.
+#   blocked       — at least one blocking predecessor not done (listed).
+#   future        — gated by a numeric threshold or a later slice; not actionable yet.
+#
+# slices (delivery increments, cumulative):
+#   MVP1  — local engine + Gradio UI + tests green; runs offline, pip-installable
+#           from the repo. (Spine: "runs entirely offline after download")
+#   Pilot — Hugging Face Gradio Space live; Hari + pilot PMs log real decisions.
+#   GA    — pip release on PyPI + calibration report from real use (Brier, ζ,
+#           reliability curve); M1 active from the user's own log.
+#
+# disciplines match the leaf keys: architecture | engineering | design | gtm |
+# compliance | decisions | sequencing, plus `human` for Hari-only actions.
+#
+# effort is in person-days (pd) for humans; build-run nodes carry the estimate
+# they were budgeted at, for the record.
+
+meta:
+  spine_version: "0.1"
+  build_run: build-run-2026-08-30
+  as_of: 2026-09-01
+  revision: negotiation-round-20.0
+                              # r20 (FINAL ROUND, measured 2026-09-01 07:55, own
+                              # runs, venv interpreter). No demand on this seat,
+                              # no dispute open against it.
+                              # (A) suite-red-no-llm-guard IS DISCHARGED and the
+                              # blocks-edge is REMOVED. Suite 81 passed / 0 failed
+                              # / 0 skipped, root (1.89s) AND off-root (1.62s);
+                              # both reproducing orderings green
+                              # (test_packaging+test_engine 61 passed, was 1
+                              # failed/60; test_audit_honesty+test_engine 47
+                              # passed). CONDITION CHECKED AGAINST THE FIX, NOT
+                              # THE PACKET — read test_engine.py:714-784 from this
+                              # seat: FORBIDDEN_IMPORTS still carries all eight
+                              # names incl. httpx (:714), the source-scan half is
+                              # intact (:779-784), no skip/xfail/collection-order
+                              # trick, test_audit_honesty.py untouched and still
+                              # collected. The import half was NOT deleted; its
+                              # SUBJECT moved to a fresh child interpreter
+                              # importing the engine (:746-777) — order-independent
+                              # by construction and strictly stronger on the
+                              # product claim (own probe: 217 modules, httpx False,
+                              # gradio False; catches a dynamic
+                              # import_module("httpx") the regex cannot see).
+                              # RESIDUE DECLARED, NOT SWALLOWED BY THE CLOSE:
+                              # app.py's TRANSITIVE import graph is now asserted by
+                              # nothing (the regex covers only its direct import
+                              # lines). Non-gating, off every path, owner
+                              # compliance, NOT re-filed from here — decisions
+                              # filed exactly that docstring correction this round.
+                              # AND ONE FACT AGAINST MY OWN r19.1 ENCODING: gate
+                              # P-1's -k form read 2 passed / 79 deselected GREEN
+                              # through the entire red (re-derived 07:55) because
+                              # -k deselects every polluter and the pollution was
+                              # run-time. Third shape of one species: a NAME wider
+                              # than its gate (r18), a SUBJECT wider than its file
+                              # (r19), an INVOCATION narrower than its subject
+                              # (r20).
+                              # (B) M-UX-02a UNCHANGED and its TERMINAL STATE
+                              # stated rather than inferred. Re-greped 07:55 in the
+                              # owning files: design's §6.12 line still the
+                              # unfilled template, gtm's six-field record still
+                              # ____, gtm's pre-committed dated MISS line still NOT
+                              # landed. Node stands at WINDOW ELAPSED — AWAITING
+                              # GTM'S DATED LINE. I did not flip it at 07:42, have
+                              # not flipped it at 07:55, and will not flip it in
+                              # the last round: the miss VERDICT is gtm's dated
+                              # line and nothing else, including my own clock, and
+                              # that rule is not suspended because an unresolved
+                              # row looks untidy at the end of a cycle. So the
+                              # graph ends the cycle with ONE node awaiting a dated
+                              # line from another seat — re-openable per the r14
+                              # rider, branch [3] live, SC-06 "designed so, not yet
+                              # timed" until a dated row says otherwise.
+                              # (C) A STALE LINE OF MY OWN, FIVE ROUNDS OLD,
+                              # CORRECTED IN PLACE: graph.md's closing paragraph
+                              # said "one non-gating engineering item sits beside
+                              # it" (venv-install-drift-fix), DONE since r15 while
+                              # item 5's own row said so. Quoted, not deleted.
+                              # (D) PINS 07:55: suite 81/81 root and off-root, 0
+                              # skipped both ways; P-14 (tests/test_vendoring.py) 7
+                              # passed / 0 skipped; two-file pre-flight 18 passed /
+                              # 0 skipped. Sequence of record: 59 -> 60 -> 64 -> 65
+                              # -> 67 -> 72 -> 73 -> 73 -> 78 -> 80 collected/79
+                              # green -> 81/81. PENDING IS EIGHT (own grep 07:55):
+                              # D1 :105, D2 :146, D3 :189, D4 :211, D5 :239,
+                              # D6 :271, D8 :612, D10 :1151; D11 closed
+                              # resolved_uncontested at :1429. D1-D6's SLA is
+                              # (E) r20.1 — THE PIN IN (D) WAS FALSE FOUR MINUTES
+                              # AFTER I WROTE IT; CORRECTED HERE, NOT OVERWRITTEN.
+                              # (D) published "81 passed / 0 skipped", pre-flight
+                              # 18, P-1 2 passed / 79 deselected, at 07:55.
+                              # Re-run 07:59:52, same interpreter, nothing of mine
+                              # touched between: 83 passed, root (1.46s) AND
+                              # off-root (1.47s), 0 skipped both ways; two-file
+                              # pre-flight 19 passed / 0 skipped; P-1's -k form 3
+                              # passed / 80 deselected. Compliance landed two
+                              # clauses while I typed (test_engine.py mtime 07:58,
+                              # test_copy_surfaces.py 07:59). Sequence of record
+                              # extended: ... -> 80 collected/79 green -> 81/81 ->
+                              # 83/83. WHAT I CERTIFY IS THE EQUALITY OF THE TWO
+                              # DIRECTIONS AND THE MODULE BEHIND IT, NEVER THE
+                              # INTEGER — six rounds of saying it, twice now caught
+                              # publishing a stale one.
+                              # AND BOTH HALVES OF r19.1 CAME BACK BETTER THAN
+                              # ASKED. (i) The residue declared in (A) — app.py's
+                              # transitive import graph asserted by nothing — is
+                              # ALREADY CLOSED as a scope word inside T-NEG-01's own
+                              # docstring (test_engine.py:746-762, decisions'
+                              # demand), false sentence struck legibly, naming
+                              # test_no_network_calls_at_runtime as the instrument
+                              # that holds the runtime claim on the UI surface. Read
+                              # from source at 08:00. Declared and retired in the
+                              # same round, by the seat I chose NOT to file it on.
+                              # (ii) MY r19.1 FIX CONSTRAINT IS NOW AN INSTRUMENT,
+                              # NOT A DEMAND: test_the_no_llm_guard_cannot_be_
+                              # quietly_weakened (T-NEG-01a, :826) landed this round
+                              # on design's demand and asserts off this file's AST
+                              # exactly what I said must survive — FORBIDDEN_IMPORTS
+                              # still names every floor module, T-NEG-01 carries no
+                              # skip marker, BOTH HALVES survive, and
+                              # test_no_network_calls_at_runtime is present and
+                              # unskipped. It asserts SHAPE not behaviour, so it
+                              # stays green when someone STRENGTHENS the guard. That
+                              # is the difference between a condition a seat holds
+                              # in a packet and one the repository holds after the
+                              # seats stop talking.
+                              # TODAY. CRITICAL PATH: entirely Hari's gates,
+                              # unchanged for twenty rounds. AGENT-CHECKABLE BOARD:
+                              # EMPTY AGAIN.
+                              # r19.1 (RE-MEASURED 2026-09-01 07:42, own runs,
+                              # venv interpreter — TWO PUBLISHED LINES BELOW ARE
+                              # NOW FALSE and are corrected here, quoted not
+                              # deleted). (A) THE SUITE IS RED AND THE RED IS ON
+                              # THE SPINE'S LOUDEST REFUSAL. The r19.0 line below
+                              # reads "78/78 root AND 78/78 off-root, EQUAL"; the
+                              # same command now reads 80 collected, 79 passed,
+                              # 1 FAILED — root (1.47s) and off-root (1.43s),
+                              # equal both directions and equally red. Failing
+                              # clause: tests/test_engine.py:720
+                              # test_no_llm_or_network_imports, AssertionError:
+                              # httpx — the executable form of the Spine's `Out:`
+                              # refusal "any LLM in the runtime loop", named in
+                              # release-audit's own title. NEW NODE
+                              # `suite-red-no-llm-guard` (READY, owner compliance,
+                              # BLOCKS release-audit) carries the full mechanism,
+                              # the not-the-new-file correction, and the fix
+                              # constraint. THE AGENT-CHECKABLE BOARD IS NOT
+                              # EMPTY — first agent-side blocks-edge since r15 —
+                              # and its ELAPSED path cost is still ZERO. It does
+                              # NOT touch the M-UX-02a sitting: P-14 7 passed /
+                              # 0 skipped and copy-surfaces 10 passed / 0 skipped
+                              # at 07:42, and test_engine.py is in neither file.
+                              # NOBODY MAY VOID A SITTING ON IT.
+                              # (B) THE BACKSTOP HOUR HAS PASSED, UNCONVENED. The
+                              # r19.0 line "backstop inside four hours" is spent:
+                              # it is 2026-09-01 07:42. states.md:1492 is still
+                              # the unfilled template, launch-copy.md:361 still
+                              # reads ____, and gtm's pre-committed dated MISS
+                              # line (launch-copy.md:488) has NOT landed either.
+                              # So M-UX-02a reads WINDOW ELAPSED — AWAITING GTM'S
+                              # DATED LINE and does NOT flip to WINDOW CLOSED: a
+                              # spent clock is an observation this seat may make,
+                              # the miss VERDICT is gtm's dated line and nothing
+                              # else, including my own clock. Branch [3] is now
+                              # the LIVE branch, so a re-opened sitting falls
+                              # after the D1/D2 write and compliance's ordered
+                              # precondition step is live, not hypothetical.
+                              # (C) PENDING IS EIGHT (re-grepped 07:42): D1 :105,
+                              # D2 :146, D3 :189, D4 :211, D5 :239, D6 :271,
+                              # D8 :612, D10 :1151. D1-D6's SLA is TODAY.
+                              # Sequence of record: 59 -> 60 -> 64 -> 65 -> 67 ->
+                              # 72 -> 73 -> 73 -> 78 -> 80 collected / 79 green.
+                              # r19 (retained as that round's record): ONE demand on this seat (decisions), answered
+                              # in full; zero nodes/edges/dates moved. (1) MY
+                              # REFUSAL OF LAUNCH-ENVIRONMENT PRECONDITIONS DOES
+                              # NOT REACH THE TREE-SHAPE ONE — said plainly so an
+                              # absence is not read as consent. The refusal ran on
+                              # a DISCONFIRMED mechanism (gtm's cwd clause: `python
+                              # /abs/path/app.py` sets sys.path[0] to the SCRIPT's
+                              # dir), and the tree-shape condition is not
+                              # disconfirmed: without `leaves/`, T-VEND-01/02
+                              # genuinely do not run. So it is real, my refusal
+                              # does not cover it, and it still earns NO edge —
+                              # every encoded branch (scheduled AND re-opened
+                              # branch-[3] sitting) runs on THIS checkout, so the
+                              # condition is a property of the plan, not something
+                              # a presenter must establish. What I still refuse is
+                              # the general form: a precondition requiring a
+                              # machine property no encoded branch guarantees, or
+                              # one not decidable off a command already run. See
+                              # (V) in release-audit for the two reproductions.
+                              # (2) BOTH r18 DEMANDS LANDED (gtm's label + the
+                              # copy-surfaces non-voiding clause; compliance's
+                              # re-opened-sitting step, whose narrowing is BETTER
+                              # than what I asked for) — the residue I said I would
+                              # carry to r20 is RETIRED, not dropped. (3) Pins
+                              # 2026-08-31 21:06: 78/78 root (1.54s) AND 78/78
+                              # off-root (1.32s), EQUAL; vendoring 7 passed 0
+                              # skipped; copy-surfaces 10 passed 0 skipped;
+                              # PENDING IS EIGHT (D1 :105, D2 :146, D3 :189,
+                              # D4 :211, D5 :239, D6 :271, D8 :612, D10 :1151 new,
+                              # non-gating by its own clause at :1227); states.md
+                              # still carries NO M-UX-02 timer line.
+                              # r18 (retained as that round's record): ZERO demands on this seat, zero nodes/edges/
+                              # dates moved, and the round's work is two
+                              # corrections and one finding. (1) THE LINE BELOW
+                              # WAS FALSE AND STOOD FOR A ROUND: r17's meta read
+                              # "suite pin 72/72 UNCHANGED, own run 20:45" while
+                              # graph.md's r17 header said I had corrected that
+                              # exact sentence "in both files". I had not — it was
+                              # corrected in graph.md only, so the seat that spent
+                              # four rounds saying a count is evidence of a
+                              # timestamp shipped a stale count in the machine-
+                              # readable half of its own leaf. Corrected here, and
+                              # the false text is quoted rather than deleted.
+                              # (2) P-14's SCOPE HAS DRIFTED ON THE PRESENTER'S
+                              # TEMPLATE from one test file to two — see (R) in
+                              # release-audit; demand filed on gtm, who owns the
+                              # field. (3) Pins re-measured 2026-08-31 20:53:
+                              # 73/73 root (1.50s) AND 73/73 from /tmp (1.29s),
+                              # EQUAL; tests/test_vendoring.py 7 passed 0 skipped;
+                              # SEVEN pending decisions (D1-D6 + D8, own grep:
+                              # D7 :305 and D9 :743 both resolved_uncontested);
+                              # states.md still carries NO M-UX-02 timer line.
+                              # r17 (retained as that round's record): four demands
+                              # accepted, zero nodes/edges/dates
+                              # moved. Expected-red rider labelled on
+                              # d1-d2-resolution (verified read-only from this
+                              # seat: editable install owns site-packages/configs,
+                              # T-VEND-06 finds checked=2 live duplicates today);
+                              # gate list stated whole (P-5/6/10/11/12/13/14, P-14
+                              # the only pre-clock precondition); P-14's instrument
+                              # recorded as STRENGTHENED not re-run; D9 corrected to
+                              # CLOSED and the pending count to SEVEN; suite pin
+                              # was written here as "72/72 UNCHANGED, own run 20:45"
+                              # — FALSE WHEN WRITTEN, the true r17 pin is 73/73
+                              # both directions at 20:48.
+                              # 1: statuses corrected against the actual repo
+                              # tree; three MVP1 items previously marked done were
+                              # found incomplete (tests-green, packaging,
+                              # readme-epistemics) and four cross-leaf requests
+                              # modeled. 1.1: synced with the Decisions leaf's
+                              # exchange output — D6 (fragility threshold) added
+                              # to the resolution node (now d3-d6-resolution),
+                              # m1-activation gate cited as ratified convention C1,
+                              # and a seed-demo-alignment node added for the
+                              # C3/C4 tour-vs-config divergence so it has an
+                              # owner and a gate instead of a loose flag.
+                              # round-2: design's §6.4 as-built audit surfaced ONE
+                              # Spine-backed honesty defect (custody-nudge miscount)
+                              # and one broken vendoring invariant (strings module
+                              # verified DIVERGED this round) — both modeled as
+                              # ready parallel nodes (custody-nudge-fix,
+                              # strings-revendor) at zero elapsed-path cost, since
+                              # the critical path is 100% human-gated. §6.4 R-3/R-4
+                              # remain deliberately absent (design↔engineering
+                              # bilateral polish, no Spine commitment as Pilot
+                              # gates). Tests re-verified 51/51 green this round.
+                              # round-3: engineering executed BOTH round-2 ready
+                              # nodes — custody-nudge-fix and strings-revendor —
+                              # verified against the repo this round (n_session
+                              # state in app.py suppressing the nudge at 0;
+                              # pairwisepm/strings.py byte-identical to design's
+                              # copy; tests/test_vendoring.py landed IN THE SAME
+                              # CHANGE as demanded, so the suite never went red).
+                              # Suite re-verified 53/53 green in the project venv.
+                              # §6.4 R-3 (ceiling strip) was ALSO implemented by
+                              # engineering bilaterally — it was never on this
+                              # graph, cost the path nothing, and is recorded
+                              # here only as evidence the admission bar works:
+                              # defects gate, polish flows bilaterally. R-4 stays
+                              # off-graph as deferred polish (design consents).
+                              # Sole agent-schedulable pre-push work remaining:
+                              # release-audit's browser-render half (design,
+                              # scheduled this round per design's round-2 deal).
+                              # round-4: design EXECUTED the browser-render half
+                              # as committed — per-check-ID results citable in
+                              # design states.md §6.5 (M-UX-01 PASS, M-UX-03
+                              # FAIL, M-DOC-01 PASS, M-UX-02 pending human).
+                              # The render surfaced TWO defects invisible to the
+                              # green suite: R-8 (gradio serializes untouched
+                              # gr.Number(value=None) fields as literal 0, so
+                              # the no-imputation blocking rule is VOID in a
+                              # real browser — a verdict computes from 12
+                              # never-entered scores) and R-9 (MP-1 probability
+                              # token illegible in dark theme; 0→1 banner not
+                              # scroll-persistent = the M-UX-03 FAIL). Both
+                              # admitted this revision under the SAME bar as
+                              # R-1/R-2: defects against admitted commitments
+                              # (delta (d) 'unfilled factors block computation';
+                              # Spine 'honest by construction', 'intervals
+                              # shown always', '0→1 banner permanent'), zero
+                              # elapsed-path cost parallel to the human gates.
+                              # New nodes: imputation-blocking-fix (blocks
+                              # pilot-live, like custody-nudge-fix) and
+                              # verdict-legibility-fix (blocks release-audit —
+                              # the audit factually cannot pass with M-UX-03
+                              # failing). NOT new scope: no behavior is added,
+                              # committed behavior is made true in the served
+                              # UI. Suite re-verified 54/54 green that round
+                              # (compliance added T-CEIL-03); pinned counts
+                              # refreshed per compliance's demand.
+                              # round-5: engineering executed imputation-
+                              # blocking-fix the round it was admitted — R-8
+                              # fixed by REMOVING gr.Number from the path
+                              # (factor inputs are Textboxes; untouched fields
+                              # submit "", screened by _coerce_raw/
+                              # _screen_factors; explicit 0 still scores) and
+                              # landed WITH T-SER-01 in the same change,
+                              # red-first demonstrated, exactly as this
+                              # graph's pairing constraint required. Node
+                              # marked done (code-verified this round:
+                              # Textbox path + tests present; suite 56/56
+                              # green, 1.49s, sequencing's own re-run in the
+                              # project venv). verdict-legibility-fix landed
+                              # HALF: the R-9 text-color half is in (every
+                              # forced-light block forces color, T-THEME-01
+                              # green) but the M-UX-03 half — str.banner.01
+                              # scroll-persistent — is NOT (verified: no
+                              # position:sticky in app.py; BANNER_HTML
+                              # unchanged), so the node stays ready with the
+                              # sticky-banner residue and release-audit
+                              # remains blocked on it (M-UX-03 FAIL row
+                              # stands). M-UX-02 (timed fresh-user run, gtm
+                              # witnessing) is now SCHEDULABLE — its explicit
+                              # R-8 dependency (gtm's demand, accepted:
+                              # timing a user against a form that fabricates
+                              # zeros measures the bug, not the design) is
+                              # satisfied; schedule promptly, ideally in the
+                              # same window as browser render session 2
+                              # (design), which verifies R-8/R-9 behavioral
+                              # acceptance and re-checks M-UX-03 once the
+                              # sticky half lands.
+                              # round-6: design EXECUTED browser render
+                              # session 2 (states.md §6.7, dated append-only
+                              # per-check-ID rows, dark theme forced).
+                              # imputation-blocking-fix is now done AND
+                              # browser-verified: all four R-8 acceptance
+                              # checks PASS live — that node's loop is fully
+                              # closed. verdict-legibility-fix stays OPEN
+                              # with widened remaining scope: M-UX-03 sticky
+                              # banner STILL unlanded (re-verified round 6:
+                              # no position:sticky in app.py; §6.7 computed
+                              # position: static), AND the R-9 half
+                              # under-reached in the browser — residual R-9b:
+                              # gradio 6.26's `.prose * { color: var(
+                              # --body-text-color) }` re-colors nested
+                              # elements, so the S3/S4 headline, MP-1 token,
+                              # runner-up chip, and S1/S2 placeholder inner
+                              # divs compute near-invisible in served dark
+                              # theme while T-THEME-01 stays green. R-9b is
+                              # a residual of an admitted defect on a
+                              # still-open node — NOT new scope, NOT a new
+                              # node; the admission bar is untouched. Fix
+                              # must land WITH a strengthened T-THEME-01 in
+                              # the same change (standing pairing
+                              # discipline). Release-audit consequence: a
+                              # render session 3 is now required — it exists
+                              # only because the node shipped half-done;
+                              # engineering lands BOTH residues first so one
+                              # session closes all remaining agent-checkable
+                              # rows. M-UX-02 SCHEDULED (session 2 confirmed
+                              # R-8): gtm witnesses, LIGHT theme until R-9b
+                              # lands (design's rider, accepted). Compliance
+                              # bookkeeping on release-audit: P-10 CLEARED,
+                              # P-5 STILL BLOCKING, P-6 rides D1/D2.
+                              # Decisions SLA report (demanded): as of
+                              # 2026-08-31 D1-D6 all pending, SLA expires
+                              # 2026-09-01 — no resolution yet, no source to
+                              # report; sequencing reports Hari-vs-
+                              # adjudication and verifies on_resolution_
+                              # notify covenants fired, in the resolution
+                              # round. Suite re-verified 56/56 green (1.28s,
+                              # project venv, own re-run).
+                              # round-7: engineering landed BOTH verdict-
+                              # legibility residues in one change-set, as
+                              # demanded — sequencing verified every piece
+                              # directly (own greps + own suite run): R-9b
+                              # inline colors on every nested element (app.py
+                              # 181/198 headline divs carry color:#1c1917;
+                              # ~30 inline color declarations) WITH render-
+                              # level T-THEME-01b (test_packaging.py:390)
+                              # same change; M-UX-03 sticky banner
+                              # (#pwpm-banner position:sticky via elem_id +
+                              # Blocks _CSS, app.py:744/766 — on the
+                              # component wrapper, correctly) WITH
+                              # T-BANNER-01 (:453). Suite 58/58 green
+                              # (1.15s, project venv, own re-run). Node
+                              # marked EXECUTED (engineering's half done);
+                              # flips to done only on render session 3
+                              # re-checking the two standing SS6.7 FAIL rows
+                              # — no-flip-past-a-FAIL-row rule + P-11, same
+                              # bracket structure R-8 rode. Session 3 is
+                              # TRIGGERED (its precondition — both residues
+                              # landed — verified) and should run THIS
+                              # window; scope exactly the two FAIL rows.
+                              # M-UX-02 SLOTTED: this window, 2026-09-01 at
+                              # latest, gtm witnessing, light theme until
+                              # session 3 confirms R-9b. Compliance
+                              # bookkeeping registered: P-11 BLOCKING with
+                              # fix+guard clauses satisfied (clears on
+                              # session-3 PASS alone); P-5 clears with the
+                              # M-UX-03 re-check; status lines read 'F-28
+                              # browser-confirmed, F-29 partial (R-9b)'
+                              # until session 3. Decisions SLA: D1-D6 all
+                              # pending (verified in decisions.yml today,
+                              # 2026-08-31); SLA expires tomorrow
+                              # 2026-09-01; no resolution, no source to
+                              # report yet. Engineering's queue was EMPTY —
+                              # the only agent-workable item left was
+                              # design's session 3.
+                              # round-8: design EXECUTED browser render
+                              # session 3 at its trigger (states.md §6.9,
+                              # 2026-08-31, dark theme forced, per-check-ID
+                              # append-only; do-not-start-early honored —
+                              # design repo-verified both residues + ran the
+                              # suite 58/58 before starting). Sequencing
+                              # verified §6.9 directly this round and re-ran
+                              # the suite: 58/58 green (3.11s, project venv,
+                              # own run). verdict-legibility-fix is now
+                              # HALF-CLOSED, split honestly: (a) R-9b half
+                              # CLOSED browser-verified — every §6.7-
+                              # enumerated surface computes legible ink in
+                              # served dark theme (S3 headline + MP-1 token,
+                              # runner-up chip, S4 headline/body, S1/S2
+                              # placeholders, stale notice, S5/Stop-5
+                              # whole-screen rider) — P-11's session-3
+                              # clause satisfied, F-29 flips on the §6.9
+                              # citation; (b) M-UX-03 half stays OPEN with a
+                              # THIRD standing FAIL row, in its cheapest
+                              # state ever: computed position IS
+                              # sticky/top:0/z:100 (rule applied) but
+                              # .gradio-container-6-26-0 computes
+                              # overflow:hidden while the document is the
+                              # scroller, so sticky is structurally inert —
+                              # FOURTH green-guard/browser-false instance
+                              # (rule-applied vs rule-effective, one layer
+                              # below R-9b). Engineering's queue is NOT
+                              # empty: one owed item — their own round-6
+                              # pre-committed position:fixed fallback on
+                              # exactly this evidence (clipping ancestor
+                              # named, fixed-viability confirmed: zero
+                              # transform/filter/contain ancestors), landed
+                              # WITH T-BANNER-01 updated in the SAME change
+                              # (pin the fixed rule; docstring the
+                              # rule-applied-vs-rule-effective lesson) and
+                              # reserved banner height so fixed doesn't
+                              # overlap the mode toggle. Verified this
+                              # round: app.py:744 still position:sticky —
+                              # the fallback is NOT yet landed. Render
+                              # session 4 then exists, scoped to exactly ONE
+                              # check (banner rect in viewport at scrollY
+                              # 1500) — minutes, the narrowest bracket this
+                              # audit has needed, the LAST if it passes.
+                              # M-UX-02: light-theme rider LIFTED (§6.9
+                              # conclusion 4) — ZERO remaining dependencies,
+                              # independent of session 4; gtm's witness is
+                              # standing/first-slot-pre-accepted, so run it
+                              # THIS window, do not serialize behind the
+                              # banner fix. Design's new minor R-12 (S5
+                              # emphasis order) stays OFF-graph on R-4 terms
+                              # (legible, honest, polish class). Decisions
+                              # SLA: today 2026-08-31 is the FINAL day of
+                              # the human window (D1-D6 verified pending in
+                              # decisions.yml today); no agent touches D1-D6
+                              # today; at tomorrow's 2026-09-01 expiry,
+                              # same-day AI adjudication with every
+                              # on_resolution_notify covenant firing in the
+                              # resolution round; sequencing's packet names
+                              # the source (Hari vs adjudication) per entry.
+                              # round-9: engineering PAID both owed items in
+                              # one round and sequencing verified every piece
+                              # directly (own greps + own suite run, never on
+                              # another leaf's word): (a) M-UX-03 fallback
+                              # LANDED per the pre-agreed contract (§5.13 /
+                              # spec §22b) — app.py:769 now reads
+                              # `#pwpm-banner { position: fixed; top: 0;
+                              # left: 0; right: 0; z-index: 100 }`, height
+                              # reserved by BANNER_SPACER_HTML placed FIRST
+                              # in the layout (app.py:787) and toggling with
+                              # the banner in on_mode_change (app.py:725,
+                              # outputs at :890), T-BANNER-01 REWRITTEN in
+                              # the same change to pin fixed+spacer+wiring
+                              # (test_packaging.py:456, red-first by
+                              # construction against the prior sticky rule,
+                              # docstring carries the rule-applied-vs-
+                              # rule-effective lesson) — pairing discipline
+                              # honored a seventh time; (b) the R-10 copy
+                              # mint executed WHOLE across the two seats in
+                              # one coordinated change: design's canonical
+                              # leaves/design/strings.py landing (round 8) +
+                              # engineering's byte-identical re-vendor
+                              # (cmp: IDENTICAL, verified this round) + _one
+                              # singular wiring + example_cta routing +
+                              # T-STR-01 added (test_packaging.py:507) —
+                              # T-VEND-01's mid-flow red-then-green is the
+                              # vendoring guard's FIRST LIVE CATCH, closed
+                              # in the documented direction; design's
+                              # "half-executed" encoding request is thereby
+                              # RESOLVED BY EVENTS, both halves done. Suite
+                              # 59/59 green (1.49s, project venv, own run) —
+                              # pin refreshed from 58 per compliance's own
+                              # conditional ("until the fallback change
+                              # moves it"; it moved). Engineering's queue is
+                              # EMPTY again — verified, not taken on their
+                              # word. Remaining agent tail: render session 4
+                              # (ONE check, banner rect in viewport at
+                              # scrollY 1500, minutes — design, THIS round)
+                              # and M-UX-02, whose slot sequencing NAMES per
+                              # gtm's first-slot-pre-accepted standing
+                              # availability: THIS window, today 2026-08-31
+                              # (2026-09-01 fallback inside gtm's own
+                              # bound), Hari recruits, gtm witnesses,
+                              # design times, either theme. P-11 CLEARED r8
+                              # (retained §7 as permanent regression gate);
+                              # F-29 browser-confirmed; P-5 clears ONLY on
+                              # session 4's single-check PASS. Decisions
+                              # SLA: D1-D6 verified STILL PENDING today
+                              # (final human-window day, re-checked this
+                              # round); tomorrow 2026-09-01 the SLA
+                              # executes — same-day AI adjudication for
+                              # whatever Hari leaves, written traced
+                              # rationales, override window ends 2026-09-02,
+                              # every on_resolution_notify covenant fires in
+                              # the resolution round BEFORE G-D1D2 lifts,
+                              # and (decisions' round-8 wiring, accepted)
+                              # sequencing's resolution-round packet now
+                              # verifies the per-entry resolution_source
+                              # field (hari | ai_adjudication) on every
+                              # resolved entry — a record lacking it does
+                              # NOT lift G-D1D2.
+                              # round-10: design ran render session 4 the
+                              # round its trigger fired — sequencing
+                              # verified the record from its own seat
+                              # (states.md §6.11 read this round: single
+                              # check PASS, banner rect top 0 / bottom 77.2
+                              # fully in the 792px viewport at scrollY 1500,
+                              # computed position:fixed; height-reservation
+                              # and opacity riders PASS; both R-10 honesty
+                              # fixes confirmed ON SCREEN). Suite 59/59
+                              # re-verified (1.29s, project venv, own run).
+                              # verdict-legibility-fix therefore flips to
+                              # DONE — on the browser PASS row, exactly the
+                              # one condition the no-flip rule named, never
+                              # on the rewritten green guard. The RENDER-
+                              # SESSION LEDGER IS CLOSED: sessions 1-4
+                              # executed, no session 5 exists, a new session
+                              # triggers only if copy or layout changes
+                              # land. NOTE the record is §6.11, not §6.10 —
+                              # round-8/9 references to "§6.10" were packet
+                              # lag; §6.10 is the R-10 mint record, exactly
+                              # as design's standing commitment pre-stated.
+                              # F-19/P-5: the single flip condition is
+                              # SATISFIED on the §6.11 row; compliance
+                              # registers the flip this round per its own
+                              # §22b acceptance clause (bookkeeping, not a
+                              # new gate — the graph does not wait on
+                              # paperwork for a browser-verified fact).
+                              # Release-audit's agent-checkable tail is now
+                              # EXACTLY ONE NODE: M-UX-02, slot NAMED per
+                              # gtm's dated commitment (launch-copy.md 1c-i,
+                              # verified this round): TODAY 2026-08-31,
+                              # first sitting design opens, gtm witness
+                              # pre-committed, rolling to the FIRST HOUR of
+                              # 2026-09-01 as the hard inside-window
+                              # backstop. Zero agent code changes owed
+                              # anywhere; engineering/design/architecture
+                              # queues all EMPTY (verified). Decisions SLA
+                              # unchanged and at trigger: D1-D6 re-verified
+                              # pending today (six pending statuses in
+                              # decisions.yml, own grep); tomorrow's
+                              # resolution round executes as pre-wired with
+                              # the per-entry resolution_source check.
+                              # round-11: bookkeeping convergence, zero new
+                              # work — every round-10 register verified in
+                              # the owning leaf's file from this seat:
+                              # (a) compliance's matrix read directly —
+                              # F-19 VERIFIED browser-confirmed, P-5
+                              # CLEARED (retained traceability §7 as a
+                              # permanent regression gate: T-BANNER-01
+                              # green at every push, any banner rule or
+                              # layout change retriggers a render
+                              # session), ZERO open browser-refutations,
+                              # ledger registered CLOSED — matrix and
+                              # graph price the same reality; (b)
+                              # architecture's §5.13 round-10 STATUS read
+                              # directly — FULLY CLOSED, both halves
+                              # verified by their owning instruments,
+                              # watch list EMPTY: second independent
+                              # confirmation of the terminal state, and
+                              # their §5.4 note encoded — D1/D2
+                              # resolution is YAML-plus-regeneration with
+                              # ZERO code motion, so tomorrow's
+                              # resolution round proceeds in any order
+                              # with no boundary review owed; (c) gtm's
+                              # 1c-i read directly — banner-in-frame gate
+                              # LIFTED r10 per the per-line protocol,
+                              # ZERO demo gates or workarounds remain,
+                              # M-UX-02 slot LIVE today 2026-08-31
+                              # (witness all day, hard backstop first
+                              # hour of 2026-09-01, witness-record format
+                              # pre-staged: start/end/elapsed/theme vs
+                              # 5:00); (d) Hari's two human obligations
+                              # surfaced in ONE place per gtm's ask:
+                              # (i) TODAY recruit the fresh user for the
+                              # M-UX-02 sitting; (ii) by TOMORROW resolve
+                              # D1-D6 or same-day AI adjudication
+                              # executes (override window ends
+                              # 2026-09-02); (e) decisions' T-minus-one
+                              # checklist on the record: tomorrow's
+                              # packet reports PER ENTRY which of D1-D6
+                              # were hari-resolved vs ai_adjudicated,
+                              # that each record carries
+                              # resolution_source, and that every
+                              # on_resolution_notify covenant fired —
+                              # BEFORE G-D1D2 lifts; compliance's
+                              # T-M0-01/T-PAR/T-FRAG regeneration fires
+                              # the same round, provenance line per
+                              # constant, before any push on new values.
+                              # Fresh pins: suite 59/59 (1.36s, project
+                              # venv, own run); decisions.yml six pending
+                              # (own grep, final human-window day); no
+                              # M-UX-02 record in states.md yet — the
+                              # sitting has NOT convened as of this
+                              # revision; the agent tail remains exactly
+                              # one node.
+                              # round-12: three demands encoded, each
+                              # verified in the owning leaf's file from
+                              # this seat before encoding. (a) BACKSTOP-
+                              # COLLISION ORDERING (gtm's ask, matching
+                              # gtm's own 1c-i line): if M-UX-02 slips to
+                              # the first hour of 2026-09-01, the sitting
+                              # convenes BEFORE the D1-D6 resolution
+                              # round executes — the fresh user's
+                              # blank-to-verdict run is not contaminated
+                              # by SLA noise and the record still lands
+                              # inside the ≤2026-09-01 window; the
+                              # resolution round is same-day, not
+                              # first-hour, so this ordering costs the
+                              # SLA nothing. (b) DESIGN §6.12 ENCODED
+                              # (read directly): the render-session
+                              # ledger's retrigger clause is explicitly
+                              # BIDIRECTIONAL — any landed banner/spacer/
+                              # forced-background/positioning/overflow
+                              # rule change in app.py retriggers a scoped
+                              # session even with all static pins green
+                              # (green pins verify rule-applied, only a
+                              # browser session verifies rule-effective);
+                              # M-UX-02's node state is DESIGN-READY,
+                              # HUMAN-GATED: WITNESS + RECRUIT, with the
+                              # §6.12 protocol as the node's acceptance
+                              # definition: one blank-to-verdict 1→N run,
+                              # fresh user, clock from S1 first paint to
+                              # first verdict render, bound 5:00, either
+                              # theme, both seats' numbers in one dated
+                              # per-check line. (c) GTM ROUND-11 TERMINAL
+                              # STATE encoded (read in 1c-i): witness
+                              # stood by through end of the named day,
+                              # witness record pre-staged VERBATIM (six
+                              # fields incl. design's same-sitting timer
+                              # reading and the coaching-given line), NO
+                              # timer record received as of round 12 —
+                              # if the backstop hour passes recordless,
+                              # the graph carries M-UX-02 as
+                              # MISSED-WINDOW (dated fact) and SC-06
+                              # stays "designed so", never perpetually
+                              # imminent. (d) COMPLIANCE PACKET-LAG
+                              # CLOSED: their flip demand was executed in
+                              # their ROUND 10 entry (F-19 VERIFIED, P-5
+                              # CLEARED); their round-11 entry states it
+                              # explicitly — no phantom open clause in
+                              # either instrument. Resolution-round
+                              # sequence held unchanged at T-minus-zero:
+                              # per-entry resolution_source verified
+                              # BEFORE G-D1D2 lifts; compliance
+                              # regeneration same round, provenance line
+                              # per constant, before any push. Fresh
+                              # pins: suite 59/59 (1.35s, project venv,
+                              # own run); decisions.yml six pending (own
+                              # grep); no M-UX-02 record in states.md
+                              # (own check) — sitting NOT convened as of
+                              # this revision.
+                              # round-13: encoding only, no new work. Both
+                              # of M-UX-02's resolution instruments are now
+                              # pre-registered on this graph, verified from
+                              # this seat in the owning files before
+                              # encoding: FLIP instrument = gtm's six-field
+                              # 1c-i witness record + design's §6.12 dated
+                              # per-check line (both seats' numbers); MISS
+                              # instrument = gtm's pre-committed dated 1c-i
+                              # line ("M-UX-02 window closed [date/time], no
+                              # sitting convened, no record exists"),
+                              # mirrored by design's appended "designed so,
+                              # not yet timed". The node therefore ends the
+                              # window on ONE OF EXACTLY TWO DATED ROWS,
+                              # never perpetually imminent; SC-06 stays
+                              # "designed so" on the miss branch. The
+                              # MISSED-WINDOW flip is evidence-keyed: it
+                              # fires on gtm's dated line and on NOTHING
+                              # else, never on inference from silence.
+                              # Rider (this seat's honesty condition, stated
+                              # openly): if the backstop hour passes with
+                              # neither row landed, the node does not flip
+                              # AND does not stay "imminent" — it reads
+                              # WINDOW ELAPSED — AWAITING GTM'S DATED LINE,
+                              # itself dated from this seat's own clock
+                              # check, since an elapsed clock is an
+                              # observation, not an inference; only the miss
+                              # VERDICT waits on gtm's row. Backstop-
+                              # collision ordering re-affirmed unchanged
+                              # (sitting BEFORE the D1-D6 resolution round;
+                              # zero SLA cost), with Hari's fresh-user
+                              # recruit held at the TOP of tomorrow's
+                              # resolution-round packet as the single act
+                              # deciding which branch is recorded.
+                              # Resolution-round ordering held verbatim:
+                              # per-entry resolution_source verified before
+                              # G-D1D2 lifts, compliance's T-M0-01/T-PAR/
+                              # T-FRAG regeneration same round with a
+                              # provenance line per constant, before any
+                              # push. Fresh pins, own runs: suite 59/59
+                              # (1.25s, project venv); decisions.yml six
+                              # pending (own grep); states.md still carries
+                              # NO M-UX-02 timer line; local clock at
+                              # encoding 2026-08-31 20:09 — roughly four
+                              # hours of the named day remain.
+                              # round-14: the round a board that had declared
+                              # itself terminal turned out to be carrying an
+                              # undeclared node — and the graph took it, after
+                              # reproducing it rather than encoding it on the
+                              # reporter's word. (a) NEW NODE venv-install-
+                              # drift-fix (A-13-01): a third, non-editable
+                              # copy of the package in .venv/ has drifted from
+                              # the copy authority at line 79, binding is
+                              # sys.path-decided, and T-VEND-01 does not catch
+                              # it — a pytest run from /tmp returns 60 passed
+                              # with that test included. Owner engineering,
+                              # INFORMS edge only: three non-gating
+                              # determinations tested this round, including
+                              # the correction that `python app.py` binds the
+                              # in-repo copy from ANY cwd (sys.path[0] is the
+                              # SCRIPT's directory), which disconfirms the
+                              # launch-directory premise the demand rested on.
+                              # Architecture's queue is NOT empty; the r11
+                              # "watch list EMPTY" encoding is superseded, and
+                              # r13's "zero agent code changes owed anywhere"
+                              # is RETRACTED. (b) M-UX-02 SPLIT into a (1→N,
+                              # instrumented) and b (0→1, no instrument, no
+                              # sitting) — compliance's self-reported scope
+                              # defect, verified in all three files; the
+                              # b-node is OPEN but NON-GATING, because an
+                              # uninstrumented unscheduled node does not
+                              # acquire a blocks-edge by being true. No state
+                              # exists in which tomorrow's sitting closes the
+                              # board. (c) MISSED-WINDOW = EXPIRED SLOT, re-
+                              # openable by a NEWLY SCHEDULED dated sitting —
+                              # never "tested and lost", and never re-entering
+                              # the Ready-Now queue on standing hope alone.
+                              # (d) DEFERRAL BOUNDARY stated: the first-hour
+                              # sitting is the ONLY event that defers the
+                              # D1-D6 round. Pins refreshed, own runs: 60/60
+                              # (1.22s) — 59/59 SUPERSEDED, T-NEG-07 landed;
+                              # six pending; no M-UX-02 timer line in
+                              # states.md; gradio>=6.0,<7 verified in both
+                              # dependency files; clock 2026-08-31 20:14.
+                              # round-15: (a) venv-install-drift-fix (A-13-01)
+                              # is DONE — closed on the condition this graph
+                              # named and on my OWN re-run of the off-root
+                              # reproduction, not on three seats' reports:
+                              # direct_url.json {"dir_info": {"editable":
+                              # true}}, site-packages/pairwisepm/ GONE, /tmp
+                              # import binds the repo copy with the CTA key
+                              # present and default_config_dir() → repo
+                              # configs/, and T-VEND-02/03/04 exist by name.
+                              # The agent-checkable board is EMPTY again and
+                              # the emptiness is TESTED from off-root, which
+                              # it never was in r9-r13. Elapsed-path cost of
+                              # the whole episode: ZERO, as the informs edge
+                              # priced it. (b) M-UX-02a's outcome space is
+                              # THREE dated branches, not two (compliance's
+                              # demand — a correction to MY r13/r14 encoding,
+                              # which collapsed PASS/FAIL and priced only the
+                              # miss): PASS, MEASURED-TARGET-MISSED
+                              # (measured-FAILED (1→N), first-class, never a
+                              # reversion to manual-pending or "designed
+                              # so"), WINDOW CLOSED (expired slot). (c) A
+                              # VOIDED run routes to WINDOW CLOSED with the
+                              # cause named on the row — never to
+                              # MEASURED-TARGET-MISSED, which asserts a number
+                              # was taken, and never as a fourth node state
+                              # (gtm's demand, accepted; the specific launch-
+                              # environment void is unreachable as of (a), so
+                              # this is a routing rule for the class, not a
+                              # live hazard). (d) D8 encoded with SLA
+                              # 2026-09-02 and its self-applied NON-DEFERRAL
+                              # clause: D8 does not gate G-D1D2 and does not
+                              # defer/pause/reopen the D1-D6 round; if pending
+                              # when the round executes, the round executes
+                              # anyway. M-UX-02b's state follows D8's ruling
+                              # rather than a graph label — and D8's existence
+                              # does NOT make M-UX-02b gating. (e) Pre-push
+                              # gates P-12 and P-13 added to release-audit;
+                              # suite pin 65/65, own runs 2026-08-31 20:26:
+                              # 1.48s from the repo root AND 1.26s from /tmp.
+                              # (f) Dispute B3 RESOLVED — architecture's file
+                              # never carried the over-broad generalisation
+                              # their demand did (§5.14 states plainly that
+                              # under `python app.py` from the repo root there
+                              # is no user-visible defect), and the underlying
+                              # condition is fixed either way.
+
+nodes:
+  # ── Foundation (done this build run) ─────────────────────────────────────
+  - id: spine-authored
+    title: Author the Spine (immutable customer narrative)
+    discipline: architecture
+    effort: 0.5pd
+    spine_commitment: "Traceability Anchor — every Leaf maps back to this page"
+    slices: [MVP1]
+    status: done
+    completed_in: build-run-2026-08-30
+    user_visible: false
+
+  - id: tech-spec-locked
+    title: Lock the technical contract (docs/technical-spec.md)
+    discipline: architecture
+    effort: 1pd
+    spine_commitment: "Solution Direction — mechanical judge, weights and a bias term, no LLM at runtime"
+    slices: [MVP1]
+    status: done
+    completed_in: build-run-2026-08-30
+    user_visible: false
+
+  # ── MVP1: engine ─────────────────────────────────────────────────────────
+  - id: factor-configs
+    title: Factor schema config files, one per mode (1→N, 0→1), with prior weights, signs, lever|fact tags, rationales, seed distributions
+    discipline: engineering
+    effort: 1pd
+    spine_commitment: "Scope In — two modes with GenAI-specific factor sets; priors are stated, editable policy"
+    slices: [MVP1]
+    status: done
+    completed_in: build-run-2026-08-30
+    user_visible: false
+    notes: Built on D1/D2 proposed defaults; weights are config, not code.
+
+  - id: engine-m0
+    title: "M0 scorer: z-scoring vs. accumulated log (seed dists until log grows), delta d = z_A − z_B, p = σ(wᵀd), zero intercept for symmetry"
+    discipline: engineering
+    effort: 2pd
+    spine_commitment: "Solution Direction — applies the PM's own policy more consistently than the PM can"
+    slices: [MVP1]
+    status: done
+    completed_in: build-run-2026-08-30
+    user_visible: false
+
+  - id: engine-bootstrap
+    title: Bootstrap over factors → interval on win probability; straddles-50% ⇒ "too close to call"
+    discipline: engineering
+    effort: 1pd
+    spine_commitment: "Success Metrics — intervals shown always, 'too close to call' when interval straddles 50%"
+    slices: [MVP1]
+    status: done
+    completed_in: build-run-2026-08-30
+    user_visible: false
+
+  - id: engine-m1
+    title: "M1 code: ridge logistic Bradley-Terry on factor deltas, shrinkage centered on M0 prior weights, MAP regularization, free-intercept diagnostic, equal-weight ablation toggle"
+    discipline: engineering
+    effort: 2pd
+    spine_commitment: "Success Metrics — model-of-the-judge activates from the user's own log by roughly decision 10"
+    slices: [MVP1]
+    status: done
+    completed_in: build-run-2026-08-30
+    user_visible: false
+    notes: Code complete and tested on synthetic logs; ACTIVATION is a separate post-build node (m1-activation) gated on ~10 real logged decisions.
+
+  - id: decision-log
+    title: "JSONL decision log: schema (raw + z vectors, evaluative inputs, pick, M0/M1 p + interval, override rationale, null outcome slot), local read/write, download/upload"
+    discipline: engineering
+    effort: 1.5pd
+    spine_commitment: "Scope In — decision log (JSONL, downloadable); no server-side storage of any user data"
+    slices: [MVP1]
+    status: done
+    completed_in: build-run-2026-08-30
+    user_visible: true
+
+  - id: metrics-zeta-brier
+    title: "ζ (Kendall consistency from circular triads) and Brier score computed from the log; reliability curve when n permits"
+    discipline: engineering
+    effort: 1pd
+    spine_commitment: "Success Metrics — ζ and Brier accumulate from decision 1"
+    slices: [MVP1]
+    status: done
+    completed_in: build-run-2026-08-30
+    user_visible: true
+
+  - id: leverage-panel
+    title: "Leverage panel: per-factor w_j·d_j bars, path-to-parity in raw units, lever/fact filter ('loses on fundamentals'), fragility flag"
+    discipline: engineering
+    effort: 2pd
+    spine_commitment: "Scope In — leverage panel: path to parity, lever-vs-fact filter, fragility flag"
+    slices: [MVP1]
+    status: done
+    completed_in: build-run-2026-08-30
+    user_visible: true
+
+  # ── MVP1: experience ─────────────────────────────────────────────────────
+  - id: design-spec
+    title: "Design Leaf: one-screen questionnaire, verdict card, mode toggle, 0→1 permanent banner, audit view layouts"
+    discipline: design
+    effort: 1.5pd
+    spine_commitment: "Solution Direction — one questionnaire, one screen, one sitting"
+    slices: [MVP1]
+    status: done
+    completed_in: build-run-2026-08-30
+    user_visible: true
+
+  - id: gradio-ui
+    title: "Gradio app.py: both ideas on one screen, mode toggle, verdict card with interval, Ceiling-flag routing, evaluative inputs displayed-not-scored, log download/upload"
+    discipline: engineering
+    effort: 3pd
+    spine_commitment: "Success Metrics — blank questionnaire to verdict card in under 5 minutes"
+    slices: [MVP1]
+    status: done
+    completed_in: build-run-2026-08-30
+    user_visible: true
+
+  - id: audit-view
+    title: "Audit view: ζ meter, Brier, M1-vs-M0 weight divergence ('revealed vs. stated policy'), free-intercept order-bias diagnostic, ablation toggle"
+    discipline: engineering
+    effort: 1.5pd
+    spine_commitment: "Solution Direction — it removes the Tuesdays; §4 honesty rules"
+    slices: [MVP1]
+    status: done
+    completed_in: build-run-2026-08-30
+    user_visible: true
+
+  - id: tests-green
+    title: "Test suite green: executable pytest suite in tests/ implementing compliance's test_engine_spec.md (symmetry, too-close, lever/fact, ceiling, M1 shrinkage, log round-trip, negative tests T-NEG-01..06)"
+    discipline: engineering
+    effort: 2pd
+    spine_commitment: "Scope Boundaries — every Leaf preserves the refusal; honesty rules are testable"
+    slices: [MVP1]
+    status: done
+    completed_in: integration-2026-08-30
+    user_visible: false
+    notes: >
+      RESOLVED at integration (ownership gap assigned to integrator, who
+      implemented): tests/test_engine.py (45 engine tests incl. T-NEG-01..04 +
+      T-FPR config_fingerprint) and tests/test_packaging.py (T-PKG + T-NEG-06,
+      6 tests) — 51/51 green in a clean venv (python 3.11, numpy/pyyaml/pytest
+      + gradio 6.26.0; zero skips). tests/test_engine_spec.md deviation
+      register updated (DV-1/DV-2/DV-4/DV-10 resolved).
+
+  - id: packaging
+    title: "pairwisepm/ pip-installable package layout, pyproject.toml, requirements.txt, HF Space README with YAML header"
+    discipline: engineering
+    effort: 1pd
+    spine_commitment: "Scope In — Hugging Face Gradio Space plus pip-installable repo"
+    slices: [MVP1, Pilot, GA]
+    status: done
+    completed_in: integration-2026-08-30
+    user_visible: true
+    notes: >
+      RESOLVED at integration: pyproject.toml (hatchling, pairwisepm 0.1.0,
+      configs/ force-included in the wheel, gradio as [app] extra) and
+      repo-root README with HF YAML header (sdk: gradio, app_file: app.py,
+      sdk_version: 6.26.0 — the version the app was actually verified under
+      locally; confirm against the Space image at space-smoke-test) both ship
+      and are pinned by tests/test_packaging.py. Constraints honored: package
+      pairwisepm v0.1.0, configs/ next to pairwisepm/, module-level `demo`.
+
+  - id: readme-epistemics
+    title: "README epistemics copy: priors are a stated editable policy; 0→1 claims no accuracy; 'the LLM's job was at build time' (spec §7 — asserted as substrings by compliance T-PKG-02)"
+    discipline: gtm
+    effort: 0.5pd
+    spine_commitment: "Scope Boundaries — a judge that overstates its confidence is worse than no judge"
+    slices: [MVP1, Pilot]
+    status: done
+    completed_in: integration-2026-08-30
+    user_visible: true
+    notes: >
+      CORRECTED in exchange round: previously marked done, but no repo-root
+      README exists. GTM shipped the guided tour (leaves/gtm/tour.html) and the
+      canonical seed comparison, not the README. Compliance requires exact
+      wording agreed between gtm and compliance before tests pin it; design
+      asks that str.banner.01, str.empty.privacy, and str.disagree.* be quoted
+      verbatim, not paraphrased. Combines with the packaging node's HF YAML
+      header into one physical README file.
+      RESOLVED: README.md exists (gtm-authored in the exchange round, verified
+      at integration); the three spec-§7 epistemics statements are asserted by
+      tests/test_packaging.py::test_readme_epistemics_substrings (green).
+
+  - id: gtm-positioning
+    title: "GTM Leaf: positioning vs. RICE/ICE/WSJF, pilot-PM recruitment note, launch copy for Space + PyPI"
+    discipline: gtm
+    effort: 1pd
+    spine_commitment: "The Problem — scorecards multiply soft guesses into false-precision totals"
+    slices: [Pilot, GA]
+    status: done
+    completed_in: build-run-2026-08-30
+    user_visible: false
+
+  - id: traceability-matrix
+    title: "Compliance Leaf: traceability matrix (every Leaf element → Spine commitment), refusal checklist (no runtime LLM, no server storage, no forced winner, no 0→1 accuracy claim)"
+    discipline: compliance
+    effort: 1pd
+    spine_commitment: "Traceability Anchor — the Compliance Leaf holds the matrix"
+    slices: [MVP1, Pilot, GA]
+    status: done
+    completed_in: build-run-2026-08-30
+    user_visible: false
+
+  - id: mvp1-complete
+    title: "MILESTONE — MVP1: local engine + UI + tests green"
+    discipline: sequencing
+    effort: 0pd
+    spine_commitment: "Success Metrics — runs entirely offline after download"
+    slices: [MVP1]
+    status: done
+    completed_in: integration-2026-08-30
+    blocked_on: [tests-green, packaging, readme-epistemics]
+    user_visible: true
+    notes: >
+      DONE at integration 2026-08-30: all three finishing items landed
+      (51-test suite green in a clean venv, pyproject + HF README header,
+      README epistemics pinned by test). app.py verified importable with a
+      module-level gr.Blocks demo under gradio 6.26.0; the canonical seed
+      demo reproduces exactly (59% (52-64%), too-close variant 55% (47-62%)).
+
+  # ── Post-build, human-gated → Pilot ──────────────────────────────────────
+  - id: d1-d2-resolution
+    title: "Hari resolves D1 (1→N prior magnitudes) and D2 (capability-trajectory weight / gate) — or 2-day SLA triggers AI adjudication per Decisions Leaf"
+    discipline: decisions
+    effort: 0.5pd
+    spine_commitment: "Solution Direction — the model applies the PM's OWN policy; priors are a stated policy"
+    slices: [Pilot]
+    status: ready
+    owner: Hari
+    due: 2026-09-01  # SLA from leaves/decisions/decisions.yml
+    user_visible: false
+    notes: >
+      Blocks space-push, not the code: weights are config. But real decisions
+      should not be logged against unsigned priors — the log z-scores against
+      them and M1 shrinks toward them. If D2 resolves to "gate", engine-m0
+      needs a fast-and-frugal-tree exit added (small, tested change) BEFORE
+      space-push. Per the Decisions Leaf process: if unresolved at SLA expiry
+      (2026-09-01), AI adjudication is due that day with a written traced
+      rationale, then a 24-hour human override window ends 2026-09-02.
+      Compliance registers this same gate as G-D1D2. On resolution, notify
+      compliance (test constants T-M0-01/T-PAR/T-FRAG regenerate) and gtm
+      (tour numbers L=0.345, p=59%, CI recompute if weights change).
+      DEFERRAL BOUNDARY, encoded r14 as a STATED RULE rather than left as an
+      implication of the backstop being first-hour (decisions' demand,
+      accepted — and verified in their file first: decisions.yml lines 20-23
+      state the same boundary): the first-hour M-UX-02a sitting is the ONLY
+      event that defers this resolution round. A sitting that materialises
+      LATER in 2026-09-01, after the hard backstop has passed, lands on
+      release-audit as a LATE RECORD against M-UX-02a and does NOT defer,
+      pause, or reopen this round; neither does an unconvened window, nor any
+      other pending human gate. "A human event is imminent" is exactly the
+      argument that converts a dated SLA into a decision that rots politely,
+      and it is settled here in advance rather than at execution time by
+      whoever speaks last. Note the interaction with the r14 expired-slot
+      encoding on release-audit: M-UX-02a staying RE-OPENABLE after a missed
+      window creates a standing future event — this boundary is what stops
+      that re-openability from ever reading as grounds to hold this round.
+      ── RIDER, r16: "YAML-ONLY" NAMES A FILE, NOT AN EDIT CLASS — TWO
+      CLASSES LIVE IN configs/*.yaml (design's demand, accepted; NON-GATING,
+      defers nothing, moves no node, and does not touch the
+      backstop-collision ordering above). Five seats have read engineering's
+      resolution-round duty as "YAML only, no code motion, no new surface"
+      and have taken the last clause to mean "no rendered surface". In
+      configs/*.yaml those are different statements, and I verified the file
+      shape myself before encoding it rather than mirroring the packet:
+      (A) POLICY/NUMERIC fields — prior_weight, sign, seed_mean, seed_std,
+      transform, plausible_range — are what D1 and D2 are about. They change
+      freely under the resolution record with nothing owed to any other seat
+      beyond the notifications this node already lists.
+      (B) RENDERED-TEXT fields in the SAME files, on NEIGHBOURING LINES:
+      `label` (configs/one_to_n.yaml:15, zero_to_one.yaml:11),
+      factors[].name / .scale / .rationale, flags[].name / .description
+      (zero_to_one.yaml:100-104), evaluative_inputs[].name / .note
+      (:106-114 — including the two "not scored — labeled override input"
+      notes that carry the Spine's excluded-from-score refusal to the
+      screen). An edit to any of these is a COPY change: it fires design's
+      §6.12(b6) retrigger and a per-line notification, and it is the one
+      thing in this round that is not YAML-only in the sense everyone has
+      been using the phrase.
+      WHAT THIS SEAT ADDS, and it is the half that protects the path rather
+      than lengthening it: THE EXPECTED COST OF THIS RIDER IS ZERO, because
+      no option on D1 or D2 as written touches class (B). I read the entries
+      rather than assuming: D1's three options are magnitudes and rankings
+      (decisions.yml:40-43); D2's are ".20 / demote ~.10 / promote to a gate"
+      (:80-83). None mints or moves a rendered string. So the rider is a
+      LABEL on an edit class, not a new precondition — and if a class-(B)
+      edit is ever proposed inside this round, that is evidence the round has
+      drifted past the question D1/D2 actually asked, and it belongs in a
+      decision entry rather than in a config diff. Class (B) does NOT acquire
+      a blocks-edge from this rider; it acquires a NAME, which is what makes
+      an unlabelled state visible instead of expensive.
+      NOTE THE SYMMETRY WITH THE EXCEPTION ALREADY ON THIS BOARD: D2's "gate"
+      option is the FIRST named exception to YAML-only (it modifies
+      engine-m0 — decisions' own LOUD FLAG, and this graph carries it in the
+      notes above as a small tested change BEFORE space-push). Class (B) is
+      the SECOND. Both are exceptions in the same direction: the phrase
+      "YAML only" describes where the bytes land, and twice now it has been
+      read as describing what they cost.
+      ── RIDER, r17: THE POST-WRITE T-VEND-06 RED IS AN EXPECTED, LABELLED
+      STATE INSIDE THIS NODE — NOT A DISCOVERED BLOCKER (architecture's
+      demand, accepted; NON-GATING, adds no edge, defers nothing, moves no
+      date, and does not touch the backstop-collision ordering). I did not
+      encode it on the packet. Verified from this seat at 2026-08-31 20:45,
+      four commands, no repo or venv file mutated:
+      (1) `.venv/lib/python3.11/site-packages/pairwisepm-0.1.0.dist-info/
+      direct_url.json` = {"dir_info": {"editable": true}, "url":
+      "file:///Users/…/ProMgtAI"} — this install is EDITABLE;
+      (2) that same dist-info's RECORD lists `configs/one_to_n.yaml` and
+      `configs/zero_to_one.yaml` with sha256, and `site-packages/configs/`
+      exists with both files present — so the second configs tree was created
+      by THIS editable install, not by some hypothetical future non-editable
+      one;
+      (3) I re-walked T-VEND-06's own algorithm read-only (iterate sys.path,
+      resolve `<entry>/configs`, byte-compare each schema against
+      `<root>/configs`): it finds `checked = 2` real duplicates today and both
+      compare IDENTICAL — so the guard is live on this machine right now, not
+      dormant;
+      (4) `pytest tests/test_vendoring.py` = 6 passed, 0 skipped, 0.03s.
+      CONSEQUENCE, which is stronger than the version every packet including
+      mine has been carrying: the instant class-(A) values are written into
+      configs/*.yaml, those two byte-comparisons stop matching. T-VEND-06 reds
+      on the NEXT suite run after the write, on the install this repo has
+      today, with NO reinstall and no other event required. That is the guard
+      working as designed.
+      HOW IT IS ENCODED, and it is a label rather than a step: the red is a
+      POST-WRITE EXPECTED STATE of this node with a named remedy
+      (refresh-or-remove: `pip install -e .`, or `pip uninstall pairwisepm`
+      — never a hand-edit of the site-packages copy, and never deleting
+      pyproject's `[tool.hatch.build.targets.wheel.force-include]`, which is
+      the only reason `pip install pairwisepm` finds its schemas at all).
+      A RED HERE DOES NOT MEAN THE ROUND FAILED, does not flip this node, does
+      not hold G-D1D2, and is not evidence of a broken environment. WHICH of
+      refresh-or-remove pip actually performs is engineering's to certify, not
+      mine: I deliberately did NOT mutate this venv on the eve of the round,
+      and this graph does not certify a remedy it has not run.
+      WHY THIS SEAT TOOK IT, in my own terms: an unlabelled state that will
+      exist for minutes and looks exactly like a failure is the cheapest way
+      anyone can buy a spurious blocks-edge — someone reads a red suite off
+      the graph at 11pm and holds the round, or worse, deletes the
+      force-include to make it green. Labelling costs the path nothing and
+      forecloses both. This is the same purchase I refused architecture at
+      r14 and it is refused again here: the label is not an edge.
+      ONE ORDERING CONSEQUENCE THIS SEAT FOUND AND OWES THE BOARD, because it
+      is the only place the expected red touches something other than its own
+      node. Gate P-14 requires `pytest tests/test_vendoring.py` GREEN before
+      the M-UX-02a clock starts. Under the ordering this graph already
+      encodes, there is no collision: the backstop sitting convenes BEFORE
+      the resolution round executes, so P-14 runs on a pre-write tree.
+      BUT branch [3] (WINDOW CLOSED) leaves M-UX-02a RE-OPENABLE by a newly
+      scheduled dated sitting, and such a sitting would fall AFTER the write.
+      On that path, and only on that path, P-14 reds on the expected
+      condition and costs a re-schedule for a reason that is not a defect.
+      Encoded as a one-line precondition on a RE-OPENED sitting only — refresh
+      the install (or confirm zero duplicate configs trees on sys.path) before
+      the pre-flight — and NOT as a precondition on the scheduled sitting, the
+      round, or space-push. Cost to the encoded critical path: zero. Filed as
+      a demand on compliance, who owns the P-14 row, rather than written into
+      their gate from here.
+
+  - id: d3-d6-resolution
+    title: "Hari resolves D3 (portfolio layer ever in scope?), D4 (calibration-report cadence + reliability-curve n), D5 (seed→log z-basis rule), D6 (fragility-flag threshold) — or 2-day SLA triggers AI adjudication"
+    discipline: decisions
+    effort: 0.5pd
+    spine_commitment: "Traceability Anchor — open spec questions tracked as live decisions, not ambiguity"
+    slices: [Pilot, GA]
+    status: ready
+    owner: Hari
+    due: 2026-09-01  # SLA from leaves/decisions/decisions.yml; override window ends 2026-09-02
+    user_visible: false
+    notes: >
+      Renamed from d3-d5-resolution in exchange round 1.1: the Decisions leaf
+      added D6 (fragility threshold — a real three-way build divergence:
+      engine ships FRAGILITY_Z=0.75, compliance's test spec pins 0.5, GTM's
+      tour narrates one-rung swings) on the same SLA. Unlike D1/D2, none of
+      D3–D6 block space-push — every entry names a build-meanwhile default
+      (D3: nothing designed for portfolio; D4: passive audit view, curve at
+      n>=30; D5: Bayesian blend, pseudo-weight 10; D6: the code as shipped,
+      0.75σ, since the flag is a warning, not a score input — no logged number
+      changes with the threshold). Per the Decisions Leaf request,
+      hard-to-reverse work touching calibration surfacing (D4) or the z-score
+      basis (D5) is sequenced AFTER the override window (2026-09-02) — see
+      z-basis-switchover and calibration-report. D6 resolution is a config +
+      test-constant change (epsilon moves into config, compliance regenerates
+      T-FRAG fixtures, gtm re-checks the tour's fragility narration) — small,
+      reversible, no dedicated node. D3 resolution touches no graph node by
+      design (portfolio is absent per Spine refusal; it enters only via a
+      Spine update).
+      D8, ENCODED r15 (decisions' demand, accepted; verified in their file at
+      decisions.yml:462-465 and 536-540 before mirroring, because a queue
+      entry copied from a packet rather than read in the file is exactly the
+      unchecked citation this board spent r14 learning about): D8 asks who, if
+      anyone, measures the 0→1 half (M-UX-02b) — SLA 2026-09-02, one day
+      behind D1-D6, non-gating for Pilot. It does NOT join this round: D8 does
+      not gate G-D1D2 and does not defer, pause, or reopen the D1-D6 round;
+      IF D8 IS STILL PENDING WHEN THE ROUND EXECUTES, THE ROUND EXECUTES
+      ANYWAY. That clause is decisions' own, self-applied to their own new
+      entry before anyone asked — the correct move, and the reason it costs
+      this seat nothing to carry.
+      WHAT THIS SEAT ADDS, in both directions: M-UX-02b's node state now
+      follows D8's ruling rather than whichever label the graph last carried
+      (today: OPEN, disposition pending D8, no instrument, no sitting) — AND
+      D8's existence does not convert M-UX-02b into a release blocker. A
+      queued coverage question is not a blocks-edge. The build-meanwhile
+      default is the board as it stands: SC-06 reads "designed so, not yet
+      timed" for 0→1 and every payload names the measured mode; if D8
+      resolves to "0→1 stays deliberately unmeasured for v1", that wins as a
+      decision somebody made rather than as the residue of nobody asking —
+      which is the entire point of it being queued rather than assumed.
+      D9, ENCODED r16 (decisions' demand, accepted; read at
+      decisions.yml:562-650 from this seat before mirroring, per the same
+      rule that governed D8). D9 asks whether the M-UX-02a witness record
+      carries a launch-environment VOIDING condition and on which predicate.
+      SLA 2026-09-02, one day behind D1-D6. NON-DEFERRAL, encoded in the
+      strong form decisions self-applied: D9 does NOT gate G-D1D2, does NOT
+      defer, pause or reopen the D1-D6 round, and — one clause wider than
+      D8's, because this is the entry with an obvious way to do harm — does
+      NOT delay, block, re-schedule or add a precondition to the M-UX-02a
+      sitting. If D9 is pending when either the round or the sitting arrives,
+      BOTH PROCEED. Its build-meanwhile default (launch from the repo root,
+      record the directory) is uncontested by every seat, so nothing is
+      conceded by using it at an hour that precedes the SLA.
+      WHAT THIS SEAT CORRECTS ABOUT ITS OWN RECORD, which is the substance of
+      the demand: my r14 refusal (release-audit (C), and item (i) of
+      venv-install-drift-fix) was aimed at gtm's CWD PRECONDITION and at
+      nothing else. It is a refusal of a blocking edge bought with a
+      disconfirmed premise; it is NOT a ruling on design's §6.14 BYTES
+      predicate, which this graph had not seen when the refusal was written
+      and which is a different claim — about which copy the browser was
+      served, not about which directory a presenter stood in. Decisions is
+      right that a graph label is not a ruling on a clause it never saw, and
+      a refusal read wider than what it refused is the same defect
+      architecture and compliance each found in their own instruments this
+      cycle, arriving through my door.
+      WHERE THE THREE FILES ACTUALLY STAND AS OF r16, verified by reading
+      them rather than the packets, because D9's premise is a divergence and
+      a premise can expire: gtm's launch-copy.md item 7 reads GATE DELETED
+      and §0 line 149 reads RETRACTED — the cwd clause is GONE from the
+      template and design's bytes condition replaces it; design's states.md
+      §6.15 states the bytes predicate was never the working directory;
+      compliance's traceability.md registers the bytes condition inside F-17
+      and instruments it as new pre-push gate P-14 (verified at :894 —
+      `pytest tests/test_vendoring.py` green on the machine that will run the
+      app, recorded in the witness template). That is D9 OPTION 2 in all
+      three owning files. So the entry is queued and pending — this seat does
+      not close another leaf's decision, and settlement-by-edit-order is
+      exactly what decisions raised it to prevent — but the honest status is
+      that the divergence D9 was raised on has CONVERGED, and a ruling would
+      be ratifying a state rather than choosing between three live positions.
+      Recorded so the ruling is taken on that fact rather than on a
+      three-way split that no longer exists in any file.
+      D9 STATUS CORRECTION, r17 — MY OWN RECORD WAS STALE BY ONE ROUND, and I
+      found it by re-grepping the file rather than by being told. D9 is
+      CLOSED: `status: resolved_uncontested` at decisions.yml:693, closed on
+      its own dissolution clause. Every "queued and pending" above is r16's
+      state and is retained as the record of that round, not silently
+      rewritten — but a reader taking today's status from this node must read
+      it as CLOSED. Nothing about the close moves anything here: the
+      non-deferral clause encoded above died with the entry having cost this
+      path exactly zero, which is what I priced it at when I encoded it.
+      PENDING COUNT, own grep at 2026-08-31 20:45, corrected in the same
+      pass: SEVEN entries carry `status: pending` — D1, D2, D3, D4, D5, D6 and
+      D8. My r13-r16 notes say "six pending"; that was true of D1-D6 alone and
+      stopped being the whole count when D8 was raised at r15. D7 and D9 both
+      read resolved_uncontested. The six that gate this board are unchanged;
+      the seventh (D8) is the non-gating coverage question whose ruling
+      M-UX-02b's node state follows.
+
+  - id: suite-red-no-llm-guard
+    title: "Restore the full suite to green WITHOUT weakening the Spine's no-runtime-LLM guard: tests/test_engine.py::test_no_llm_or_network_imports reds in a full-suite session (AssertionError: httpx) because tests/test_audit_honesty.py loads app.py -> gradio -> httpx into sys.modules and sorts before it"
+    discipline: compliance
+    effort: 0.1pd
+    spine_commitment: "Scope Boundaries — Out, refused deliberately: any LLM in the runtime loop"
+    slices: [Pilot, GA]
+    status: done
+    opened_at: 2026-09-01   # r19.1, own runs 07:42, venv interpreter
+    completed_in: build-run-2026-08-30   # discharged r20, own runs 07:55
+    notes: |
+      DISCHARGED AT r20 — CLOSED, NOT ABANDONED, AND THE BLOCKS-EDGE IS REMOVED.
+      Closed on a re-run and a source read from this seat, never on a report.
+
+      MEASURED 2026-09-01 07:55, venv interpreter: `pytest` from the repo root =
+      81 passed / 0 failed / 0 skipped (1.89s) and from /tmp = 81 passed (1.62s)
+      — equal both directions, equally green. Both orderings that reproduced the
+      defect are green: `pytest tests/test_packaging.py tests/test_engine.py` =
+      61 passed (was 1 failed / 60 passed) and `pytest tests/test_audit_honesty.py
+      tests/test_engine.py` = 47 passed; the clause alone = 1 passed.
+
+      MY ONE CONDITION WAS THAT BOTH HALVES SURVIVE, AND I READ
+      tests/test_engine.py:714-784 TO CHECK IT RATHER THAN ACCEPTING "FIXED".
+      FORBIDDEN_IMPORTS still carries all eight names, httpx among them (:714).
+      The source-scan half is intact and unchanged (:779-784). No skip, no
+      xfail, no collection-order trick, and tests/test_audit_honesty.py — which
+      this node said was a good instrument and must NOT be the fix — is untouched
+      and still collected. The import half was not deleted: its SUBJECT was moved,
+      from the pytest process's sys.modules to a fresh child interpreter that
+      imports the engine (:746-777).
+
+      ON THE PRODUCT CLAIM THIS IS A STRENGTHENING, said in the same breath as
+      the caveat. Own probe, not reported: a fresh interpreter importing
+      pairwisepm + .engine loads 217 modules with httpx False and gradio False —
+      non-vacuous — and because it censuses a live module table rather than
+      grepping text it catches an importlib.import_module("httpx") the regex half
+      cannot see. It is also order-independent by construction, which is what the
+      r19.1 entry said the fix had to be.
+
+      ONE RESIDUE, DECLARED RATHER THAN SWALLOWED BY THE CLOSE. The old census
+      half also asserted, by accident of collection order, something about
+      app.py's TRANSITIVE import graph; the new one does not, and app.py is now
+      covered only by the regex over its direct import/from lines. That is the
+      right trade — gradio is a legitimate UI dependency, nothing should red on
+      it, and the old coverage was an artifact rather than a claim anyone made —
+      but it is a narrowing, and this graph does not close a node by not
+      mentioning one. Non-gating, off every path, owner compliance. NOT FILED AS A
+      DEMAND FROM HERE: decisions filed exactly this one-sentence docstring
+      correction on compliance this round, and a second seat filing the same ask
+      in the last round adds noise, not pressure.
+
+      ONE FACT THAT CUTS AGAINST THIS NODE'S OWN r19.1 ENCODING, re-derived here
+      before repeating it (it is decisions' finding): gate P-1's -k form
+      (`pytest tests/ -k "no_llm or no_network"`) read 2 passed / 79 deselected —
+      GREEN — at 07:55, and it read green THROUGH THE ENTIRE RED, because -k
+      deselects every polluter and the pollution was run-time. For one round this
+      graph's registered gate on the Spine's loudest refusal was structurally
+      incapable of observing the defect that refusal's own clause was failing on.
+      The subject correction fixes the gate as a side effect. General form, which
+      is the part worth keeping: a gate whose green depends on how it was invoked
+      is not a gate — a NAME wider than its gate (r18, P-14), a SUBJECT wider than
+      its file (r19, this clause), an INVOCATION narrower than its subject (r20,
+      P-1).
+
+      COST OF THE WHOLE EPISODE TO THE ELAPSED CRITICAL PATH: ZERO, which is what
+      the blocks-edge was priced at when it was opened against this seat's own
+      "board empty" line. Opened r19.1, discharged r20.
+
+      r20.1 (07:59:52, re-run after the paragraphs above were written — the 81/81
+      figure they carry was false four minutes later and is corrected, not
+      overwritten): suite 83 passed, root 1.46s AND off-root 1.47s, 0 skipped both
+      ways; two-file pre-flight 19 passed / 0 skipped; P-1's -k form 3 passed / 80
+      deselected. Compliance landed two clauses while this note was being typed.
+      TWO OF THEM CLOSE THIS NODE'S OWN RESIDUE AND ITS OWN CONDITION, both read
+      from source at 08:00 rather than taken on report:
+        * T-NEG-01's docstring (test_engine.py:746-762) now carries the ROUND-20
+          SCOPE WORD on decisions' demand — the sentence "the source scan is
+          unchanged and still covers app.py" struck legibly, with app.py's
+          TRANSITIVE graph named as asserted by nothing here, deliberately, and
+          test_no_network_calls_at_runtime named as the instrument that does hold
+          the runtime claim on the UI surface. The residue declared four
+          paragraphs above is therefore retired IN THE ROUND IT WAS DECLARED, by
+          the seat this node deliberately did not file it on.
+        * test_the_no_llm_guard_cannot_be_quietly_weakened (T-NEG-01a, :826)
+          landed on design's demand and asserts off the file's own AST exactly
+          this node's fix constraint: FORBIDDEN_IMPORTS still names every floor
+          module, T-NEG-01 carries no skip marker and calls no pytest.skip, BOTH
+          HALVES survive (child-process probe AND source scan), and
+          test_no_network_calls_at_runtime is present and unskipped. Shape, not
+          behaviour — it stays green when the guard is STRENGTHENED. This node's
+          condition is now an instrument rather than a position, which is the only
+          form it is worth anything in after the seats stop talking.
+
+      ORIGINAL ENTRY, retained as the r19.1 record:
+      NEW at r19.1 and the first agent-side blocks-edge this graph has carried
+      since r15. THE AGENT-CHECKABLE BOARD IS NOT EMPTY.
+
+      MEASURED, not reported. Full suite: 80 collected, 79 passed, 1 FAILED —
+      from the repo root (1.47s) AND from /tmp (1.43s), equal both directions
+      and equally red. Failing clause: tests/test_engine.py:720,
+      `test_no_llm_or_network_imports`, AssertionError: httpx. That clause is
+      the executable form of the Spine's `Out:` line "any LLM in the runtime
+      loop" and is named in release-audit's OWN title ("pre-push refusal
+      checklist (no runtime LLM/network, ...)").
+
+      MECHANISM, walked from this seat rather than taken from a packet. The
+      clause has two halves. (1) A SOURCE SCAN of pairwisepm/*.py + app.py for
+      `import httpx|openai|anthropic|transformers|litellm|langchain|requests|
+      aiohttp` — GREEN. (2) A sys.modules CENSUS asserting none of those eight
+      is imported in this interpreter — RED. The polluter is
+      tests/test_audit_honesty.py (NEW this round; it took the suite 78 -> 80),
+      which at :108 loads the live app via
+      importlib.util.spec_from_file_location("pairwisepm_app_audit", APP).
+      That imports gradio, which imports httpx, which stays in sys.modules for
+      the rest of the session. "audit" sorts before "engine", so the pollution
+      precedes the guard.
+
+      THE NEW FILE IS NOT THE DEFECT AND MUST NOT BE THE FIX — checked before
+      writing it down, because the cheap fix is the wrong one:
+      `pytest tests/test_packaging.py tests/test_engine.py` also reds (own run:
+      1 failed, 60 passed). tests/test_packaging.py::_load_app has loaded app.py
+      the same way for rounds; it merely sorted AFTER the guard. The
+      order-dependence was LATENT and is now LIVE, and what changed is a
+      filename beginning with `a`. So: not a rename, not a collection-order
+      trick, not deleting test_audit_honesty.py (a good instrument on the audit
+      view's honesty surface — it should stay). Each of those works exactly
+      until the next test_a*.py lands.
+
+      WHAT IS NOT RED, stated as loudly as what is, because the failure text
+      says "httpx" and a reader at speed will draw the wrong conclusion:
+      nothing here says the product imports an LLM or a network client at
+      runtime. The source scan is green; the socket kill-switch
+      (test_no_network_calls_at_runtime) is green; the clause run alone is
+      1 passed and its file alone is 45 passed. The product's refusal is
+      INTACT. What is broken is the board's ability to ASSERT it in one
+      command — which is still a push blocker, because an unassertable refusal
+      is exactly the state release-audit exists to refuse, but it is a blocker
+      on the INSTRUMENT and mis-describing it as a runtime finding would cost
+      this board more than the red.
+
+      FIX CONSTRAINT — this seat's only condition, and it is a refusal:
+      BOTH HALVES MUST SURVIVE. Not by dropping httpx from FORBIDDEN_IMPORTS,
+      not by deleting the sys.modules half, not by xfail/skip, not by reordering
+      collection. Weakening the guard to get a green would convert a real
+      instrument into a decoration on the one refusal the Spine says a judge is
+      worse than useless without ("A judge that overstates its confidence is
+      worse than no judge"). The mechanism of the fix is compliance's to choose
+      and may route to engineering; this seat states the constraint, not the
+      implementation.
+
+      ORDERING, which is the half this seat owes the board:
+      * BLOCKS release-audit -> space-push, on release-audit's own written
+        acceptance ("full automated suite green"). Encoded as `blocks` and NOT
+        softened to `informs`: the node's acceptance sentence names the thing
+        that is red. Pricing it as informs to preserve a "board empty" line
+        would be the confidence overstatement the Spine forbids, pointed at my
+        own status report.
+      * ELAPSED CRITICAL-PATH COST: ZERO. The critical path is Hari's gates
+        (D1-D6, SLA today; hf-space-setup); this is ~0.1pd of agent work that
+        runs beside them, and space-push cannot fire until those gates lift.
+      * IT DOES NOT TOUCH THE M-UX-02a SITTING. P-14
+        (`pytest tests/test_vendoring.py`) = 7 passed / 0 skipped and the
+        copy-surfaces check = 10 passed / 0 skipped at 07:42, both green, and
+        tests/test_engine.py is in NEITHER file. The pre-flight is file-scoped,
+        so no reading of any of the three owning files makes this red a
+        NO-RECORD ground, a P-14 failure, or a reason to delay a re-opened
+        sitting. NOBODY MAY VOID A SITTING ON IT.
+
+      Closing condition: `pytest` from the repo root AND from off-root both
+      return 0 failed / 0 skipped with test_no_llm_or_network_imports still
+      carrying both halves — re-run from this seat, not accepted on report.
+
+  - id: release-audit
+    title: "Release audit per traceability.md §5: full automated suite green + manual checks M-UX-01..03 (one-screen, timed <=5:00 both modes, 0→1 banner in every state) and M-DOC-01 signed off; pre-push refusal checklist (no runtime LLM/network, no server-side persistence, interval always shown, too-close never forced, 0→1 banner permanent)"
+    discipline: compliance
+    effort: 0.5pd
+    spine_commitment: "Traceability Anchor — the Compliance Leaf holds the matrix; Scope Boundaries refusals"
+    slices: [Pilot, GA]
+    status: ready   # r11: automated half green (59/59 re-verified this round, 1.36s, own run); RENDER-SESSION LEDGER CLOSED — sessions 1 (§6.5), 2 (§6.7), 3 (§6.9), 4 (§6.11) all executed, no session 5 exists, a new session triggers only if copy or layout changes land. M-UX-03 CLOSED browser-verified (§6.11 single-check PASS) with architecture's INDEPENDENT confirmation on record (§5.13 FULLY CLOSED, watch list EMPTY — verified in their file r11). F-19 VERIFIED / P-5 CLEARED registered in compliance's matrix r10 — verified in traceability.md r11; matrix carries ZERO open browser-refutations; P-5 retained §7 as permanent regression gate (T-BANNER-01 at every push; banner rule/layout change retriggers a render session). Agent-checkable tail is EXACTLY ONE NODE: M-UX-02, slot LIVE per gtm's dated 1c-i commitment (verified): TODAY 2026-08-31, first sitting design opens, gtm witness standing by ALL DAY, witness-record format pre-staged (start/end/elapsed/theme vs 5:00), rolling to the FIRST HOUR of 2026-09-01 as the hard inside-window backstop — Hari recruits, design times, either theme. Sitting NOT yet convened as of r12 (no record in states.md — own check; gtm's witness stood by through the named day, six-field record pre-staged verbatim in 1c-i, no timer record received). r12 encodings: M-UX-02 node state is DESIGN-READY, HUMAN-GATED: WITNESS + RECRUIT — acceptance definition is design's §6.12 protocol (one blank-to-verdict 1→N run, fresh user, clock from S1 first paint to first verdict render, bound 5:00, either theme, both seats' numbers in one dated per-check line); BACKSTOP-COLLISION ORDERING: if the sitting slips to the first hour of 2026-09-01 it convenes BEFORE the D1-D6 resolution round executes; the retrigger clause is BIDIRECTIONAL per §6.12 (any banner/spacer/forced-background/layout rule change in app.py retriggers a scoped session even with all static pins green — green guards are never effect-verification). If the backstop hour passes recordless, this node is recorded MISSED-WINDOW as a dated fact and SC-06 stays "designed so". r13: BOTH resolution instruments pre-registered and verified in the owning files — FLIP = gtm's six-field 1c-i witness record + design's §6.12 dated per-check line (both seats' numbers); MISS = gtm's dated "M-UX-02 window closed [date/time], no sitting convened, no record exists" line, mirrored by design's "designed so, not yet timed" — so this node resolves to one of exactly two dated rows. The MISSED-WINDOW flip fires on gtm's dated line and on NOTHING else (never on inference from silence); if the backstop hour passes with neither row landed the node reads WINDOW ELAPSED — AWAITING GTM'S DATED LINE, dated from this seat's own clock check, neither flipped nor "imminent". r13 re-verification, own runs: 59/59 (1.25s), six pending, states.md still carries no M-UX-02 timer line, local clock 2026-08-31 20:09. ### r14 ENCODINGS, each verified from this seat in the owning file before writing. (A) M-UX-02 SPLITS (compliance's demand, accepted; dispute B2 RESOLVED in their favour on the facts): gtm's 1c-i template fixes `mode: 1→N`, design's §6.12 fixes "one blank-to-verdict 1→N run", and compliance's F-17 row defined the check as BOTH modes — so the r12/r13 registration priced a one-mode measurement as discharging a two-mode check. Corrected here: node M-UX-02a (1→N) is the instrumented, human-gated node everything above describes; node M-UX-02b (0→1) is OPEN WITH NO INSTRUMENT AND NO SCHEDULED SITTING. NO STATE EXISTS IN WHICH TOMORROW'S SITTING CLOSES THE BOARD. Sequencing's one condition, which compliance's own demand already concedes: M-UX-02b is NON-GATING — an unconverted claim (SC-06 reads "designed so, not yet timed" for 0→1 and every payload names the measured mode), NOT a release blocker. An uninstrumented, unscheduled node does not acquire a blocks-edge merely by being true; that is how honest status turns into a lengthened path, and this seat refuses it in both directions. (B) MISSED-WINDOW IS AN EXPIRED SLOT, NOT A FAILURE (gtm's demand, accepted in their terms): a recordless backstop flips M-UX-02a on gtm's dated line and on nothing else, and the node stays RE-OPENABLE — a later dated witnessed run under the identical §6.12 protocol converts it, at which point gtm's row-4 WINDOW CLOSED text is replaced by PASS or FAIL. "Not yet timed", never "tested and lost". RIDER, so re-openable does not become perpetually imminent by another door: re-opening requires a NEWLY SCHEDULED DATED SITTING; an expired slot with no new date stays EXPIRED and does not return to the Ready-Now queue as live work. (C) WORKING DIRECTORY joins the witness line as a RECORDED FIELD beside theme and mode (architecture's ask, accepted in the half that survives testing) — NOT a precondition: `python app.py` sets sys.path[0] to the script's directory, so the documented launch binds the in-repo copy from any cwd (tested this round from /tmp). See venv-install-drift-fix for the full reproduction. (D) Pins REFRESHED, own runs — and the volatility recorded rather than smoothed: the suite count moved TWICE inside this single round, 59 (r13 pin) → 60/60 at 1.22s (20:14) → 64/64 at 1.62s (~20:20), all my own runs. PINNED AT 64/64, own run, 2026-08-31 ~20:20, with the caveat stated: other seats are landing guards DURING the round, so any count in any packet — mine included — is true as of its timestamp and not after. A count is evidence of a moment, not a standing property; that is the same lesson architecture's cwd-conditional finding taught, applied to my own instrument. six pending (own grep); states.md still carries NO M-UX-02 timer line — the sitting has NOT convened; gradio>=6.0,<7 present at requirements.txt:17 and pyproject.toml:33 (engineering's disclosed edit, verified — a version range tightened, no path or shape change); local clock 2026-08-31 20:14. ### r15 ENCODINGS, each re-derived from this seat before writing. (E) THE OUTCOME SPACE IS THREE DATED BRANCHES, NOT TWO (compliance's demand, accepted — and it corrects MY encoding, not theirs; r12/r13 registered "one of exactly two dated rows" and r14 kept it, which priced the miss branch and collapsed PASS with FAIL): [1] PASS — filled six-field 1c-i record + design's §6.12 per-check line, elapsed at or under 5:00, SC-06 graduates to "under five minutes in 1→N, witnessed <date>". [2] MEASURED-TARGET-MISSED — a FILLED record over 5:00 flips F-17 to `measured-FAILED (1→N)`, a FIRST-CLASS DATED STATE: never a reversion to manual-pending, never a fallback to "designed so", and never re-defined by adjusting the bound after the number is known. A build that measured and missed has told the user strictly more than one that never measured, and a graph that cannot distinguish them destroys exactly the information the Spine's "a judge that overstates its confidence is worse than no judge" protects, pointed at our own instrument. [3] WINDOW CLOSED — the r14 expired slot: re-openable by a newly scheduled dated sitting, "not yet timed", never "tested and lost". All three flip on the owning seat's dated row and on nothing else. (F) VOID-BY-LAUNCH-ENVIRONMENT (and every other registered voiding cause — non-fresh user, coaching beyond mode selection, a partially filled template) ROUTES TO BRANCH [3], WINDOW CLOSED, WITH THE CAUSE NAMED ON THE ROW (gtm's demand, accepted in their terms). It cannot route to [2], because [2] asserts a number was taken and a voided run produced none; and it mints NO fourth node state, so nothing is adjudicated live at the hour. Stated honestly rather than sold: the specific void gtm wrote this for — an off-root launch binding a stale module — is UNREACHABLE as of r15 (see venv-install-drift-fix), so what is encoded here is a routing rule for the class, not a live hazard. (G) M-UX-02b'S STATE FOLLOWS D8 (decisions' demand, accepted; verified at decisions.yml:462-465 and 536-540 before mirroring): D8 (who, if anyone, measures the 0→1 half) carries SLA 2026-09-02 and a self-applied non-deferral clause — D8 does NOT gate G-D1D2 and does NOT defer, pause, or reopen the D1-D6 resolution round; if D8 is still pending when the round executes, THE ROUND EXECUTES ANYWAY. The b-node therefore reads "open — disposition pending D8 (SLA 2026-09-02)" instead of sitting under whichever label the graph last carried. MY CONDITION IS UNCHANGED AND STATED IN BOTH DIRECTIONS: D8's existence does not convert M-UX-02b into a release blocker. A queued coverage question and a blocks-edge are different objects, and an entry raised on execution eve earns no edge from this seat regardless of which seat raised it. (H) TWO NEW PRE-PUSH GATES REGISTERED (compliance's demand, accepted; both verified by name in their file and by the tests existing in the suite): P-12 — exactly one importable copy of the package, instrumented by T-VEND-02/03/04, which is the gate that would have caught A-13-01 the day it appeared; P-13 — the banner rule is DELIVERED not merely written (gradio major bound intact + `_deprecated_css` fallback present in the installed runtime), instrumented by T-DELIV-01a/b. (I) SUITE PIN 65/65, own runs 2026-08-31 20:26: 1.48s from the repo root AND 1.26s from /tmp. The off-root number is the one that changed meaning — for five rounds an off-root run returned green against a stale module, so every "own run, N/N" this seat published in r9-r13 was cwd-conditional evidence stated as unconditional, mine included. It is anchored now, by T-VEND-02/03/04 rather than by anyone's care. ### r16 ENCODINGS, each re-derived or read in the owning file from this seat before writing. (J) THE ACCEPTANCE DEFINITION'S VOIDING CLAUSE IS QUEUED AS D9, NOT SETTLED BY THIS GRAPH (decisions' demand, accepted, and it corrects MY record rather than theirs). My r14/r15 refusal of a launch-environment precondition was aimed at gtm's CWD clause — a blocking edge bought with a premise this seat disconfirmed — and NOT at design's §6.14 BYTES clause, which the graph had not seen when the refusal was written and which asserts something different: which COPY was served, not which DIRECTORY was used. Reading my refusal as covering both would be a refusal registered wider than what it refused, the same species of error architecture (§4.3.1), compliance (F-25) and design (§6.15) each caught in their own instruments this cycle. D9 carries SLA 2026-09-02 and the non-deferral clause encoded in full at d3-d6-resolution: it does not gate G-D1D2, does not defer/pause/reopen the D1-D6 round, and does not delay, block, re-schedule or add a precondition to the sitting. HONEST STATUS ALONGSIDE THAT, because a queued divergence can expire and D9's premise is a divergence: as of r16 all three owning files carry D9's OPTION 2 — gtm's item 7 reads GATE DELETED and §0:149 reads RETRACTED (cwd clause gone, bytes condition in its place), design's §6.15 states the predicate was never the working directory, compliance's F-17 registers the bytes condition instrumented by new gate P-14. The entry stays pending because this seat does not close another leaf's decision; but a reader should know the ruling would ratify a converged state, not pick among three live positions. (K) GATE P-14 REGISTERED on the release-audit gate list with its instrument named (verified at traceability.md:894 before encoding): `pytest tests/test_vendoring.py` green on the machine that will run the app, BEFORE the clock starts, result recorded in gtm's 1c-i template beside theme, mode and working directory. THIS SEAT'S PRICING, stated because a pre-flight is a precondition and my agenda resists those by default: P-14 costs ONE COMMAND and reduces elapsed risk rather than adding it — a red discovered before the clock costs a re-schedule, the same red discovered after costs the RECORD, and a lost record is the branch [3] outcome that leaves SC-06 unconverted. It is also machine-decidable, so nothing is adjudicated by argument at the hour. That is a precondition I accept on its merits; a cwd rule a presenter must reason about is not, and the difference is the whole of my position in D9. (L) SUITE PIN 72/72, own runs 2026-08-31 20:38: 1.53s from the repo root AND 1.38s from /tmp, EQUAL from both directions. STATED AS IT HAPPENED RATHER THAN SMOOTHED, because this is the third round running in which the number moved under me: I opened this round measuring 67/67 both directions, encoded that, and a re-run before submitting returned 72/72 both directions — other seats landed five more assertions inside the same round. 67/67 was true at the top of the round and is not true now; both are my own runs. The earlier 67 is left visible above rather than overwritten, because a pin that only ever shows the last number hides exactly the volatility that makes a pin worth distrusting. T-VEND-05 (bound module carries the R-10 corrected copy — never skips) and T-VEND-06 (a second configs copy, if present, is not stale) landed since the r15 pin; I read the test names in tests/test_vendoring.py rather than accepting the labels. The count moved 59 → 60 → 64 → 65 → 67 across r14-r16 with other seats landing guards mid-round; the pin is true as of its timestamp and not after, and what I certify is the EQUALITY of the two directions and the module behind it, not the integer. (M) OPEN, DECLARED, NOT QUEUED: engineering reports that T-VEND-03/04's skip predicate gates on the design leaf's presence, so all four original guards SKIP in an sdist-shaped tree (their reproduction: 4 skipped, 0 assertions) — a defect with a named owner and a filed demand on compliance, not a work item for this graph. It does not gate the sitting, the resolution round, or space-push, and manufacturing a node for a defect already owned would lengthen the queue with something nobody has to do twice. ### r17 ENCODINGS, each measured or read from this seat before writing. (N) THE PRE-PUSH GATE LIST, STATED ONCE AND WHOLE so it is not assembled by a reader from four narrative paragraphs (decisions' demand, accepted — and their premise was half wrong in my favour, which I state rather than take the credit for: P-14 has been on this list by name since r16, at (K) above and in the mermaid node label `gates P-12 + P-13 r15 · P-14 r16`, so the gap was that it was recorded in prose rather than in a list, not that it was absent). THE LIST, as of r17: **P-5** (banner rule — CLEARED r10/r11, retained §7 as a permanent regression gate: T-BANNER-01 at every push) · **P-6** (rides D1/D2 — lifts with G-D1D2) · **P-10** CLEARED · **P-11** CLEARED r8 (retained §7 as permanent regression gate) · **P-12** (exactly one importable copy of the PACKAGE — T-VEND-02/03/04; NEW r15) · **P-13** (banner rule DELIVERED, not merely written: gradio major bound intact + `_deprecated_css` fallback present — T-DELIV-01a/b; NEW r15) · **P-14** (`pytest tests/test_vendoring.py` green on the machine that will run the app, BEFORE the M-UX-02a clock starts, result recorded on gtm's 1c-i witness line beside theme, mode and working directory; NEW r16, traceability.md:894). F-29 browser-confirmed. P-14 is the ONLY pre-clock precondition on the sitting — that is the sentence a reader wants and it now exists in the file that owns the acceptance definition. (O) P-14'S INSTRUMENT WAS STRENGTHENED, NOT MERELY RE-RUN (compliance's demand, accepted, and they filed it against their own instrument, which is the handling that makes a pin worth carrying). What changed: three of the six vendoring guards gated on the DESIGN LEAF's presence, so in any tree lacking `leaves/` they skipped — and the r16 green I encoded at (K) was therefore partly a count of skips rather than of assertions. Compliance re-predicated them at r16 and I read the source rather than the report: T-VEND-03 and T-VEND-06 now gate on `_repo_config_authority()` (`<root>/configs`, tests/test_vendoring.py:118 and :198); T-VEND-04 (:227) and T-VEND-05 (:129) carry NO skip predicate at all; T-VEND-01 (:68) and T-VEND-02 (:85) retain the design-leaf skip, which is HONEST because the design authority file IS their subject. Own run 2026-08-31 20:45: `pytest tests/test_vendoring.py` = 6 passed, 0 SKIPPED, 0.03s. So P-14's green is now a green earned by assertions in this tree, which it was not when I encoded the gate. MY r16 SKIP-AWARE DEMAND IS DELIVERED, AND AS A TEST RATHER THAN A ROW CLAUSE — MORE THAN I ASKED FOR, AND THE NARROWED RE-PRESS I HAD DRAFTED IS WITHDRAWN: compliance registered T-VEND-07 (`test_this_file_cannot_return_an_all_skipped_green`, tests/test_vendoring.py:334) at 20:47, INSIDE this round. I read it rather than accepting the label: it parses its own file's AST and asserts (1) T-VEND-04 and T-VEND-05 carry NO skip predicate at all — a FLOOR of unskippable clauses so that green in any tree means at least those two asserted; (2) every clause that does skip skips on a predicate naming its own subject, so a third predicate reds here first, which is where activation-vs-subject gets looked at rather than assumed; (3) the floor is stated as a COUNT, so deleting one floor clause cannot be covered by renaming another. P-14's row now reads "green means exit 0 AND 0 SKIPPED", with the skip count recorded beside the result on the witness line. That is the exact hole I named — pytest exits 0 on an all-skipped file, and a witness would have recorded a pass for a run that measured nothing, on the one gate whose failure mode is silent AND time-boxed — closed structurally instead of by a caveat asking a presenter to count skips. Own run after it landed: 7 passed, 0 skipped, 0.03s. (P) SUITE PIN 73/73 BOTH DIRECTIONS, own runs 2026-08-31 20:48: 1.30s from the repo root AND 1.28s from /tmp. AND THE CORRECTION THAT MATTERS MORE THAN THE NUMBER: three minutes earlier in this same round I wrote "72/72, UNCHANGED from the r16 pin — the first round in four in which the count did not move under me", and claimed the non-movement as the news. IT WAS ALREADY FALSE WHEN I WROTE IT — compliance landed T-VEND-07 at 20:47 while I was typing the sentence. I am correcting it in place rather than deleting it, because the failure is the interesting part: this seat has spent four rounds telling the board that a count is evidence of a timestamp and not a standing property, and then asserted stability inside a three-minute window. The doctrine survives the round by being violated by its own author. Sequence of record: 59 → 60 → 64 → 65 → 67 → 72 → 73. What I certify is unchanged and is the reason the integer never mattered: the EQUALITY of the two directions and the module behind it. Also re-verified this round rather than carried: states.md carries NO M-UX-02 timer line (own grep — the sitting has NOT convened as of local clock 2026-08-31 20:45, on the named day, with the hard backstop now inside four hours); D1's three options at decisions.yml:40-43 and D2's at :80-83 are unchanged and STILL touch no rendered-text field, so design's r16 class-(B) rider still has an expected path cost of ZERO — re-checked, not assumed, because a rider priced at zero on last round's file is a claim about last round's file. (Q) ARCHITECTURE'S EXPECTED-RED RIDER IS ENCODED ON `d1-d2-resolution`, VERIFIED FROM THIS SEAT: the second `configs/` tree on this machine was created by the EDITABLE install (dist-info `direct_url.json` = editable true; its RECORD lists both YAML schemas; `site-packages/configs/` exists), and re-walking T-VEND-06's own algorithm read-only finds `checked = 2` live duplicates comparing identical today. So the post-write red needs no reinstall to arrive. Full encoding, remedy and the one ordering consequence (a RE-OPENED branch-[3] sitting would run P-14 after the write) live in that node. ### r18 ENCODINGS — no demands were filed on this seat, so everything here is either a correction to my own record or a finding I went looking for. (R) THE ONLY PRE-CLOCK PRECONDITION ON THE SITTING HAS QUIETLY WIDENED FROM ONE TEST FILE TO TWO, AND THE SECOND ONE CARRIES A VOIDING CONSEQUENCE NOBODY REGISTERED. Read from the two owning files this round, not from packets. Compliance's gate row (traceability.md:1071) defines P-14 as `pytest tests/test_vendoring.py` green (T-VEND-01..06, +07), exit 0 AND 0 skipped, and compliance told gtm twice in as many rounds that P-15 (`tests/test_copy_surfaces.py`) guards the D1-D6 resolution round and is NOT on the witness template. gtm's pre-staged witness record (launch-copy.md:266) now reads: "**P-14 pre-flight: `pytest tests/test_vendoring.py tests/test_copy_surfaces.py`** run on THIS machine before the clock started" — and eleven lines later, ":277, unchanged since r16 — if `n` or P-14 was not run green, the run is NO RECORD". gtm did this for a good reason and said so openly: they DELETED two eyes-on human checks and swapped in the executed file, which is a better instrument and net less ceremony. The defect is not the command, it is the LABEL plus the voiding clause sitting under it. As written, a red in `test_copy_surfaces.py` — a copy literal moved, which is a real defect but says NOTHING about which copy of the module was bound, the predicate the NO-RECORD rule exists to protect — reads on the presenter's own template as "P-14 was not run green" and therefore as NO RECORD: branch [3] WINDOW CLOSED, SC-06 unconverted, on the last agent-checkable node on the board, at an hour when the backstop leaves no room for a second sitting. That is a precondition widening by three assertions without a Spine commitment or a gate registration behind it, which is the exact thing this seat exists to refuse — and it widened by an act of subtraction, which is why nobody caught it. VERIFIED FROM THIS SEAT rather than argued: `pytest tests/test_copy_surfaces.py` = 5 passed, 0 skipped, 0.06s (own run 20:53); the file carries TWO skip predicates, `pytest.skip("no repo config authority present")` at :67 and `pytest.skip("app.py not present in this tree")` at :155, both naming their own subject, so it is a well-built file and this is not a complaint about it; combined command = 12, matching gtm's "11 then 12" note. WHAT I AM NOT ASKING FOR: not the removal of the second file from the pre-flight — running it is cheap and finds real defects — and not a new gate, a new field, a new node or an edge. The ask is one label and one clause in gtm's file, filed as a demand there because the field is theirs: record the second file's result under its own name (it is not P-14), and state that a red in `test_copy_surfaces.py` is a defect to fix before any push and is NOT a NO-RECORD ground. Cost to the encoded critical path: zero. Cost of NOT doing it, on the one path where it bites: the record. This is the same shape as decisions' r17 narrowing (a red on T-VEND-03/04/06 blocks a push but is not a D9 void) pointed one file further out, and it is why an instrument cited by a NAME wider than its SUBJECT keeps being this cycle's recurring defect. (S) A FALSE LINE OF MY OWN, STANDING FOR A FULL ROUND, FOUND BY RE-READING MY OWN MACHINE-READABLE HALF. r17's graph.md header says I corrected the "72/72, unchanged" claim "in place, not deleted, IN BOTH FILES". I did not: `meta.revision`'s comment block in this file still read "suite pin 72/72 UNCHANGED, own run 20:45" until this round, so the correction landed in the prose half and the YAML half kept publishing the stale count. Corrected at meta with the false text quoted rather than deleted. The lesson is not the integer, it is that a seat which certifies pins was, for one round, the only seat on this board shipping a pin it had already publicly retracted — and it survived because the retraction and the pin lived in different files under the same name. (T) PINS RE-MEASURED, own runs 2026-08-31 20:53, venv interpreter (decisions' r17 caveat honored: a count reported without its interpreter is not a pin): **73/73 from the repo root (1.50s) AND 73/73 from /tmp (1.29s), EQUAL** — the r17 pin held for a full round, which is the first time in five rounds the count did not move under me, and I am stating it flatly rather than as news, having been burned making exactly that claim last round. `pytest tests/test_vendoring.py` = 7 passed, 0 SKIPPED (P-14's own reading, both halves). Sequence of record: 59 → 60 → 64 → 65 → 67 → 72 → 73 → 73. **SEVEN pending decisions** re-grepped rather than carried (D1 :94, D2 :135, D3 :178, D4 :200, D5 :228, D6 :260, D8 :601 pending; D7 :305 and D9 :743 resolved_uncontested); six gate the board. **states.md carries NO M-UX-02 timer line** (own grep at 20:53): the sitting has NOT convened, on the named day, at local clock 2026-08-31 20:53 — the hard backstop (first hour of 2026-09-01) is now inside THREE HOURS AND SEVEN MINUTES. That is a dated status, not a prediction and not "imminent": the node still flips on gtm's dated line and on nothing else. (U) MY r17 DEMAND ON COMPLIANCE IS RE-PRESSED ONCE, NARROWED, AND IT IS THE LAST TIME. The re-opened-sitting clause has not landed — own grep of traceability.md finds no reopen/re-open language on or near the P-14 row (:1071), and their r17 packet crossed my demand rather than refusing it. Narrowed to the half that cannot be argued with: on a RE-OPENED branch-[3] sitting ONLY, a T-VEND-06 red traceable to the resolution-round write, remedy not yet applied, is not a P-14 failure and not a void. Nothing on the scheduled sitting, the round, or space-push. If it does not land by r20 this graph carries it as a DECLARED, UNINSTRUMENTED residue on the branch-[3] path rather than as a node, because a hazard on a path that may never be taken does not earn an edge from this seat — including when the hazard is one I found. ### r19 ENCODINGS — one demand on this seat, answered in full, and nothing on the graph moved. (V) THE TREE-SHAPE PRECONDITION: MY REFUSAL DOES NOT REACH IT, AND SAYING SO IS THE POINT (decisions' demand, accepted — silence here would have been read as consent and consent is not what I mean). The predicate my refusals actually run on, stated once so it is quotable and falsifiable: I REFUSE A PRECONDITION WHOSE DEFECT I HAVE DISCONFIRMED, NOT ONE THAT IS INCONVENIENT. gtm's r14 CWD clause failed on its mechanism — `python /abs/path/app.py` puts the SCRIPT's directory on sys.path[0], so the documented launch binds the in-repo copy from any working directory (tested from /tmp at r14, never contradicted since); a gate bought with a premise that does not hold costs elapsed time and buys nothing, and that is all I refused. THE TREE-SHAPE CONDITION IS NOT DISCONFIRMED: in a tree without `leaves/`, T-VEND-01/02 genuinely do not run and the guard genuinely asserts less than a reader of "P-14 green" believes. So it is real, my refusal does not cover it, and I will not let an old refusal be read wide enough to swallow a live fact — the error this board has now named in five instruments, arriving at my door by absence. WHAT I DO SAY, WHICH IS PRICING AND NOT A RULING (D10 is decisions'): the condition costs the encoded critical path ZERO ON EVERY BRANCH, so it earns a recorded fact and NO EDGE. The scheduled sitting and every re-opened branch-[3] sitting run on THIS CHECKOUT — the tree that carries `leaves/` — because the sitting times the build this board describes, and NO BRANCH ON THIS GRAPH SERVES THE APP FROM AN UNPACKED SDIST. A condition every encoded branch already satisfies is a property of the plan, not something a presenter must ESTABLISH: no node, no edge, no new field, no new line on the witness template. THE GENERAL FORM I STILL REFUSE, stated so it is testable against future asks: a precondition that (i) requires the presenter to establish a machine property no encoded branch guarantees, or (ii) is not decidable off a command they already run. Tree shape fails neither test — the skip count is printed by the pre-flight itself. AND THE D10 STATE IS ONE MACHINE SHAPE FURTHER OUT THAN THE ENTRY SAYS, own runs 2026-08-31 21:0x, no repo file and no venv file mutated: an sdist-shaped tree (pairwisepm, configs, app.py, tests, pyproject; no leaves) run with THIS machine's project interpreter gives 1 FAILED, 4 passed, 2 skipped, EXIT 1 — T-VEND-04 reds, because this venv's `_editable_impl_pairwisepm.pth` puts a second importable copy on sys.path. On this machine the ambiguous state is UNREACHABLE; the tree-shape accident produces an unambiguous red every reading agrees on. Decisions' exit-0 figures are real but need a SECOND condition that is not tree shape — the project must also not be installed in the interpreter: re-running the same tree against a site-packages mirror with the editable .pth and the force-included `configs` left out (symlink farm in the scratchpad, `-S`) reproduces their numbers exactly, 5 passed, 2 skipped, exit 0. HONEST CAVEAT ON MY OWN EVIDENCE: that is an EMULATION of a foreign interpreter, not an install, so it demonstrates reachability and not some future machine's exact behaviour. Either way this graph's path cost stays zero and my pricing does not depend on the ruling. (W) BOTH r18 DEMANDS LANDED AND THE RESIDUE I SAID I WOULD CARRY IS RETIRED, NOT DROPPED. gtm corrected the label and added the clause (read in their file): the witness record now states P-14 = `pytest tests/test_vendoring.py` ALONE, names the second file as the COPY-SURFACES CHECK under its own name, and says in terms that a red anywhere in `tests/test_copy_surfaces.py` is a push blocker and NOT a NO-RECORD ground. Compliance landed the re-opened-sitting clause and asked whether their narrowing loses anything my path needs: IT DOES NOT, AND THEIR FORM IS BETTER THAN THE ONE I DEMANDED. I asked for "a red traceable to the write is not a P-14 failure", which leaves a JUDGMENT in the presenter's hands at the hour; they wrote an ORDERED PRECONDITION STEP — on a re-opened sitting only, refresh (or confirm zero duplicate `configs` trees on sys.path) BEFORE the pre-flight, and if T-VEND-06 still reds it is a real defect and P-14 fails normally. Same path cost, one less thing argued in front of a guest, and it is the same correction they made to my "green" last round. My r18 line about carrying this as a declared uninstrumented residue is MOOT and withdrawn. (X) gtm's OPEN QUESTION ANSWERED, AND MY ONE ASK IS NOT THE THING THEY OFFERED. They kept one blank and one command, deriving the P-14 verdict from the aggregate, and offered a second blank in r20 if I judge the derivation too clever. I DO NOT — the entailment holds and I checked it rather than nodding at it: an aggregate of `0 failed, 0 skipped` over two files entails each file 0 failed / 0 skipped, so on a green aggregate "P-14 green" is derived, not judged. DO NOT SPEND r20 ON A SECOND BLANK. Spend the line on the residual instead, which is the demand filed: on a NON-green aggregate the template says what a copy-surfaces red is NOT (not a void) without saying what it IS FOR THE CLOCK. Compliance's rule stops the sitting on a red or skip IN test_vendoring.py; nothing in any of the three files says whether a copy-surfaces red stops the clock — which leaves the presenter exactly the judgment call four rounds of work has been spent removing, with the asymmetry running as it always does here: a wording mismatch against design's ratified fixture invalidates no elapsed-time measurement, while not starting costs the RECORD. (Y) PINS, own runs 2026-08-31 21:06, venv interpreter: 78/78 FROM THE REPO ROOT (1.54s) AND 78/78 OFF-ROOT (1.32s), EQUAL; `pytest tests/test_vendoring.py` 7 passed 0 skipped; `pytest tests/test_copy_surfaces.py` 10 passed 0 skipped; combined 17. The count moved 73 → 78 between rounds under compliance's hand (copy-surfaces grew 5 clauses to 10) while this seat wrote no test — sequence of record 59 → 60 → 64 → 65 → 67 → 72 → 73 → 73 → 78. PENDING IS EIGHT, not seven, line numbers re-grepped because the file grew: D1 :105, D2 :146, D3 :189, D4 :211, D5 :239, D6 :271, D8 :612, D10 :1151 (new). Six gate the board; D8 and D10 are non-gating, D10 by its own clause at :1227 (does not gate G-D1D2, does not defer/pause/reopen the resolution round, adds no precondition to the sitting) — verified in their file rather than accepted from a packet, because a non-deferral clause is the only thing between a new entry and a new edge on execution eve. states.md still carries NO M-UX-02 timer line (own grep 21:06): the sitting has NOT convened, on the named day, with under three hours of it left and the hard backstop inside four. Then pre-push refusal checklist + compliance sign-off.
+    blocked_on: [tests-green]
+    user_visible: false
+    notes: >
+      Registered at compliance's request. Runs on EVERY release candidate and
+      on any Spine version bump — modeled once here gating space-push, and it
+      re-runs before pip-release (blocks-edge to both). Manual checks are
+      owned by design (M-UX-01..03) with gtm witnessing M-UX-02 and co-owning
+      M-DOC-01.
+      Round-2 progress: design executed the catalogue-vs-as-built half of its
+      integrator flag (states.md §6.4 audited against app.py, all ten deltas
+      confirmed as-built; compliance's demand satisfied in substance). STILL
+      OUTSTANDING: the real-browser render, M-UX-01..03 timed checks, and
+      M-DOC-01 sign-off — plus gtm's tour-stop divergence check (seven stops
+      in leaves/gtm/tour.html vs live screens), which folds into the same
+      render session at no extra scope. This remains the only pre-push item
+      not waiting on Hari.
+      Round-3 status: design committed (round-2 deal with sequencing) to
+      begin the browser render THIS round, in parallel with
+      d1-d2-resolution. Per compliance's standing demand, results must be
+      recorded as per-check-ID pass/fail (M-UX-01..03, M-DOC-01), not a
+      narrative — a narrative sign-off does not flip this node to done.
+      The strings-revendor precondition is cleared (T-VEND-01 green), so
+      the automated half remains green (53/53 at that revision; 54/54 at the
+      round-4 re-run, incl. compliance's T-CEIL-03).
+      Round-4 status: design EXECUTED the browser render as committed.
+      Per-check-ID results (citable, design states.md §6.5): M-UX-01 PASS,
+      M-UX-02 PENDING (needs a fresh human user with gtm witnessing — an
+      agent cannot be its own fresh user), M-UX-03 FAIL (str.banner.01 is
+      not scroll-persistent), M-DOC-01 PASS. The render also surfaced R-8
+      and R-9 (see imputation-blocking-fix and verdict-legibility-fix).
+      This node CANNOT flip to done with a failing check row: it now
+      carries a blocks-edge from verdict-legibility-fix (which includes
+      the M-UX-03 sticky-banner fix) plus the M-UX-03 re-check, M-UX-02,
+      and compliance's refusal-checklist sign-off. Remaining work is
+      re-checks and the one human-in-the-loop timed run — not a re-render
+      of the whole protocol.
+      Round-5 status: the automated half now includes the two new guards
+      (T-SER-01, T-THEME-01) — 56/56 green at sequencing's round-5 re-run.
+      R-8 landed, so M-UX-02's explicit dependency (gtm's demand,
+      accepted: M-UX-02 is downstream of imputation-blocking-fix and was
+      NOT schedulable before it landed — a timed run against a form that
+      fabricates zeros measures the bug, not the design) is now
+      satisfied: M-UX-02 is SCHEDULABLE and should be scheduled promptly
+      (Hari recruits the fresh user; gtm witnesses; design times).
+      Browser render session 2 (design's committed closing bracket:
+      R-8/R-9 behavioral acceptance, M-UX-01 re-check, M-UX-03
+      verification, gtm's Stop 5 pixel-legibility sub-check) is scheduled
+      for the current window — but note M-UX-03 will still FAIL until
+      engineering lands the sticky-banner residue of
+      verdict-legibility-fix, so that one-line CSS change should land
+      first so one session closes everything agent-checkable.
+      Round-6 status: render session 2 EXECUTED (design states.md §6.7,
+      2026-08-31, dark theme forced, per-check-ID append-only). Results:
+      R-8 acceptance PASS on all four checks (imputation-blocking-fix
+      browser-verified, bracket closed); M-UX-01 re-check PASS; amber
+      strips + direct-text lines PASS; R-9 acceptance FAIL — residual
+      R-9b (nested elements re-colored by gradio's `.prose *` rule,
+      T-THEME-01 green throughout — a guard-blind FAIL, same class
+      T-SER-01 was built to kill); M-UX-03 FAIL stands (banner
+      position: static). This node CANNOT flip: two FAIL rows (R-9b,
+      M-UX-03) plus M-UX-02 pending. M-UX-02 is SCHEDULED (its R-8
+      trigger confirmed in session 2): Hari recruits the fresh user, gtm
+      witnesses, design times, LIGHT theme until R-9b lands (design's
+      rider — a dark-theme run would time the user against an invisible
+      verdict headline). Render session 3 is the remaining bracket:
+      R-9b + M-UX-03 re-checks only, AFTER engineering lands both
+      residues, so it is the last render. Compliance bookkeeping
+      recorded per demand: P-10 CLEARED (fix+guard same change,
+      red-first honored); P-5 STILL BLOCKING (M-UX-03 unlanded as of
+      round 6); P-6 rides D1/D2 at the 2026-09-01 SLA.
+
+  - id: venv-install-drift-fix
+    title: "A-13-01: make the project venv's pairwisepm install editable-or-absent so exactly one copy of the package is bindable, and strengthen T-VEND-01 to assert on the IMPORTED module (importlib.import_module('pairwisepm.strings').__file__ resolves inside the repo tree; that module's bytes equal leaves/design/strings.py)"
+    discipline: engineering
+    effort: 0.1pd
+    spine_commitment: "Traceability Anchor — a guard that certifies less than it claims makes the matrix overstate its confidence; Scope In — pip-installable repo"
+    slices: [Pilot]
+    status: done   # CLOSED r15 on my OWN re-run of the exact reproduction this node named as its closing test — three seats reported the fix in the same packet, which is a reason to check it, not a reason to skip checking it. Own commands, 2026-08-31 20:26: (1) .venv/.../pairwisepm-*.dist-info/direct_url.json now reads {"dir_info": {"editable": true}, "url": "file:///Users/brettleehary/mcparea/ProMgtAI"} — an editable install, not a frozen snapshot. (2) .venv/lib/python3.11/site-packages/pairwisepm/ NO LONGER EXISTS (ls: No such file or directory) — the third copy is gone, not merely shadowed. (3) The r14 reproduction INVERTS in both directions: from /tmp, `import pairwisepm.strings` → /Users/brettleehary/mcparea/ProMgtAI/pairwisepm/strings.py, 'str.empty.example_cta' in STRINGS == True, and default_config_dir() → /Users/brettleehary/mcparea/ProMgtAI/configs. (4) The guard half landed and I read the test names rather than accepting the labels: tests/test_vendoring.py carries test_imported_strings_module_is_the_in_repo_copy (T-VEND-02), test_loaded_config_dir_is_the_in_repo_copy (T-VEND-03), test_exactly_one_importable_copy_of_the_package (T-VEND-04) alongside the original byte-identity clause. (5) Suite 65/65 from the repo root (1.48s) AND 65/65 from /tmp (1.26s) — for the first time on this board those two numbers mean the same thing. ELAPSED-PATH COST OF THE ENTIRE EPISODE: ZERO — exactly what the informs edge priced it at when this seat refused it a blocks-edge on a disconfirmed premise. RESIDUE, recorded and deliberately NOT queued: site-packages/configs/ still exists as a pip-owned install-time snapshot, currently byte-identical and INERT under the editable install (T-VEND-03 pins that the engine loads the repo copy, which is the thing that actually matters for tomorrow's D1/D2 values). It is architecture's declaration to make in their copy census; a declaration gap is not a work item, and manufacturing a node for it would lengthen the queue with something no one has to do. PRIOR STATUS, retained as the r14 record: OPENED r14 on architecture's report, REPRODUCED from this seat before encoding — never on their word. Findings, own commands: (1) .venv/lib/python3.11/site-packages/pairwisepm/ is a THIRD copy of the package, non-editable — dist-info direct_url.json reads {"dir_info": {}, "url": "file:///Users/brettleehary/mcparea/ProMgtAI"}, i.e. a frozen snapshot, not an editable install; architecture.md §4.2 declares TWO copies. (2) It has DRIFTED from the copy authority: `cmp .venv/.../pairwisepm/strings.py leaves/design/strings.py` differs at char 3663, line 79. The in-repo mirror pairwisepm/strings.py remains cmp-IDENTICAL to the authority — the mirror invariant itself is intact. (3) Binding is sys.path-decided: from repo root `import pairwisepm.strings` → /Users/brettleehary/mcparea/ProMgtAI/pairwisepm/strings.py with 'str.empty.example_cta' in STRINGS == True; from /tmp → the site-packages copy with the same expression == False. (4) T-VEND-01 DOES NOT CATCH IT — it compares VENDORED_COPY and DESIGN_COPY, two paths it constructs itself, and never imports the module it guards; a pytest session run from /tmp returns 60 passed with T-VEND-01 included. That is the defect: a guard certifying rule-APPLIED while the record reads it as rule-EFFECTIVE. CLOSES on a re-run of the off-root reproduction from architecture's seat (co-owned with compliance's F-25 scope correction to GUARD-SCOPE-LIMITED). OFF THE CRITICAL PATH — informs edge only, zero elapsed cost; see notes for the three non-gating determinations, each tested rather than assumed.
+    blocked_on: []
+    user_visible: false
+    notes: >
+      WHY THIS IS ON THE GRAPH: it is a defect against an existing commitment
+      (architecture §4.2's copy declaration, and a guard the matrix cites as
+      evidence), not new scope — the same admission bar that took R-1, R-2,
+      R-8 and R-9. Architecture reported it against their OWN instrument and
+      superseded their own round-10 "watch list EMPTY"; this graph carries the
+      open item rather than the terminal-state claim it displaced.
+      WHY IT IS `informs` AND NOT `blocks` — three determinations, each tested
+      from this seat this round, because a blocking edge is the expensive kind
+      of encoding and must not rest on an untested premise:
+      (i) It does NOT gate M-UX-02a. Architecture's demand asserted that "a
+      launch from any other directory KeyErrors at app.py:848 before first
+      paint". Tested and FALSE for the documented launch: `python app.py`
+      (README line 67) sets sys.path[0] to the SCRIPT's directory, not the cwd
+      — running the app from /tmp by absolute path still binds
+      ProMgtAI/pairwisepm/strings.py, with 'str.empty.example_cta' present.
+      The real blast radius is narrower and should be stated exactly: any
+      interpreter that imports pairwisepm WITHOUT the repo root on sys.path (a
+      -c one-liner, a REPL, a pytest session rooted elsewhere) binds stale
+      bytes silently. Real, worth fixing, not a gate on the sitting.
+      (ii) It does NOT gate space-push: the Space launches `app_file: app.py`
+      from the Space root against the in-repo mirror, which is cmp-identical
+      to the authority; no frozen copy is installed there.
+      (iii) It does NOT gate the pip path: `pip install .[app]` from the
+      current tree installs current bytes. The stale artifact is one machine's
+      pre-round-8 venv snapshot.
+      WHAT IS ACCEPTED FROM THE SECOND HALF OF THE DEMAND: the M-UX-02a
+      witness line records the WORKING DIRECTORY alongside theme and mode — a
+      free disambiguation if a run ever voids — but as a recorded FIELD, never
+      as a precondition the sitting must satisfy. Encoding a blocking
+      precondition on a premise this seat disconfirmed would be the same
+      failure as leaving a node "imminent" after its window closed.
+      ── CLOSING NOTE, r16 (architecture's demand, accepted and stated in
+      their words because the distinction is theirs): NO LAUNCH-LOCATION GATE
+      WAS EVER WARRANTED BY A-13-01. Not "a gate was opened and has now been
+      discharged" — the difference matters and it is the whole content of the
+      demand. This graph never encoded one: the r14 entry above refused the
+      blocks-edge on the tested ground that `python /abs/path/app.py` puts the
+      SCRIPT's directory on sys.path[0], so the documented launch bound the
+      in-repo copy from any working directory EVEN IN THE DEFECTIVE STATE.
+      Architecture re-derived that premise from their own seat before
+      conceding (a probe script under /tmp, run from /tmp, printed
+      sys.path[0] = '/private/tmp/pwpm_probe') rather than accepting this
+      seat's report, and gtm — who DID open such a gate at r14 on the
+      generalisation — deleted it at r15 on their own re-reproduction and
+      retracted the mechanism in their file rather than narrowing it quietly
+      (verified this round: launch-copy.md item 7 reads "GATE DELETED",
+      §0 line 149 reads "RETRACTED"). So the record now closes the premise in
+      all three places rather than preserving a discharged precondition
+      someone re-derives later from an untested claim. WHAT WAS REAL AND IS
+      NOT RETRACTED: the defect itself (a drifted third copy) and its true
+      blast radius (any interpreter importing pairwisepm without the repo root
+      on sys.path — a -c one-liner, a REPL, an off-root pytest session). A
+      reproduction's SHAPE is part of its scope; `python -c` and `python
+      app.py` resolve sys.path differently, and only the first one ever bound
+      the stale bytes.
+      CLOSING EVIDENCE RE-DERIVED THIS ROUND FROM THIS SEAT, 2026-08-31
+      (not carried forward from r15, because the suite count moved twice
+      inside r15 and a pin is evidence of a moment): from /tmp,
+      `import pairwisepm.strings` → /Users/brettleehary/mcparea/ProMgtAI/
+      pairwisepm/strings.py, 'str.empty.example_cta' True,
+      default_config_dir() → the repo's configs/; site-packages carries
+      _editable_impl_pairwisepm.pth and NO pairwisepm/ tree; suite 67/67 from
+      the repo root (1.50s) AND 67/67 from /tmp (1.26s) at the top of the
+      round, then 72/72 both directions on a re-run at 20:38 — five more
+      assertions landed from other seats while this round was being written,
+      and both numbers are my own runs. I certify the EQUALITY of the two
+      directions and the module behind them, which is the property that
+      changed meaning; the integer is true as of its timestamp and not after,
+      and this round demonstrated that twice inside itself.
+
+  - id: hf-space-setup
+    title: "Hari creates the HF Space and provisions a write token (HF_TOKEN) locally — never stored server-side or in the repo"
+    discipline: human
+    effort: 0.25pd
+    spine_commitment: "Scope In — Hugging Face Gradio Space"
+    slices: [Pilot]
+    status: ready
+    owner: Hari
+    user_visible: false
+
+  - id: space-push
+    title: "Push repo to the HF Space (git push with token); confirm build passes with pinned requirements"
+    discipline: engineering
+    effort: 0.25pd
+    spine_commitment: "Scope In — Hugging Face Gradio Space plus pip-installable repo"
+    slices: [Pilot]
+    status: blocked
+    blocked_on: [mvp1-complete, d1-d2-resolution, hf-space-setup, release-audit]
+    user_visible: true
+    notes: >
+      blocked_on widened in exchange round: mvp1-complete is no longer done
+      (see that node), and compliance's release-audit gate now precedes any
+      push. Packaging must be complete in-repo so the push itself is a 0.25pd
+      credentialed git operation, nothing more.
+
+  - id: space-smoke-test
+    title: "Space smoke test: full A-vs-B in both modes on the live Space, blank-to-verdict under 5 minutes, log download works, nothing persists server-side"
+    discipline: engineering
+    effort: 0.25pd
+    spine_commitment: "Success Metrics — under 5 minutes; log fully in the user's hands"
+    slices: [Pilot]
+    status: blocked
+    blocked_on: [space-push]
+    user_visible: true
+
+  - id: seed-demo-alignment
+    title: "Align the canonical seed demo with the shipped engine (Decisions conventions C3/C4): recompute leaves/gtm/seed-comparison.json and tour.html numbers against the canonical configs/*.yaml seed distributions (tour uses raw-space Reach μ5000/σ3000 vs config log10p μ3/σ1; Effort σ4 vs σ5) and fix the risk entry-direction narration (C3: entered already reversed, 4 = lowest exposure); reconcile with engineering's shipped Load-example pair so the Space demos the tour's exact story"
+    discipline: gtm
+    effort: 0.5pd
+    spine_commitment: "Scope Boundaries — a judge that overstates its confidence is worse than no judge; demo numbers must reproduce in the shipped app"
+    slices: [Pilot]
+    status: done
+    completed_in: integration-2026-08-30
+    user_visible: true
+    notes: >
+      Added in exchange round 1.1 from Decisions conventions C3/C4, which
+      flagged (without an owner) that the tour's p=59% / CI 52–64% will NOT
+      reproduce inside the shipped app until one side aligns. GTM owns the
+      recompute; engineering assists on wiring the canonical pair as the app's
+      Load-example (engineering currently ships a DIFFERENT seeded pair —
+      'Auto-draft replies' vs 'Meeting-notes copilot' at 65% — one canonical
+      demo must survive). Blocks pilot-live, not space-push: the Space may
+      build and smoke-test meanwhile, but pilot PMs must not be invited with a
+      tour whose numbers the live app contradicts — that is an overstated-
+      confidence failure at first contact. Re-check if d1-d2-resolution
+      changes weights (informs edge).
+      RESOLVED at integration 2026-08-30: app.py loads the canonical pair from
+      leaves/gtm/seed-comparison.json (Reply Drafts vs Instant Summaries, with
+      an inlined fallback), configs/one_to_n.yaml carries the matching seed
+      distributions (Reach identity mu5000/sigma3000, Effort sigma4), the risk
+      entry-direction narration follows C3 (entered already reversed), and the
+      engine reproduces the tour numbers exactly: p=0.5854 -> 59% (52-64%),
+      verdict A; variant 55% (47-62%) too_close, L=0.185. The old
+      'Auto-draft replies' pair is gone from app.py.
+
+  - id: custody-nudge-fix
+    title: "Fix str.log.unsaved_nudge custody miscount (design states.md §6.4 R-1): render_audit passes the TOTAL log count into the {n_session} slot, so after an upload the app falsely claims uploaded decisions exist only in this browser tab — track the session-appended count separately, pass that, suppress the nudge at 0 (binding semantics in design S10b)"
+    discipline: engineering
+    effort: 0.25pd
+    spine_commitment: "Success Metrics — log fully in the user's hands; Scope Boundaries — a judge that overstates its confidence is worse than no judge"
+    slices: [Pilot]
+    status: done
+    completed_in: negotiation-round-3-2026-08-30
+    user_visible: true
+    notes: >
+      Added negotiation round 2. Accepted onto the graph because it is a
+      verified FALSE user-facing custody claim on a Spine-committed surface
+      (design's as-built audit, round 1) — not app polish. Modeled like
+      seed-demo-alignment: blocked pilot-live, NOT space-push. Zero
+      elapsed-path cost, run in parallel to the human gates as planned.
+      DONE — verified in round 3 against app.py: render_audit takes
+      n_session (records appended this session only, design S10b binding
+      semantics), the nudge is suppressed at n_session == 0, uploads never
+      count toward it (session_n gr.State threaded through
+      do_log/do_export/do_upload). Compliance pinned the fix with T-CUST-01
+      the same round it landed. Dispute B1 (pre-pilot vs post-Pilot
+      placement of R-1) is thereby moot: it landed pre-pilot, as this graph
+      modeled. The remaining §6.4 residual R-4 (ablation placement) stays
+      OFF the graph — deferred polish with design's on-record consent; R-3
+      (ceiling routing strip) was implemented by engineering bilaterally
+      without ever entering this graph, at zero path cost.
+
+  - id: strings-revendor
+    title: "Re-vendor pairwisepm/strings.py from leaves/design/strings.py (additive keys: str.log.pick_first/pick_missing/appended/export_empty/upload_none, str.factor.ceiling_label) and land architecture's byte-identity test IN THE SAME CHANGE (§6.4 R-2 + architecture's round-1 demand to engineering)"
+    discipline: engineering
+    effort: 0.1pd
+    spine_commitment: "Traceability Anchor — every Leaf element maps back; the vendoring contract (architecture.md §4.2, design is copy authority) is a normative boundary"
+    slices: [Pilot]
+    status: done
+    completed_in: negotiation-round-3-2026-08-30
+    user_visible: false
+    notes: >
+      Added negotiation round 2 with a hard SEQUENCING CONSTRAINT: re-vendor
+      and byte-identity test must land in the SAME change, since the files
+      verifiably differed and the test alone would have turned the suite red.
+      DONE — engineering honored the pairing exactly: verified in round 3
+      that pairwisepm/strings.py is byte-identical to leaves/design/strings.py
+      and tests/test_vendoring.py (T-VEND-01, matrix row F-25, pre-push gate
+      P-9) landed in the same change; the suite never went red (53/53 green
+      at the round-3 verification; 54/54 at the round-4 re-run). The five handler messages
+      and both Ceiling checkbox labels are keyed off the new string IDs per
+      design R-2. The vendoring boundary is now self-enforcing.
+
+  - id: imputation-blocking-fix
+    title: "Fix design §6.4 R-8 (CRITICAL, browser-verified round 3): gradio 6.26 renders gr.Number(value=None) as a literal 0 and submits it, so untouched factor fields reach the handlers as 0, _missing_factors never fires, and the no-imputation blocking rule is void in a real browser — a full verdict computes from 12 never-entered scores. Behavioral acceptance (mechanism is engineering's call): an untouched factor must never reach the handler as a value, and Compare on an incomplete form must render str.partial.verdict_placeholder"
+    discipline: engineering
+    effort: 0.5pd
+    spine_commitment: "Success Metrics — the verdict is honest by construction; Scope Boundaries — a judge that overstates its confidence is worse than no judge"
+    slices: [Pilot]
+    status: done
+    completed_in: negotiation-round-5
+    user_visible: true
+    notes: >
+      DONE round 5 — executed the round after admission, inside the D1/D2
+      window as modeled, zero elapsed-path cost. Mechanism (engineering's
+      call, as offered): gr.Number removed from the path entirely — factor
+      inputs are Textboxes, untouched fields submit "", screened by
+      _coerce_raw/_screen_factors before the handler; an explicit 0 still
+      scores; incomplete Compare renders str.partial.verdict_placeholder.
+      The pairing constraint was honored exactly: T-SER-01
+      (tests/test_packaging.py::test_untouched_factor_never_scores) landed
+      IN THE SAME CHANGE, demonstrated RED against the pre-fix gr.Number
+      build per compliance's spec §20. Sequencing verification round 5:
+      Textbox path + both guards present in the repo, suite 56/56 green
+      (1.49s, project venv, sequencing's own re-run). BROWSER-VERIFIED
+      round 6: render session 2 (design states.md §6.7, 2026-08-31, dark
+      theme forced, real Chrome) passed all four acceptance checks —
+      (a) clean first paint (blank Textboxes, no pre-filled 0s, no red
+      borders, no toasts), (b) incomplete Compare renders
+      str.partial.verdict_placeholder verbatim with the per-factor list,
+      (c) explicit 0 scores (computed the S4 too-close verdict),
+      (d) range/numeric errors via the S2 list (T-SER-01(d),
+      handler-level). This node's closing bracket is CLOSED; a re-found
+      defect reopens as a defect, not as this node.
+      Admitted negotiation round 4 under the SAME admission bar as R-1/R-2:
+      a defect against an already-admitted commitment (§6.4 delta (d),
+      closed round 1 as "unfilled factors block computation with no
+      defaulting", now shown browser-broken), NOT new scope — no behavior
+      is added, committed behavior is made true in the served UI. Zero
+      elapsed-path cost: runs parallel to the human-gated D1/D2 path.
+      Modeled like custody-nudge-fix: blocks PILOT-LIVE, not space-push
+      (the Space may build and smoke-test meanwhile, but pilot PMs must
+      not touch an app that fabricates verdict inputs — that is the exact
+      overstated-confidence failure the Spine refuses). SEQUENCING
+      CONSTRAINT (same pairing discipline as strings-revendor, per
+      compliance): the fix must land WITH a serialization-level regression
+      guard in the same change — the existing suite calls handlers with
+      Python None directly and is structurally blind to this bug class,
+      which is how a green 54-test suite coexisted with a void blocking
+      rule. Design routed R-8 through the Decisions queue as agreed;
+      sequencing (the named stakeholder) CONCURS with gating, so the
+      D-entry can be recorded as uncontested — no adjudication needed.
+
+  - id: verdict-legibility-fix
+    title: "Fix design §6.4 R-9 + the M-UX-03 FAIL: every forced-light-background HTML block in app.py also forces its text color (the MP-1 probability token and TCTC headline render near-white-on-white in Gradio's served dark theme; the amber ceiling/fragility strips share the root cause), and str.banner.01 becomes scroll-persistent (sticky or equivalent) so the 0→1 banner is visible in every 0→1 state"
+    discipline: engineering
+    effort: 0.25pd
+    spine_commitment: "Success Metrics — intervals shown always (an illegible interval is not shown); refusal checklist — 0→1 banner permanent"
+    slices: [Pilot]
+    status: done   # r10: FULLY CLOSED, both halves browser-verified. R-9b half CLOSED §6.9 (r8); M-UX-03 half CLOSED §6.11 (session 4's single check, verified from this seat: PASS — banner rect top 0 / bottom 77.2 fully within the 792px viewport at scrollY 1500, computed position:fixed, served 0→1 dark theme; height-reservation rider PASS, spacer computed 77.2 = banner height exactly; opacity rider PASS). The node flipped on the browser PASS row and on nothing else — exactly the one condition the no-flip rule named. F-19/P-5 flip condition SATISFIED on the §6.11 row; compliance registers the flip in its matrix this round per its own §22b acceptance clause. Suite 59/59 (1.29s, own run r10)
+    completed_in: negotiation-round-9-landed-round-10-browser-closed
+    user_visible: true
+    notes: >
+      Round-6 status: OPEN with widened remaining scope, per browser render
+      session 2 (design states.md §6.7). (a) R-9b — the R-9 mechanism
+      landed and validated its premise (amber strips and direct-text lines
+      PASS legible), but under-reached: gradio 6.26's
+      `.prose * { color: var(--body-text-color) }` beats inheritance from
+      the block's forced inline color, so the S3/S4 verdict headline, the
+      MP-1 probability token, the runner-up chip, and the S1/S2
+      placeholder inner divs all compute rgb(244,244,245) on
+      rgb(250,250,249) in served dark theme — near-invisible — while
+      T-THEME-01 stays green (the guard checks the element, the rule
+      re-colors its children). R-9b is a RESIDUAL of the admitted R-9 on
+      this still-open node, not new scope and not a new node. SEQUENCING
+      CONSTRAINT (same pairing discipline as T-SER-01): the R-9b fix
+      lands WITH a strengthened T-THEME-01 in the same change — every
+      text-bearing element inside a forced-light block carries its own
+      color, or a computed-style-level check. (b) M-UX-03 — str.banner.01
+      scroll-persistent — verified absent AGAIN round 6 (no
+      position:sticky in app.py; §6.7 computed position: static at
+      scrollY 1500, banner out of viewport). Release-audit stays blocked
+      on both FAIL rows and now needs render session 3, which exists only
+      because this node shipped half-done: land BOTH residues before
+      session 3 so it is the LAST render.
+      Round-7 status: EXECUTED. Engineering landed both residues in one
+      change-set exactly as this graph demanded, and sequencing verified
+      each piece directly this round: (a) R-9b — every affected nested
+      element carries its own inline color (S3/S4 headline divs at
+      app.py:181/198 now emit style='font-size:1.25em;color:#1c1917';
+      ~30 inline color declarations across the forced-light blocks;
+      mechanism inline-per-element, engineering's call as offered — a
+      scoped !important-inherit rule would have clobbered the intentional
+      #57534e sub-text), landed WITH the strengthened render-level
+      T-THEME-01b (test_forced_light_blocks_color_every_nested_element,
+      tests/test_packaging.py:390 — parses real rendered output,
+      self-tests red against the pre-fix headline shape) in the SAME
+      change per the standing pairing discipline; (b) M-UX-03 —
+      #pwpm-banner { position: sticky; top: 0; z-index: 100 } wired via
+      elem_id + Blocks-level _CSS (app.py:744/766, on the component
+      wrapper — correct, since sticky inside a wrapper of its own height
+      is a no-op), pinned by T-BANNER-01 (:453). Suite 58/58 green
+      (1.15s, project venv, sequencing's own re-run). The node flips to
+      DONE only when render session 3 re-checks the two standing §6.7
+      FAIL rows — a node flips on its acceptance bar, not on its guards,
+      and both FAIL rows are dated browser evidence only a browser can
+      flip (compliance's P-11 encodes the same: fix + same-change guard
+      satisfied, clears on session-3 PASS alone). Same bracket structure
+      imputation-blocking-fix rode: code-verified at landing, browser
+      bracket under release-audit. Session 3 is TRIGGERED and scoped to
+      exactly these two rows; fallback pre-agreed if sticky is clipped
+      by an intermediate container (report the clipping ancestor's
+      computed overflow; engineering lands position:fixed same-round).
+      Round-8 status: HALF-CLOSED per render session 3 (§6.9, verified
+      directly this round). (a) R-9b CLOSED browser-verified: every
+      surface §6.7 enumerated computes legible ink in served dark theme
+      (per-check-ID PASS rows, computed rgb(28,25,23)/rgb(87,83,78)
+      evidence; S5/Stop-5 whole-screen rider closed with it). The R-9
+      bracket closes past nothing — the FAIL row it answered is answered
+      by a dated PASS row-set. (b) M-UX-03 stands FAIL a third time in
+      its cheapest state ever: computed position IS sticky/top:0/z:100
+      (the rule landed and applies) but .gradio-container-6-26-0
+      computes overflow:hidden while the DOCUMENT is the scroller, so
+      sticky's scrollport never scrolls — structurally inert. FOURTH
+      green-guard/browser-false instance, one layer below R-9b: a
+      static pin verifies rule-APPLIED, only the browser verifies
+      rule-EFFECTIVE (guard doctrine ladder: serialization → specificity
+      → structural context). Engineering owes its own round-6
+      pre-committed fallback on exactly this evidence — position:fixed
+      on #pwpm-banner (§6.9 confirms viability: zero
+      transform/filter/contain ancestors) + T-BANNER-01 updated in the
+      SAME change (pin the fixed rule, docstring the lesson) + reserved
+      banner height so fixed does not overlap the mode toggle. Verified
+      this round: app.py:744 still position:sticky — fallback NOT yet
+      landed; engineering's queue is not empty. Render session 4 exists,
+      scoped to exactly ONE check (banner rect in viewport at scrollY
+      1500) — minutes, the last bracket if it passes.
+      Round-9 status: FALLBACK LANDED, verified piece by piece from this
+      seat (own greps, own suite run): position:fixed/top:0/left:0/
+      right:0/z-index:100 on #pwpm-banner via Blocks-level _CSS
+      (app.py:769); height reserved by BANNER_SPACER_HTML — an in-flow,
+      visibility:hidden, content-exact duplicate placed FIRST in the
+      layout (app.py:787; a top:0 fixed box covers the top of the
+      viewport, so the reservation sits at the top of the page) and
+      toggling with the banner in on_mode_change (app.py:725, wired in
+      mode.change outputs at :890); T-BANNER-01 REWRITTEN in the SAME
+      change (test_packaging.py:456) pinning fixed rule + spacer +
+      wiring, red-first by construction (a fixed assertion cannot pass
+      against the prior sticky rule), docstring recording the
+      rule-applied-vs-rule-effective lesson — §22b's four clauses all
+      satisfied, the pairing discipline's seventh consecutive honor.
+      Suite 59/59 green (1.49s, project venv, own run). Per the
+      standing no-flip-past-a-FAIL-row rule the node does NOT flip on
+      the landing: the third §6.9 FAIL row is dated browser evidence
+      only a browser can answer, so the node awaits render session 4's
+      single check (banner rect within viewport at scrollY 1500 in
+      served 0→1), committed by design for the landing round — which is
+      THIS round. Same bracket structure as R-8: code-verified at
+      landing, browser bracket under release-audit, narrowest bracket
+      this audit has ever needed.
+      Round-10 status: CLOSED. Design ran session 4 the round the
+      trigger fired, and sequencing verified the record directly
+      (states.md §6.11 read this round, not taken from the packet):
+      the single check PASSED — banner rect top 0 / bottom 77.2 fully
+      within the 792px viewport at scrollY 1500 (and at the document's
+      max scroll 1824.5), computed position:fixed, served 0→1 dark
+      theme, screenshot evidence; the height-reservation rider PASSED
+      (spacer computed height 77.2 = banner height exactly, mode-toggle
+      top 238.5, no overlap — no M-UX-01 regression traded for the
+      fix); the opacity rider PASSED. S8 invariant 7 holds in the
+      browser for the first time. The node flipped to done on the
+      dated browser PASS row — the only condition the no-flip rule
+      ever named — and the guard-doctrine arc ends correctly: the
+      rewritten T-BANNER-01 pins a rule whose applied and effective
+      halves were each verified by the instrument that owns them.
+      NUMBERING: the record is §6.11 (§6.10 is the R-10 mint record);
+      earlier "§6.10" references were packet lag. Render session 4 was
+      the LAST render — the ledger is closed (see release-audit).
+      Round-5 status (historical): R-9 half landed with T-THEME-01;
+      M-UX-03 half verified unlanded; node held READY.
+      Admitted negotiation round 4. The banner half is not even new gating:
+      M-UX-03 is a release-audit check that FAILED in the round-3 render,
+      and release-audit (which already blocks space-push) factually cannot
+      pass while it fails — this node just gives that fix an owner and an
+      edge instead of leaving the audit un-passable with no route to done.
+      The dark-theme half rides the same node at zero marginal path cost:
+      CSS-only (one line per forced-background block), no engine or string
+      change, and Spine-backed — a pilot or demo on dark theme currently
+      shows an unreadable verdict headline at the exact moment the
+      product's honesty is supposed to be visible. After it lands, design
+      re-checks M-UX-03 (and the R-9 render) in one short session.
+
+  - id: pilot-live
+    title: "MILESTONE — Pilot: HF Space live, pilot PMs invited"
+    discipline: sequencing
+    effort: 0pd
+    spine_commitment: "The User — PM working on GenAI applications, solo or small team"
+    slices: [Pilot]
+    status: blocked
+    blocked_on: [space-smoke-test, seed-demo-alignment, custody-nudge-fix, imputation-blocking-fix]
+    user_visible: true
+
+  # ── Real-use ramp → GA ───────────────────────────────────────────────────
+  - id: first-10-decisions
+    title: "First ~10 real decisions logged (Hari dogfooding + pilot PMs); ζ and Brier accumulating from decision 1"
+    discipline: human
+    effort: 2pd
+    spine_commitment: "Success Metrics — ζ and Brier accumulate from decision 1"
+    slices: [GA]
+    status: blocked
+    blocked_on: [pilot-live]
+    owner: Hari
+    user_visible: true
+
+  - id: m1-activation
+    title: "M1 activates from the user's own log (exactly 10 picks per mode — M1_ACTIVATION_N=10, RATIFIED as Decisions convention C1: override picks count toward the gate and train M1): verify shrinkage-to-M0 behavior on the real log, revealed-vs-stated divergence panel populates, order-bias diagnostic read, leverage panel hard-switches to M1 weights with the mandatory regime label (convention C6 — no blend)"
+    discipline: engineering
+    effort: 0.5pd
+    spine_commitment: "Success Metrics — model-of-the-judge activates by roughly decision 10"
+    slices: [GA]
+    status: blocked
+    blocked_on: [first-10-decisions]
+    user_visible: true
+
+  - id: outcome-labeling-ui
+    title: "UI affordance for outcome labeling: mark a past logged decision's outcome 'A'|'B' (schema slot and DecisionLog.outcome_brier() already shipped; deliberately out of v1 UI scope)"
+    discipline: engineering
+    effort: 0.5pd
+    spine_commitment: "§6 decision log — outcome slot (null until labeled later — schema ready for M2/M3)"
+    slices: [GA]
+    status: blocked
+    blocked_on: [pilot-live]
+    user_visible: true
+    notes: >
+      Added at engineering's request: the M2 runway is already in the data
+      (every record carries outcome: null, outcome_brier() activates on labels)
+      — the only missing piece is this UI affordance. Without it users cannot
+      label, so it blocks outcome-labeling-begins.
+
+  - id: outcome-labeling-begins
+    title: "Outcome labeling begins: users fill the null outcome slot on past 1→N decisions as results land (counts toward the ~45-outcome M2 gate)"
+    discipline: human
+    effort: ongoing
+    spine_commitment: "§3 regression ladder — M2 trains on outcome labels; 0→1 never claims predictive accuracy"
+    slices: [GA]
+    status: blocked
+    blocked_on: [pilot-live, outcome-labeling-ui]
+    owner: Hari
+    user_visible: true
+    notes: 1→N outcomes only; 0→1 outcome labels are collected but never used for accuracy claims.
+
+  - id: z-basis-switchover
+    title: "Wire the seed→log z-scoring basis into app.py per D5 resolution (v1.1 flag; shipped helpers log_derived_stats / with_updated_distributions are deliberately unwired)"
+    discipline: engineering
+    effort: 1pd
+    spine_commitment: "§2 — factors z-scored against the accumulated log (seed distributions ship in config until the log grows)"
+    slices: [GA]
+    status: blocked
+    blocked_on: [d3-d6-resolution, first-10-decisions]
+    user_visible: true
+    notes: >
+      CONFLICT flagged for the integrator: engineering's shipped mechanism is a
+      hard per-factor replacement (log_derived_stats), but D5's build-meanwhile
+      default — and its likely resolution — is a Bayesian blend (seed as a
+      pseudo-sample, weight 10, config) precisely because a hard cutover can
+      flip near-tie verdicts between sessions, the occasion noise the product
+      removes. The blend is NOT yet implemented. Sequenced after the D5
+      override window (2026-09-02) and after real log data exists; do not wire
+      the hard cutover in the meantime.
+
+  - id: calibration-report
+    title: "Calibration report from real use: Brier trend, reliability curve, ζ per judge, M1-vs-M0 divergence, intercept/order-bias finding — published in the audit view and README"
+    discipline: engineering
+    effort: 1pd
+    spine_commitment: "§1 — 1→N accuracy claims are EARNED over time via calibration; honest by construction"
+    slices: [GA]
+    status: blocked
+    blocked_on: [first-10-decisions, m1-activation]
+    informed_by: [outcome-labeling-begins, d1-d2-resolution, d3-d6-resolution]
+    user_visible: true
+    notes: >
+      D4 governs surfacing cadence and the reliability-curve threshold
+      (build-meanwhile: passive audit view, curve at n>=30 with bin counts
+      shown, thresholds in config). Report format/surfacing work is sequenced
+      after the D4 override window (2026-09-02).
+
+  - id: pip-release
+    title: "pip release: publish pairwisepm to PyPI (version tagged, changelog, install-and-run verified offline)"
+    discipline: engineering
+    effort: 0.5pd
+    spine_commitment: "Success Metrics — runs entirely offline after download: no API key"
+    slices: [GA]
+    status: blocked
+    blocked_on: [mvp1-complete, pilot-live, release-audit]
+    user_visible: true
+    notes: The release-audit protocol re-runs on this release candidate (traceability.md §5).
+
+  - id: ga-live
+    title: "MILESTONE — GA: pip release + calibration report after real use"
+    discipline: sequencing
+    effort: 0pd
+    spine_commitment: "Success Metrics — all four, held simultaneously"
+    slices: [GA]
+    status: blocked
+    blocked_on: [pip-release, calibration-report]
+    user_visible: true
+
+  # ── Future, threshold-gated (post-GA; listed so nobody re-litigates) ─────
+  - id: m2-outcome-regression
+    title: "M2: same regression vs. labeled outcomes — GATED at ≥ ~45 outcomes; not scheduled"
+    discipline: engineering
+    effort: 2pd
+    spine_commitment: "§3 regression ladder — M2 future; §1 accuracy earned, never assumed"
+    slices: []
+    status: future
+    gate: ">= ~45 labeled 1→N outcomes"
+    user_visible: false
+
+edges:
+  # foundation
+  - {from: spine-authored,      to: tech-spec-locked,   type: blocks}
+  - {from: tech-spec-locked,    to: factor-configs,     type: blocks}
+  - {from: tech-spec-locked,    to: decision-log,       type: blocks}
+  - {from: tech-spec-locked,    to: design-spec,        type: blocks}
+  - {from: spine-authored,      to: gtm-positioning,    type: blocks}
+  - {from: spine-authored,      to: traceability-matrix, type: blocks}
+
+  # engine chain
+  - {from: factor-configs,      to: engine-m0,          type: blocks}
+  - {from: engine-m0,           to: engine-bootstrap,   type: blocks}
+  - {from: engine-m0,           to: engine-m1,          type: blocks}
+  - {from: engine-m0,           to: leverage-panel,     type: blocks}
+  - {from: decision-log,        to: engine-m1,          type: blocks}
+  - {from: decision-log,        to: metrics-zeta-brier, type: blocks}
+
+  # experience chain
+  - {from: design-spec,         to: gradio-ui,          type: informs}
+  - {from: engine-m0,           to: gradio-ui,          type: blocks}
+  - {from: engine-bootstrap,    to: gradio-ui,          type: blocks}
+  - {from: leverage-panel,      to: gradio-ui,          type: blocks}
+  - {from: decision-log,        to: gradio-ui,          type: blocks}
+  - {from: engine-m1,           to: audit-view,         type: blocks}
+  - {from: metrics-zeta-brier,  to: audit-view,         type: blocks}
+  - {from: gtm-positioning,     to: readme-epistemics,  type: informs}
+  - {from: traceability-matrix, to: tests-green,        type: informs}
+
+  # MVP1 gate
+  - {from: gradio-ui,           to: tests-green,        type: blocks}
+  - {from: audit-view,          to: tests-green,        type: blocks}
+  - {from: tests-green,         to: mvp1-complete,      type: blocks}
+  - {from: packaging,           to: mvp1-complete,      type: blocks}
+  - {from: readme-epistemics,   to: mvp1-complete,      type: blocks}
+
+  # Pilot gate
+  - {from: mvp1-complete,       to: space-push,         type: blocks}
+  - {from: d1-d2-resolution,    to: space-push,         type: blocks}
+  - {from: hf-space-setup,      to: space-push,         type: blocks}
+  - {from: tests-green,         to: release-audit,      type: blocks}
+  - {from: traceability-matrix, to: release-audit,      type: informs}
+  - {from: release-audit,       to: space-push,         type: blocks}
+  - {from: traceability-matrix, to: space-push,         type: informs}
+  - {from: space-push,          to: space-smoke-test,   type: blocks}
+  - {from: space-smoke-test,    to: pilot-live,         type: blocks}
+  - {from: gtm-positioning,     to: pilot-live,         type: informs}
+
+  # real-use ramp
+  - {from: pilot-live,          to: first-10-decisions, type: blocks}
+  - {from: pilot-live,          to: outcome-labeling-ui, type: blocks}
+  - {from: outcome-labeling-ui, to: outcome-labeling-begins, type: blocks}
+  - {from: pilot-live,          to: outcome-labeling-begins, type: blocks}
+  - {from: first-10-decisions,  to: m1-activation,      type: blocks}
+  - {from: m1-activation,       to: calibration-report, type: blocks}
+  - {from: first-10-decisions,  to: calibration-report, type: blocks}
+  - {from: outcome-labeling-begins, to: calibration-report, type: informs}
+  - {from: d1-d2-resolution,    to: calibration-report, type: informs}
+  - {from: d3-d6-resolution,    to: calibration-report, type: informs}
+  - {from: d3-d6-resolution,    to: z-basis-switchover, type: blocks}
+  - {from: first-10-decisions,  to: z-basis-switchover, type: blocks}
+
+  # seed-demo alignment (Decisions conventions C3/C4)
+  - {from: factor-configs,      to: seed-demo-alignment, type: blocks}
+  - {from: gtm-positioning,     to: seed-demo-alignment, type: informs}
+  - {from: d1-d2-resolution,    to: seed-demo-alignment, type: informs}
+  - {from: seed-demo-alignment, to: pilot-live,          type: blocks}
+
+  # round-2 honesty/contract fixes (parallel to human gates; zero elapsed cost)
+  - {from: custody-nudge-fix,   to: pilot-live,          type: blocks}
+  - {from: strings-revendor,    to: release-audit,       type: informs}
+
+  # round-4 browser-verified defect fixes (parallel to human gates; zero elapsed cost)
+  - {from: imputation-blocking-fix, to: pilot-live,      type: blocks}
+  - {from: imputation-blocking-fix, to: release-audit,   type: informs}
+  # ^ the informs edge carries a HARD intra-node constraint (gtm, accepted r5):
+  #   release-audit's M-UX-02 sub-check (timed fresh-user run) was NOT
+  #   schedulable before imputation-blocking-fix landed — R-8 landed r5, so
+  #   M-UX-02 is schedulable from r6 and should be scheduled promptly.
+  - {from: verdict-legibility-fix,  to: release-audit,   type: blocks}
+
+  # round-14: A-13-01 (architecture's self-reported defect, reproduced from this
+  #   seat). INFORMS, deliberately NOT blocks — the three non-gating
+  #   determinations are tested and recorded in the node's notes. It costs the
+  #   release path zero elapsed time; it is on the graph because it is true,
+  #   not because it gates anything.
+  - {from: venv-install-drift-fix,  to: release-audit,   type: informs}
+
+  # r19.1 (2026-09-01 07:42): the full suite is 79 passed / 1 FAILED, and the
+  # failing clause is the Spine's no-runtime-LLM refusal guard, which
+  # release-audit's own title names as item one of the pre-push refusal
+  # checklist. BLOCKS, not informs — the node's acceptance sentence names the
+  # thing that is red. Elapsed critical-path cost is still ZERO: the path is
+  # Hari's gates, and space-push cannot fire until those lift.
+  - {from: suite-red-no-llm-guard,  to: release-audit,   type: blocks}
+                              # r20: the SOURCE is now `done`, so this edge is
+                              # SATISFIED and release-audit is unblocked by it.
+                              # The edge is KEPT rather than deleted: a blocks-edge
+                              # from a done node is satisfied by ordinary graph
+                              # semantics, and deleting it would erase the record
+                              # that release-audit's own acceptance sentence ("no
+                              # runtime LLM/network") was, for one round, not
+                              # assertable in one command. Opened r19.1, discharged
+                              # r20, elapsed path cost zero.
+
+  # GA gate
+  - {from: mvp1-complete,       to: pip-release,        type: blocks}
+  - {from: pilot-live,          to: pip-release,        type: blocks}
+  - {from: release-audit,       to: pip-release,        type: blocks}
+  - {from: gtm-positioning,     to: pip-release,        type: informs}
+  - {from: pip-release,         to: ga-live,            type: blocks}
+  - {from: calibration-report,  to: ga-live,            type: blocks}
+
+  # future gate
+  - {from: outcome-labeling-begins, to: m2-outcome-regression, type: blocks}
+  - {from: calibration-report,  to: m2-outcome-regression, type: informs}

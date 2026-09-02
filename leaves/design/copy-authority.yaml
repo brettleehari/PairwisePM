@@ -1,0 +1,170 @@
+# leaves/design/copy-authority.yaml
+# DESIGN-OWNED EXPECTED-VALUES FIXTURE for the CX-15-01 population
+# (configs/*.yaml rendered text) and the CX-15-02 CANDIDATES set
+# (app.py's four "(not scored)" evaluative labels).
+#
+# Purpose (states.md §6.17, answering compliance's F-32/F-33 ruling demand,
+# option (a)): this file is the machine-diffable destination for copy that
+# carries product meaning but has no catalogue entry. Compliance owns the
+# diff test; design owns these bytes. A red here means a text field moved
+# without design ratification — which is exactly the per-line notification
+# §6.12(b6) asks for, converted from a procedure into an instrument.
+#
+# NOT an authority for: policy/numeric fields (prior_weight, sign, seed_mean,
+# seed_std, transform, plausible_range). Those change freely under the D1/D2
+# record and are deliberately absent from this file, so the resolution round
+# cannot red it.
+#
+# render_map states which ratified fields actually reach a browser AND — as of
+# §6.19 — which rendered fields are governed elsewhere. It is this file's scope
+# statement and must be read before the `configs:` block below: a field with a
+# render_map row and no bytes under `configs:` is rendered copy whose authority
+# is NAMED IN ITS ROW, not an unwatched field. Reading render_map as the whole
+# rendered population was possible until §6.19 and was wrong; it is the error
+# this header now exists to refuse.
+#
+# NUMERAL CORRECTION, §6.19(ii), on architecture's demand — the false figure is
+# quoted rather than reworded away. This header read: "Three of the seven
+# fields design declared 'rendered' in §6.15 do not render at all." BOTH
+# numerals were wrong and the arithmetic concealed it, which is why three seats
+# read past it: the declared population was EIGHT names, not seven, and FOUR of
+# them do not render, not three. 7−3 and 8−4 both land on 4, so the wrong
+# premises produced the right remainder and nothing looked odd.
+#
+# The map now carries TEN names and the split is exactly five/five:
+#   RENDERS (5): label, factors[].name, factors[].scale, factors[].rationale,
+#                banner
+#   DOES NOT RENDER (5): flags[].name, flags[].description,
+#                        evaluative_inputs[].name/.scale/.note
+# Nine of the ten are ratified in the `configs:` block below. `banner` is the
+# tenth and is deliberately NOT — see its row and §6.19(i).
+ratified: '2026-08-31'
+ratified_by: design leaf (leaves/design/states.md §6.17, §6.19)
+render_map:
+  label: RENDERS — mode toggle (app.py gr.Radio choices) + audit rows
+  factors[].name: RENDERS — input label, leverage table, path-to-parity, fragility line
+  factors[].scale: RENDERS — input label suffix (shadowed for risk_surface by str.factor.risk_label_suffix)
+  factors[].rationale: RENDERS — input info/help text (side A only)
+  flags[].name: DOES NOT RENDER — checkbox label comes from str.factor.ceiling_label
+  flags[].description: DOES NOT RENDER — routing copy is engine-pinned PINNED_CEILING (T-CEIL-02)
+  evaluative_inputs[].name: DOES NOT RENDER — app.py literal 'A · Strategic fit (not scored)' etc.
+  evaluative_inputs[].scale: >-
+    DOES NOT RENDER — ratified here ('0–4', both schemas) but carried by no
+    on-screen label; cfg.evaluative_inputs has NO call site in app.py at all
+    (its two name-matches, :124 and :700, are the GTM seed dict, a different
+    object with a similar name). Added §6.19(ii) — until this round a ratified
+    field carried no render verdict in either direction.
+  evaluative_inputs[].note: DOES NOT RENDER — no call site; dead text
+  banner: >-
+    RENDERS — 0→1 ONLY (one_to_n's is null). Permanent fixed box on every 0→1
+    screen: configs/zero_to_one.yaml → BANNER_HTML (app.py:91) → gr.HTML
+    (app.py:832), toggled visible by on_mode_change (app.py:738). NOT RATIFIED
+    IN THIS FILE, deliberately — AUTHORITY IS THE CATALOGUE'S str.banner.01,
+    asserted byte-equal at import by app.py:73 and by test_engine.py's
+    test_zero_to_one_banner_mandatory / test_banner_attached_and_wording, which
+    compliance's T-COPY-02c checks by name. This is the sole on-screen carrier
+    of the Spine's 0→1 refusal ("It does not predict product–market fit"), and
+    it sits here as a RENDER VERDICT WITH A NAMED AUTHORITY so that no reader
+    of this map concludes it is unwatched. Ruling and reasons — §6.19(i).
+configs:
+  configs/one_to_n.yaml:
+    label: 1→N (allocation)
+    factors:
+      impact_primary_metric:
+        name: Impact on primary metric
+        scale: vs. a named past feature, −2..+2
+        rationale: Anchoring to a named shipped feature replaces a soft 1–10 guess with a comparative
+          judgment PMs are actually good at.
+      capability_feasibility:
+        name: Capability feasibility
+        scale: eval / prototype pass rate, 0–4
+        rationale: GenAI features fail on model capability more than on engineering; a measured pass rate
+          beats optimism.
+      reach:
+        name: Reach
+        scale: users affected per quarter (count)
+        rationale: Reach is an observable property of the user base, not a hope — hence a fact. Seed distribution
+          matches the canonical demo (leaves/gtm/seed-comparison.json); switch transform to log10p for
+          heavy-tailed user bases.
+      unit_economics:
+        name: Unit economics
+        scale: value per use vs. inference cost, 0–4
+        rationale: Inference cost per use is the silent killer of GenAI features; margin per use must
+          be scored, not assumed.
+      data_flywheel:
+        name: Data flywheel
+        scale: usage → data → better feature, 0–4
+        rationale: A compounding data loop is structural to the idea; you either have the loop or you
+          don't.
+      risk_surface:
+        name: Risk surface
+        scale: hallucination / compliance exposure, 0–4 REVERSED (4 = lowest exposure)
+        rationale: Guardrails, review flows and scoping can shrink exposure — risk is workable, hence
+          a lever.
+      effort:
+        name: Effort
+        scale: person-weeks, reference-class adjusted
+        rationale: Cost side of the ledger; reference-class adjustment fights the planning fallacy before
+          the number enters the score.
+    flags: {}
+    evaluative_inputs:
+      strategic_fit:
+        name: Strategic fit
+        scale: 0–4
+        note: not scored — labeled override input
+      brand_fit:
+        name: Brand fit
+        scale: 0–4
+        note: not scored — labeled override input
+  configs/zero_to_one.yaml:
+    label: 0→1 (search)
+    factors:
+      problem_severity_frequency:
+        name: Problem severity × frequency
+        scale: 0–4
+        rationale: How much it hurts times how often it hurts is the demand floor; the problem exists
+          or it doesn't.
+      capability_trajectory_exposure:
+        name: Capability-trajectory exposure
+        scale: −2..+2 (stronger vs. absorbed as frontier models improve)
+        rationale: The next model release either feeds your product or eats it; that exposure is structural,
+          not workable.
+      evidence_of_pull:
+        name: Evidence of pull
+        scale: interviews / waitlist / pre-orders, 0–4
+        rationale: Pull evidence can be manufactured by doing the work — go get interviews and pre-orders;
+          hence a lever.
+      genai_necessity:
+        name: GenAI-necessity
+        scale: generative core vs. bolt-on, 0–4
+        rationale: If the generative model is removable, the moat is removable; necessity is architecture,
+          not effort.
+      data_distribution_advantage:
+        name: Data / distribution advantage
+        scale: 0–4
+        rationale: Proprietary data or an owned channel is held or not held at decision time — a fact
+          of position.
+      cost_to_test:
+        name: Cost to test
+        scale: weeks to a falsifiable prototype
+        rationale: In search mode the scarce resource is falsification speed; scoping the test smaller
+          is always available work.
+    flags:
+      ceiling:
+        name: Ceiling
+        description: 'Top-box flag: plausibly a 100x outcome. Unweighted; routes to human portfolio judgment
+          instead of being averaged into the score.'
+    evaluative_inputs:
+      strategic_fit:
+        name: Strategic fit
+        scale: 0–4
+        note: not scored — labeled override input
+      brand_fit:
+        name: Brand fit
+        scale: 0–4
+        note: not scored — labeled override input
+app_py_candidates:
+- A · Strategic fit (not scored)
+- A · Brand fit (not scored)
+- B · Strategic fit (not scored)
+- B · Brand fit (not scored)

@@ -1,0 +1,101 @@
+{
+  "_purpose": "Canonical seeded demo comparison used by the GTM tour (leaves/gtm/tour.html). Other leaves that ship a demo/example (engineering sample log, app Load-example button, design mocks) should use these exact values so every artifact tells one consistent story. All derived numbers are VERIFIED against the shipped engine: pairwisepm.compare() with configs/one_to_n.yaml defaults (n_boot=2000, seed=7) reproduces p, logit, interval, contributions, parity paths, and both verdicts exactly (exchange round, 2026-08-30; re-verified against the post-integration build — README sdk_version 6.26.0 — negotiation round 1, 2026-08-30: p=0.5854, interval (0.5225, 0.6445), variant p=0.5461 straddling, all contributions and parity targets exact).",
+  "_recompute_on": "D1 resolution. If Decisions D1 changes any prior weight, every derived number here and in tour.html must be recomputed — flag GTM.",
+  "mode": "1toN",
+  "config_file": "configs/one_to_n.yaml",
+  "config_key_map": {
+    "impact": "impact_primary_metric",
+    "feasibility": "capability_feasibility",
+    "reach": "reach",
+    "unit_economics": "unit_economics",
+    "data_flywheel": "data_flywheel",
+    "risk_surface": "risk_surface",
+    "effort": "effort"
+  },
+  "entry_conventions": {
+    "risk_surface": "Entered directly on the REVERSED 0-4 scale (4 = lowest exposure), matching configs/one_to_n.yaml. The raw_inputs below carry both the underlying exposure (for narrative) and the reversed value actually entered (risk_scored_reversed = what goes in the form).",
+    "effort": "Person-weeks; identical inputs produce a zero delta and zero contribution (deliberate teaching point)."
+  },
+  "ideas": {
+    "A": {
+      "name": "Reply Drafts",
+      "one_liner": "Agent-assist generative reply drafts in the ticket composer of an established support product."
+    },
+    "B": {
+      "name": "Instant Summaries",
+      "one_liner": "LLM thread summary rendered when an agent opens a ticket."
+    }
+  },
+  "weights": {
+    "impact": 0.25,
+    "feasibility": 0.20,
+    "reach": 0.15,
+    "unit_economics": 0.15,
+    "data_flywheel": 0.10,
+    "risk_surface": 0.05,
+    "effort": -0.10
+  },
+  "seed_distributions": {
+    "impact": { "mean": 0, "std": 1, "scale": "-2..+2 vs named past feature (anchor: 'Macros v2 launch')" },
+    "feasibility": { "mean": 2, "std": 1, "scale": "golden-set eval pass rate mapped to 0-4" },
+    "reach": { "mean": 5000, "std": 3000, "scale": "users touched per quarter (identity transform, per configs/one_to_n.yaml)" },
+    "unit_economics": { "mean": 2, "std": 1, "scale": "value per use vs inference cost, 0-4" },
+    "data_flywheel": { "mean": 1.5, "std": 1, "scale": "usage->data->better feature, 0-4" },
+    "risk_surface": { "mean": 2, "std": 1, "scale": "seed stats on the reversed 0-4 scale (4 = lowest exposure)" },
+    "effort": { "mean": 8, "std": 4, "scale": "person-weeks, reference-class adjusted" }
+  },
+  "raw_inputs": {
+    "A": { "impact": 1.0, "feasibility": 2.9, "reach": 8400, "unit_economics": 2.7, "data_flywheel": 2.3, "risk_exposure": 3.0, "risk_scored_reversed": 1.0, "effort": 9 },
+    "B": { "impact": 0.5, "feasibility": 2.5, "reach": 8800, "unit_economics": 2.0, "data_flywheel": 1.5, "risk_exposure": 2.5, "risk_scored_reversed": 1.5, "effort": 9 }
+  },
+  "app_form_values_by_config_key": {
+    "A": { "impact_primary_metric": 1.0, "capability_feasibility": 2.9, "reach": 8400, "unit_economics": 2.7, "data_flywheel": 2.3, "risk_surface": 1.0, "effort": 9 },
+    "B": { "impact_primary_metric": 0.5, "capability_feasibility": 2.5, "reach": 8800, "unit_economics": 2.0, "data_flywheel": 1.5, "risk_surface": 1.5, "effort": 9 }
+  },
+  "evaluative_inputs_excluded_from_score": {
+    "A": { "strategic_fit": "core to our assist strategy" },
+    "B": { "strategic_fit": "adjacent - nice to have" }
+  },
+  "derived": {
+    "contributions_w_times_dz": {
+      "impact": 0.125,
+      "feasibility": 0.08,
+      "reach": -0.02,
+      "unit_economics": 0.105,
+      "data_flywheel": 0.08,
+      "risk_surface": -0.025,
+      "effort": 0.0
+    },
+    "logit_L": 0.345,
+    "p_A_beats_B": 0.585,
+    "interval_90pct_display": [0.52, 0.64],
+    "interval_90pct_engine": [0.5225, 0.6445],
+    "straddles_50": false,
+    "verdict": "A",
+    "parity_paths_levers_only": {
+      "impact": { "delta_z": 1.38, "raw_shift": 1.38, "B_target_value": 1.88, "within_scale": true },
+      "feasibility": { "delta_z": 1.73, "raw_shift": 1.73, "B_target_value": 4.2, "within_scale": false },
+      "unit_economics": { "delta_z": 2.30, "raw_shift": 2.30, "within_scale": false },
+      "risk_surface": { "delta_z": 6.90, "raw_shift": 6.90, "within_scale": false },
+      "note_60_40": "no single-lever path to 60/40 in B's favor exists within any scale"
+    },
+    "fragility": { "raised": false, "reason": "largest 0.75-sigma single-factor move shifts L by at most 0.25*0.75 = 0.19 < margin 0.345 (FRAGILITY_Z = 0.75 per engine; ratification pending with Decisions)" }
+  },
+  "too_close_to_call_variant": {
+    "change": "B feasibility re-estimated 2.5 -> 3.3 after re-running the summary eval with name-handling fixed",
+    "logit_L": 0.185,
+    "p_A_beats_B": 0.546,
+    "interval_90pct_display": [0.47, 0.62],
+    "interval_90pct_engine": [0.47, 0.6213],
+    "straddles_50": true,
+    "verdict": "too close to call - gather evidence"
+  },
+  "audit_view_sample_log_illustration": {
+    "_label": "SAMPLE - seeded demo log of 14 decisions; must always be badged as sample data wherever shown. These numbers are illustrative only and are NOT engine-derived.",
+    "m1_revealed_weights": { "impact": 0.21, "feasibility": 0.24, "reach": 0.11, "unit_economics": 0.14, "data_flywheel": 0.13, "risk_surface": 0.04, "effort": -0.15 },
+    "zeta_consistency": 0.89,
+    "circular_triads": 1,
+    "brier_vs_picks": 0.21,
+    "free_intercept_diagnostic": 0.03
+  }
+}
