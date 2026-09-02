@@ -1,0 +1,1115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Noise, Measured</title>
+<meta name="description" content="PairwisePM — how a mechanical pairwise judge reduces noise in product decisions, explained one statistical concept at a time.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,300;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;450;500;600&display=swap">
+<style>
+:root{
+  --ground:#FAFAFC;
+  --paper:#FFFFFF;
+  --ink:#15171E;
+  --ink-2:#3A3F4D;
+  --muted:#666D80;
+  --rule:#E3E5EC;
+  --rule-2:#F0F1F5;
+  --signal:#0F6B70;
+  --signal-soft:#E3F1F1;
+  --noise:#A9581F;
+  --noise-soft:#F7EBE0;
+  --shadow:0 1px 2px rgba(20,22,30,.05), 0 8px 24px -12px rgba(20,22,30,.14);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0D0F14;
+    --paper:#141720;
+    --ink:#E9EBF2;
+    --ink-2:#B9BFCE;
+    --muted:#8A92A6;
+    --rule:#262B38;
+    --rule-2:#1D212B;
+    --signal:#5FD3D0;
+    --signal-soft:#122A2C;
+    --noise:#E0965A;
+    --noise-soft:#2A1E14;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0D0F14;
+  --paper:#141720;
+  --ink:#E9EBF2;
+  --ink-2:#B9BFCE;
+  --muted:#8A92A6;
+  --rule:#262B38;
+  --rule-2:#1D212B;
+  --signal:#5FD3D0;
+  --signal-soft:#122A2C;
+  --noise:#E0965A;
+  --noise-soft:#2A1E14;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:16.5px;
+  line-height:1.65;
+  font-weight:400;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%}
+
+/* ---------- layout ---------- */
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+.col{max-width:660px}
+main{padding-bottom:120px}
+
+section.part{
+  border-top:1px solid var(--rule);
+  padding:74px 0 8px;
+}
+.part-head{display:flex;gap:20px;align-items:baseline;margin-bottom:46px;flex-wrap:wrap}
+.part-num{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:12px;letter-spacing:.14em;color:var(--signal);
+  font-weight:600;padding-top:6px;white-space:nowrap;
+}
+.part-title{
+  font-family:Newsreader,Georgia,serif;
+  font-size:clamp(28px,4vw,40px);
+  line-height:1.12;font-weight:400;margin:0;letter-spacing:-.015em;
+  text-wrap:balance;
+}
+.part-sub{color:var(--muted);font-size:15.5px;margin:10px 0 0;max-width:56ch}
+
+article.concept{margin:0 0 62px}
+article.concept > .col > h3{
+  font-family:Newsreader,Georgia,serif;
+  font-size:24px;font-weight:500;line-height:1.25;
+  margin:0 0 4px;letter-spacing:-.01em;text-wrap:balance;
+}
+.eyebrow{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 14px;display:block;
+}
+p{margin:0 0 17px}
+.col p:last-child{margin-bottom:0}
+strong{font-weight:600;color:var(--ink)}
+em{font-style:italic}
+a{color:var(--signal);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--signal) 35%,transparent)}
+a:hover{border-bottom-color:var(--signal)}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--signal);outline-offset:3px;border-radius:2px}
+
+/* ---------- hero ---------- */
+header.hero{padding:0 0 20px;position:relative;overflow:hidden}
+.hero-inner{padding:74px 0 54px;display:grid;grid-template-columns:minmax(0,1fr);gap:44px}
+@media(min-width:1000px){.hero-inner{grid-template-columns:minmax(0,1.06fr) minmax(0,1fr);gap:64px;align-items:start}}
+.kicker{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--signal);margin:0 0 20px;
+}
+h1{
+  font-family:Newsreader,Georgia,serif;
+  font-size:clamp(40px,6.4vw,66px);
+  line-height:1.02;font-weight:400;letter-spacing:-.028em;
+  margin:0 0 22px;text-wrap:balance;
+}
+h1 em{font-style:italic;color:var(--signal)}
+.lede{font-size:19px;line-height:1.58;color:var(--ink-2);margin:0 0 20px;max-width:52ch}
+.lede-2{font-size:16px;color:var(--muted);margin:0 0 28px;max-width:54ch}
+.links{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:12.5px;letter-spacing:.02em;
+  padding:9px 15px;border:1px solid var(--rule);border-radius:2px;
+  background:var(--paper);color:var(--ink-2);text-decoration:none;
+  transition:border-color .16s,color .16s;
+}
+.btn:hover{border-color:var(--signal);color:var(--signal)}
+.btn.primary{background:var(--signal);border-color:var(--signal);color:#fff}
+:root[data-theme="dark"] .btn.primary,
+:root:not([data-theme="light"]) .btn.primary{color:#0D0F14}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .btn.primary{color:#fff}}
+.btn.primary:hover{opacity:.9;color:#fff}
+:root[data-theme="dark"] .btn.primary:hover{color:#0D0F14}
+
+/* ---------- live model ---------- */
+.machine{
+  background:var(--paper);border:1px solid var(--rule);border-radius:3px;
+  padding:22px 22px 18px;box-shadow:var(--shadow);
+}
+.machine h2{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+  margin:0 0 3px;font-weight:600;
+}
+.machine .hint{font-size:13px;color:var(--muted);margin:0 0 18px;line-height:1.5}
+.sliders{display:flex;flex-direction:column;gap:11px;margin-bottom:20px}
+.srow{display:grid;grid-template-columns:1fr 118px 44px;gap:12px;align-items:center}
+.slab{font-size:13.5px;line-height:1.3;color:var(--ink-2)}
+.slab .w{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:10.5px;color:var(--muted);display:block;letter-spacing:.03em;
+}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:3px;
+  background:var(--rule);border-radius:2px;outline:none;cursor:grab;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:15px;height:15px;border-radius:50%;
+  background:var(--signal);cursor:grab;border:2px solid var(--paper);
+  box-shadow:0 0 0 1px var(--signal);
+}
+input[type=range]::-moz-range-thumb{
+  width:13px;height:13px;border-radius:50%;background:var(--signal);
+  cursor:grab;border:2px solid var(--paper);box-shadow:0 0 0 1px var(--signal);
+}
+.sval{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:12.5px;text-align:right;color:var(--ink);font-variant-numeric:tabular-nums;
+}
+.readout{border-top:1px solid var(--rule-2);padding-top:16px}
+.verdict{
+  font-family:Newsreader,Georgia,serif;font-size:26px;line-height:1.15;
+  margin:0 0 3px;letter-spacing:-.01em;
+}
+.verdict.close{color:var(--noise);font-size:22px}
+.pline{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:13px;color:var(--muted);margin:0 0 14px;font-variant-numeric:tabular-nums;
+}
+.pbar{position:relative;height:26px;margin:0 0 8px}
+.pbar-track{position:absolute;top:11px;left:0;right:0;height:3px;background:var(--rule);border-radius:2px}
+.pbar-ci{position:absolute;top:9px;height:7px;background:var(--signal-soft);border-radius:2px;border:1px solid var(--signal)}
+.pbar-mid{position:absolute;top:4px;width:1px;height:17px;background:var(--muted);opacity:.6}
+.pbar-dot{position:absolute;top:6.5px;width:12px;height:12px;border-radius:50%;background:var(--signal);border:2px solid var(--paper);margin-left:-6px}
+.pbar-scale{display:flex;justify-content:space-between;font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted);letter-spacing:.04em}
+.lev{margin-top:16px;border-top:1px solid var(--rule-2);padding-top:14px}
+.lev h3{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:600}
+.levrow{display:grid;grid-template-columns:112px 1fr;gap:10px;align-items:center;margin-bottom:5px;font-size:12px}
+.levname{color:var(--muted);text-align:right;font-size:11.5px;line-height:1.25}
+.levbar{position:relative;height:14px;background:var(--rule-2);border-radius:1px}
+.levbar i{position:absolute;top:0;height:14px;display:block;border-radius:1px}
+.levmid{position:absolute;left:50%;top:-2px;width:1px;height:18px;background:var(--rule);z-index:2}
+
+/* ---------- figures ---------- */
+figure{
+  margin:30px 0;padding:26px 24px 18px;background:var(--paper);
+  border:1px solid var(--rule);border-radius:3px;
+  max-width:940px;overflow-x:auto;
+}
+figure svg{display:block;max-width:100%;height:auto;margin:0 auto;color:var(--ink)}
+figcaption{
+  margin-top:18px;padding-top:14px;border-top:1px solid var(--rule-2);
+  font-size:13.5px;line-height:1.55;color:var(--muted);max-width:70ch;
+}
+figcaption b{color:var(--ink-2);font-weight:600}
+
+/* ---------- formula ---------- */
+.fx{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  background:var(--paper);border:1px solid var(--rule);border-left:2px solid var(--signal);
+  border-radius:2px;padding:14px 18px;margin:20px 0;font-size:14px;line-height:1.85;
+  overflow-x:auto;white-space:pre;color:var(--ink);
+}
+code{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.88em;
+  background:var(--rule-2);padding:1.5px 5px;border-radius:2px;color:var(--ink-2);
+}
+.callout{
+  border-left:2px solid var(--noise);background:var(--noise-soft);
+  padding:15px 18px;margin:22px 0;font-size:15px;line-height:1.6;border-radius:0 2px 2px 0;
+}
+.callout b{color:var(--ink)}
+.note{
+  border-left:2px solid var(--rule);padding:2px 0 2px 18px;margin:20px 0;
+  font-size:15px;color:var(--muted);line-height:1.6;
+}
+
+/* ---------- table ---------- */
+.tw{overflow-x:auto;margin:24px 0;max-width:940px}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:10px 14px 10px 0;border-bottom:1px solid var(--rule-2);vertical-align:top}
+th{
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);font-weight:600;
+  border-bottom:1px solid var(--rule);
+}
+td.mono,th.mono{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-size:13px}
+
+/* ---------- footer ---------- */
+footer{border-top:1px solid var(--rule);padding:52px 0 70px;margin-top:40px}
+.refs{columns:2;column-gap:44px;font-size:13.5px;color:var(--muted);line-height:1.55;max-width:940px}
+@media(max-width:720px){.refs{columns:1}}
+.refs li{margin-bottom:9px;break-inside:avoid}
+.refs ol{padding-left:20px;margin:0}
+.foot-note{font-size:14px;color:var(--muted);margin-top:34px;max-width:62ch}
+
+/* toggle */
+.theme-btn{
+  position:fixed;top:16px;right:16px;z-index:50;
+  width:34px;height:34px;border-radius:2px;border:1px solid var(--rule);
+  background:var(--paper);color:var(--muted);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-family:"IBM Plex Mono",monospace;font-size:13px;box-shadow:var(--shadow);
+}
+.theme-btn:hover{color:var(--signal);border-color:var(--signal)}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<button class="theme-btn" id="tt" aria-label="Toggle colour theme">◐</button>
+
+<header class="hero">
+  <div class="wrap hero-inner">
+    <div>
+      <p class="kicker">PairwisePM · a mechanical judge for product decisions</p>
+      <h1>Two ideas in.<br>A number that <em>knows what it doesn't know</em> out.</h1>
+      <p class="lede">Ask a product manager to choose between two features on a Monday, then ask again on Thursday. Often you get two different answers. That gap is noise, it is invisible in any single decision, and it is expensive.</p>
+      <p class="lede-2">This is a small statistical instrument that removes it — not by being smarter than the PM, but by applying the PM's own policy the same way every single time. Everything below explains exactly how, one concept at a time.</p>
+      <div class="links">
+        <a class="btn primary" href="https://github.com/brettleehari/PairwisePM">Source on GitHub</a>
+        <a class="btn" href="https://huggingface.co/brettleehari/PairwisePM">Hugging Face</a>
+        <a class="btn" href="#problem">Start reading ↓</a>
+      </div>
+    </div>
+
+    <div class="machine">
+      <h2>The model, running</h2>
+      <p class="hint">These are the seven factors of allocation mode, with their shipped weights. Drag a slider to set how much idea&nbsp;A beats idea&nbsp;B on that factor, in standard deviations. Everything below updates with the real arithmetic.</p>
+      <div class="sliders" id="sl"></div>
+      <div class="readout">
+        <p class="verdict" id="vd">A preferred</p>
+        <p class="pline" id="pl">—</p>
+        <div class="pbar">
+          <div class="pbar-track"></div>
+          <div class="pbar-ci" id="ci"></div>
+          <div class="pbar-mid" style="left:50%"></div>
+          <div class="pbar-dot" id="dot"></div>
+        </div>
+        <div class="pbar-scale"><span>0%</span><span>50%</span><span>100%</span></div>
+        <div class="lev">
+          <h3>Leverage — who caused this verdict</h3>
+          <div id="lv"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ PART I ============ -->
+<section class="part" id="problem">
+  <div class="wrap">
+    <div class="part-head">
+      <span class="part-num">PART I</span>
+      <div>
+        <h2 class="part-title">The problem is noise, not bias</h2>
+        <p class="part-sub">Everyone tries to fix the wrong half of the error. The half nobody measures is the half you can remove for free.</p>
+      </div>
+    </div>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 01 · the decomposition</span>
+        <h3>Error splits in two, and the halves are equal</h3>
+        <p>Take any judgement with a true answer. <strong>Bias</strong> is the average error — everyone in the room reads high. <strong>Noise</strong> is the scatter — the same person gives different answers to the same question on different days.</p>
+        <p>In squared-error terms they simply add:</p>
+      </div>
+      <div class="fx">MSE  =  Bias²  +  Noise²</div>
+      <div class="col">
+        <p>That equation is why this project exists. The terms contribute <em>equally</em>. Yet organizations spend all their improvement effort on bias — better frameworks, better templates, better training — and none on noise, because noise is invisible in any single decision. You cannot see scatter in one shot. You need a set of judgements of like cases before it appears at all.</p>
+        <p>Reduce noise and you reduce error <em>even when you have no idea which way your bias runs</em>. That is close to a free lunch, and free lunches are rare.</p>
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 700 260" role="img" aria-label="Two targets. The left shows tight shots grouped away from centre, which is bias. The right shows shots scattered all around the centre, which is noise.">
+          <defs>
+            <marker id="ar" markerWidth="8" markerHeight="8" refX="6.5" refY="3" orient="auto">
+              <polygon points="0 0, 7 3, 0 6" fill="currentColor"/>
+            </marker>
+          </defs>
+          <!-- left target: biased -->
+          <g transform="translate(150,120)">
+            <circle r="82" fill="none" stroke="currentColor" stroke-opacity=".13"/>
+            <circle r="56" fill="none" stroke="currentColor" stroke-opacity=".13"/>
+            <circle r="30" fill="none" stroke="currentColor" stroke-opacity=".13"/>
+            <circle r="5" fill="none" stroke="currentColor" stroke-opacity=".35"/>
+            <g fill="var(--noise)">
+              <circle cx="41" cy="-33" r="4.5"/><circle cx="50" cy="-25" r="4.5"/>
+              <circle cx="36" cy="-22" r="4.5"/><circle cx="46" cy="-38" r="4.5"/>
+              <circle cx="55" cy="-33" r="4.5"/><circle cx="44" cy="-28" r="4.5"/>
+            </g>
+            <line x1="5" y1="-4" x2="38" y2="-27" stroke="currentColor" stroke-opacity=".5" stroke-dasharray="3 3" marker-end="url(#ar)"/>
+          </g>
+          <text x="150" y="232" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor" fill-opacity=".85">BIAS — tight, but off centre</text>
+          <text x="150" y="250" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor" fill-opacity=".5">a shared, directional error</text>
+
+          <!-- right target: noisy -->
+          <g transform="translate(505,120)">
+            <circle r="82" fill="none" stroke="currentColor" stroke-opacity=".13"/>
+            <circle r="56" fill="none" stroke="currentColor" stroke-opacity=".13"/>
+            <circle r="30" fill="none" stroke="currentColor" stroke-opacity=".13"/>
+            <circle r="5" fill="none" stroke="currentColor" stroke-opacity=".35"/>
+            <g fill="var(--noise)">
+              <circle cx="-52" cy="20" r="4.5"/><circle cx="38" cy="-46" r="4.5"/>
+              <circle cx="14" cy="58" r="4.5"/><circle cx="-30" cy="-40" r="4.5"/>
+              <circle cx="62" cy="26" r="4.5"/><circle cx="-8" cy="-14" r="4.5"/>
+            </g>
+          </g>
+          <text x="505" y="232" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor" fill-opacity=".85">NOISE — centred, but scattered</text>
+          <text x="505" y="250" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor" fill-opacity=".5">unpredictable, and invisible in one shot</text>
+
+          <line x1="327" y1="45" x2="327" y2="200" stroke="currentColor" stroke-opacity=".12"/>
+        </svg>
+        <figcaption><b>The same total error, two different diseases.</b> Look at only one shot — one decision, one scorecard — and the two targets are indistinguishable. You need the whole pattern before noise is even visible, which is why organizations that never audit their decisions conclude they do not have a noise problem.</figcaption>
+      </figure>
+
+      <div class="col">
+        <div class="callout"><b>The line the mechanical core will not cross.</b> This decomposition needs a true value to exist. “Will this raise 30-day retention” has one, eventually. “Is this on-brand” does not — there is no fact of the matter to be wrong about. So only predictive factors enter the score. Evaluative inputs are captured, displayed next to the verdict, and structurally excluded — they are not even in the scoring function's signature.</div>
+      </div>
+    </article>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 02 · anatomy</span>
+        <h3>Three kinds of noise, and only one of them is yours to lose</h3>
+        <p>Noise decomposes further, and the distinction decides what a model can honestly promise.</p>
+      </div>
+      <div class="fx">System Noise²  =  Level Noise²  +  Pattern Noise²
+Pattern Noise²  =  Stable Pattern²  +  Occasion²</div>
+      <div class="col">
+        <p><strong>Level noise</strong> is the easy one — one PM is systematically bullish, another is stingy. <strong>Stable pattern noise</strong> is a judge's idiosyncratic reaction to particular cases: she always over-values developer tooling, consistently, every time. This is usually the largest component, and being stable, it is arguably not error at all — it is her policy. <strong>Occasion noise</strong> is the same judge, same case, different Tuesday. In one study, developers re-estimating identical tasks differed by an average of 71 percent.</p>
+        <p>Occasion noise is typically the <em>smallest</em> of the three. And it is the only one a model of your own judgement removes.</p>
+        <div class="note">So be honest about the size of the prize. A model fitted to your past choices is not smarter than you and has no information you lacked. It just doesn't have Tuesdays. Small, but free.</div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ PART II ============ -->
+<section class="part">
+  <div class="wrap">
+    <div class="part-head">
+      <span class="part-num">PART II</span>
+      <div>
+        <h2 class="part-title">Why comparison beats scoring</h2>
+        <p class="part-sub">One line of algebra decides the entire shape of the product.</p>
+      </div>
+    </div>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 03 · the cancellation</span>
+        <h3>Subtraction deletes a whole noise term</h3>
+        <p>Score an idea on its own and you measure the idea plus your level bias plus today's mood:</p>
+      </div>
+      <div class="fx">score_A  =  true_A  +  level_bias  +  occasion_noise</div>
+      <div class="col"><p>Score both ideas in the same sitting and subtract, and the shared terms vanish:</p></div>
+      <div class="fx">Δ  =  score_A − score_B  =  (true_A − true_B)  +  (level_bias − level_bias)
+   =  true_A − true_B</div>
+      <div class="col">
+        <p>A PM who marks everything two points high marks <em>both</em> options two points high. Pairwise comparison is not a gentler kind of scoring — it deletes an entire error term by construction.</p>
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 700 250" role="img" aria-label="Bars for idea A and idea B each contain a true component plus an identical bias segment. Their difference contains only the true difference; the bias segments cancel.">
+          <g font-family="IBM Plex Mono, monospace" font-size="11.5">
+            <!-- A -->
+            <text x="18" y="46" fill="currentColor" fill-opacity=".7">score A</text>
+            <rect x="95" y="32" width="180" height="20" fill="var(--signal)" fill-opacity=".85"/>
+            <rect x="275" y="32" width="96" height="20" fill="var(--noise)" fill-opacity=".8"/>
+            <text x="185" y="46" fill="#fff" text-anchor="middle" font-size="11">true A</text>
+            <text x="323" y="46" fill="#fff" text-anchor="middle" font-size="11">bias</text>
+            <!-- B -->
+            <text x="18" y="92" fill="currentColor" fill-opacity=".7">score B</text>
+            <rect x="95" y="78" width="126" height="20" fill="var(--signal)" fill-opacity=".85"/>
+            <rect x="221" y="78" width="96" height="20" fill="var(--noise)" fill-opacity=".8"/>
+            <text x="158" y="92" fill="#fff" text-anchor="middle" font-size="11">true B</text>
+            <text x="269" y="92" fill="#fff" text-anchor="middle" font-size="11">bias</text>
+
+            <line x1="95" y1="118" x2="600" y2="118" stroke="currentColor" stroke-opacity=".16"/>
+            <text x="18" y="152" fill="currentColor" fill-opacity=".7">Δ = A − B</text>
+            <rect x="95" y="138" width="54" height="20" fill="var(--signal)"/>
+            <text x="122" y="152" fill="#fff" text-anchor="middle" font-size="11">Δtrue</text>
+            <g stroke="var(--noise)" stroke-opacity=".5" stroke-dasharray="4 3">
+              <rect x="149" y="138" width="96" height="20" fill="none"/>
+            </g>
+            <line x1="149" y1="158" x2="245" y2="138" stroke="var(--noise)" stroke-opacity=".7"/>
+            <text x="258" y="152" fill="var(--noise)" font-size="11">bias cancels — it was in both</text>
+
+            <text x="95" y="196" fill="currentColor" fill-opacity=".55" font-size="11">…but only if BOTH are scored in the same sitting.</text>
+            <text x="95" y="214" fill="currentColor" fill-opacity=".55" font-size="11">Score A Tuesday and B Thursday and the mood term no longer cancels —</text>
+            <text x="95" y="232" fill="currentColor" fill-opacity=".55" font-size="11">it re-enters as delta noise, now uncorrelated, and you are worse off than before.</text>
+          </g>
+        </svg>
+        <figcaption><b>Why the interface is one screen, two columns, and refuses partial input.</b> The cancellation only removes error the two scores <em>share</em>. Split the sitting and you don't merely lose the benefit — you actively add an uncorrelated term. Note also what survives untouched: your stable pattern noise. Pairwise is one specific deletion, not a cure.</figcaption>
+      </figure>
+
+      <div class="col">
+        <p>Frameworks like RICE do the opposite of this. They multiply and divide four soft estimates, so errors compound rather than cancel — and then the result is printed to one decimal place. 47.3 versus 44.1 reads as information. It is rounding error wearing a suit.</p>
+      </div>
+    </article>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 04 · standardization</span>
+        <h3>Putting users, weeks and judgements on one scale</h3>
+        <p>Reach is a count of users. Effort is person-weeks. Impact is a −2 to +2 judgement against a named past feature. These cannot be added until they share a scale, so each becomes a z-score:</p>
+      </div>
+      <div class="fx">z  =  (raw − μ) / σ</div>
+      <div class="col">
+        <p>The μ and σ start as <strong>seed distributions</strong> shipped in the config, because a new user has no history to standardize against. As the log grows, their own data should take over — and the transition is where it gets subtle. A hard cutover at some threshold changes every subsequent z-score, and so changes verdicts, silently, between sessions. That is precisely the Tuesday-noise the tool exists to remove.</p>
+        <p>So the default is a <strong>Bayesian blend</strong>: the seed acts as a pseudo-sample of weight 10 that real data gradually swamps. No discontinuity, and it converges to pure-log.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ PART III ============ -->
+<section class="part">
+  <div class="wrap">
+    <div class="part-head">
+      <span class="part-num">PART III</span>
+      <div>
+        <h2 class="part-title">The model, and why it is deliberately dumb</h2>
+        <p class="part-sub">A dot product, a logistic curve, and a decision not to fit the weights.</p>
+      </div>
+    </div>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 05 · Bradley-Terry, 1952</span>
+        <h3>The whole model is one dot product</h3>
+        <p>Bradley-Terry gives each item a strength and says the probability one beats the other depends only on the <em>difference</em> of strengths, squashed through a logistic function.</p>
+      </div>
+      <div class="fx">P(A beats B)  =  σ(β_A − β_B)        σ(x) = 1 / (1 + e⁻ˣ)</div>
+      <div class="col">
+        <p>Fitting a strength per idea would be useless here — every idea is new and has never been compared to anything. So strength becomes a weighted sum of factors, and the model works on the <em>difference vector</em>:</p>
+      </div>
+      <div class="fx">d  =  z_A − z_B          P(A beats B)  =  σ(wᵀd)</div>
+      <div class="col">
+        <p>That is the entire model. Every past decision — “we picked A over B” — becomes one training row: features are the factor deltas, the label is 1. Thurstone's Case V is the same model with a probit link instead of a logistic one, and the choice changes nothing that matters here.</p>
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 700 290" role="img" aria-label="The logistic curve mapping the weighted sum of factor differences to a win probability, with a worked example at 0.35 mapping to 59 percent.">
+          <g font-family="IBM Plex Mono, monospace" font-size="11">
+            <!-- axes -->
+            <line x1="80" y1="240" x2="640" y2="240" stroke="currentColor" stroke-opacity=".25"/>
+            <line x1="80" y1="30" x2="80" y2="240" stroke="currentColor" stroke-opacity=".25"/>
+            <line x1="80" y1="135" x2="640" y2="135" stroke="currentColor" stroke-opacity=".12" stroke-dasharray="3 4"/>
+            <line x1="360" y1="30" x2="360" y2="240" stroke="currentColor" stroke-opacity=".12" stroke-dasharray="3 4"/>
+            <!-- curve: p = sigmoid(x), x from -4..4 mapped 80..640, p 0..1 mapped 240..30 -->
+            <path d="M80,237.4 L115,236.1 L150,234.1 L185,230.9 L220,225.9 L255,218.3 L290,207.2 L325,192.1 L360,135 L395,77.9 L430,62.8 L465,51.7 L500,44.1 L535,39.1 L570,35.9 L605,33.9 L640,32.6"
+                  fill="none" stroke="var(--signal)" stroke-width="2"/>
+            <!-- worked point x=0.35 -> px = 360 + 0.35*70 = 384.5 ; p=0.5866 -> py = 240-0.5866*210 = 116.8 -->
+            <line x1="384.5" y1="240" x2="384.5" y2="116.8" stroke="var(--noise)" stroke-opacity=".5" stroke-dasharray="3 3"/>
+            <line x1="80" y1="116.8" x2="384.5" y2="116.8" stroke="var(--noise)" stroke-opacity=".5" stroke-dasharray="3 3"/>
+            <circle cx="384.5" cy="116.8" r="5" fill="var(--noise)"/>
+            <text x="396" y="106" fill="var(--noise)">wᵀd = 0.35  →  p = 0.59</text>
+            <!-- labels -->
+            <text x="360" y="258" fill="currentColor" fill-opacity=".6" text-anchor="middle">0</text>
+            <text x="80" y="258" fill="currentColor" fill-opacity=".6" text-anchor="middle">−4</text>
+            <text x="640" y="258" fill="currentColor" fill-opacity=".6" text-anchor="middle">+4</text>
+            <text x="360" y="278" fill="currentColor" fill-opacity=".75" text-anchor="middle">wᵀd — the weighted sum of factor differences (log-odds)</text>
+            <text x="70" y="139" fill="currentColor" fill-opacity=".6" text-anchor="end">50%</text>
+            <text x="70" y="34" fill="currentColor" fill-opacity=".6" text-anchor="end">100%</text>
+            <text x="70" y="243" fill="currentColor" fill-opacity=".6" text-anchor="end">0%</text>
+            <text x="96" y="46" fill="currentColor" fill-opacity=".5" font-size="10.5">ties are the steep part —</text>
+            <text x="96" y="62" fill="currentColor" fill-opacity=".5" font-size="10.5">small evidence moves the answer most near 50%</text>
+          </g>
+        </svg>
+        <figcaption><b>Everything the model believes is on this curve.</b> The x-axis is the only thing the factors produce — a single number. Note the shape: near a tie the curve is steep, so tiny differences in evidence swing the probability hard, which is exactly the region where the interval matters most and where the tool most often declines to answer.</figcaption>
+      </figure>
+    </article>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 06 · symmetry</span>
+        <h3>The intercept: forbidden in one role, informative in the other</h3>
+        <p>A symmetric pairwise model must have <strong>no intercept</strong>. If it had one, the model would believe that whichever option sits in the left column wins more often — a statement about your form layout, not about your ideas. So the scoring fit simply omits the intercept column. That buys an exact guarantee, tested to 1e-12: swap A and B and you get exactly 1 − p.</p>
+        <p>But that same intercept is <em>interesting</em>. So the code fits it a second time, unconstrained and lightly penalized, purely as a diagnostic. Its z-statistic is a measurement of <strong>your presentation-order bias</strong> — do you favour whatever you happened to type first? That number appears in the audit view and is never, ever used for scoring.</p>
+        <div class="note">The same parameter, in two roles. Banned from the verdict because it would corrupt it; kept as a mirror because it tells you something true about yourself.</div>
+      </div>
+    </article>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 07 · Dawes, 1979</span>
+        <h3>Why the default weights are not fitted from data</h3>
+        <p>The instinct is to learn the weights. Resist it — the reason is Robyn Dawes' <em>The Robust Beauty of Improper Linear Models</em>.</p>
+        <p>A <em>proper</em> model optimizes its weights by regression. An <em>improper</em> model uses non-optimal weights — equal weights, or as here, documented prior weights. Dawes showed improper models frequently match or beat properly fitted regression <strong>out of sample</strong>, and that both beat human intuition.</p>
+        <p>The mechanism is not mysterious. With small n and correlated predictors, fitted weights chase noise in the training set. Equal weights cannot overfit, because they were never fit. Dawes &amp; Corrigan sharpen it further: nearly all the power of a linear model comes from knowing <em>which</em> variables matter and their <em>sign</em>, not their precise magnitudes.</p>
+        <div class="callout"><b>A trap that is easy to walk into.</b> Choosing which factors to include <em>is itself fitting</em>. Screen your factors on the same data you evaluate on, and your improper model has quietly become a proper one — with all the overfitting you were trying to avoid, now hidden in a step you didn't count as modelling.</div>
+      </div>
+    </article>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 08 · Einhorn &amp; Hogarth</span>
+        <h3>The flat maximum: stop arguing about decimals</h3>
+        <p>A related and liberating result. When predictors are correlated, the prediction surface is <strong>flat</strong> across a wide range of weightings. Moving a weight from 0.25 to 0.22 usually does not change the ranking at all.</p>
+        <p>Which means the open weight questions in this project matter far less than the <em>ordering</em> of the factors. Get the ranking right and defensible; the decimals are configuration, not code, and can be tuned later without touching a line.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ PART IV ============ -->
+<section class="part">
+  <div class="wrap">
+    <div class="part-head">
+      <span class="part-num">PART IV</span>
+      <div>
+        <h2 class="part-title">Learning the judge, not the world</h2>
+        <p class="part-sub">The model that needs no outcomes at all — only a record of what you chose.</p>
+      </div>
+    </div>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 09 · Goldberg, 1970</span>
+        <h3>A model of you beats you</h3>
+        <p>Lewis Goldberg's <em>Man versus model of man</em>. Build a linear model that predicts <em>the judge's own past judgements</em>. Then set the judge aside and use the model. It wins.</p>
+        <p>Why? Because it applies the judge's own policy with perfect consistency — it sets occasion noise to zero. In Goldberg's study, judges correlated 0.84 with truth while models of those same judges reached 0.89.</p>
+        <p>This needs <strong>no outcome data whatsoever</strong>. No ground truth, no waiting a year to see whether the feature worked. Just a record of what you picked. It activates at ten logged decisions.</p>
+        <div class="callout"><b>A design decision worth defending.</b> Override picks — the times you overruled the tool — <em>count</em> toward that gate and are included in training. Overruling is the strongest possible signal of your revealed policy. Filtering overrides out would train the model to agree with itself, which is circular.</div>
+      </div>
+    </article>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 10 · the regularizer</span>
+        <h3>Shrink toward the stated policy, not toward zero</h3>
+        <p>This is the piece I would defend hardest, and it is a small idea. Standard ridge regression penalizes weights for being far from <strong>zero</strong>:</p>
+      </div>
+      <div class="fx">minimize   −loglik(w)  +  λ‖w‖²</div>
+      <div class="col">
+        <p>With almost no data that pulls every weight toward zero — toward a model that believes nothing at all. But that is not our belief. Before seeing a single one of your decisions, our belief is the stated prior policy sitting in the config. So the penalty is centred there instead:</p>
+      </div>
+      <div class="fx">minimize   −loglik(w)  +  ½ (w − w₀)ᵀ P (w − w₀)</div>
+      <div class="col">
+        <p>What this buys is a behaviour that is correct at both ends and continuous in between. At zero decisions the fit returns <em>exactly</em> the prior, verified to 1e-6. At two hundred decisions the likelihood dominates and you have essentially a free fit. No threshold, no switch, no cliff — the model earns the right to disagree with your stated policy, gradually, in proportion to evidence.</p>
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 700 250" role="img" aria-label="Two trajectories for a fitted weight as data accumulates. Ridge toward zero starts at zero and climbs; prior-centred shrinkage starts at the stated prior and moves toward the revealed value.">
+          <g font-family="IBM Plex Mono, monospace" font-size="11">
+            <line x1="82" y1="205" x2="640" y2="205" stroke="currentColor" stroke-opacity=".25"/>
+            <line x1="82" y1="30" x2="82" y2="205" stroke="currentColor" stroke-opacity=".25"/>
+            <!-- prior line -->
+            <line x1="82" y1="95" x2="640" y2="95" stroke="currentColor" stroke-opacity=".22" stroke-dasharray="4 4"/>
+            <text x="646" y="99" fill="currentColor" fill-opacity=".55" font-size="10.5">stated prior w₀</text>
+            <!-- revealed target -->
+            <line x1="82" y1="58" x2="640" y2="58" stroke="var(--signal)" stroke-opacity=".28" stroke-dasharray="4 4"/>
+            <text x="646" y="62" fill="var(--signal)" font-size="10.5">revealed w</text>
+
+            <!-- ridge to zero: starts at 205 (zero) climbs slowly -->
+            <path d="M82,205 C200,203 280,180 360,150 C450,118 540,80 640,62" fill="none" stroke="var(--noise)" stroke-width="2"/>
+            <text x="150" y="196" fill="var(--noise)" font-size="10.5">ridge → 0 : believes nothing at n=0</text>
+
+            <!-- prior centred: starts at 95 moves to 58 -->
+            <path d="M82,95 C210,94 300,86 380,78 C460,70 550,63 640,59" fill="none" stroke="var(--signal)" stroke-width="2"/>
+            <text x="150" y="86" fill="var(--signal)" font-size="10.5">shrink → prior : believes your policy at n=0</text>
+
+            <circle cx="82" cy="95" r="4" fill="var(--signal)"/>
+            <circle cx="82" cy="205" r="4" fill="var(--noise)"/>
+
+            <text x="82" y="226" fill="currentColor" fill-opacity=".6">0</text>
+            <text x="360" y="226" fill="currentColor" fill-opacity=".6" text-anchor="middle">decisions logged →</text>
+            <text x="640" y="226" fill="currentColor" fill-opacity=".6" text-anchor="end">200</text>
+          </g>
+        </svg>
+        <figcaption><b>The same regularizer, one parameter changed.</b> Both curves converge to the same place with enough data. The difference is entirely at the left edge, which is where every real user lives — and where a model that "believes nothing" produces verdicts nobody should act on.</figcaption>
+      </figure>
+    </article>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 11 · numerical survival</span>
+        <h3>Two fictitious games, or the fit runs off to infinity</h3>
+        <p>A failure mode that bites everyone implementing Bradley-Terry for the first time. If the comparison graph is not strongly connected, or one option wins every single time it appears, the maximum likelihood estimate <strong>diverges</strong> — the weight sprints to infinity, because infinity fits that data best. With five logged decisions this is not an edge case, it is Tuesday.</p>
+        <p>The classical fix is pseudo-observations, historically “two fictitious games”. For each factor, the code adds a pair of unit-delta pseudo-comparisons in <em>both presentation orders</em>, with soft outcomes equal to the prior model's own prediction.</p>
+        <p>Two properties fall out. The fit stays anchored at the stated policy while real data is thin — and because the pair is order-symmetric, it adds no bias to the intercept, so the order-bias diagnostic above stays clean.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ PART V ============ -->
+<section class="part">
+  <div class="wrap">
+    <div class="part-head">
+      <span class="part-num">PART V</span>
+      <div>
+        <h2 class="part-title">Saying how sure you are</h2>
+        <p class="part-sub">Discrimination and calibration are different virtues. Most tools ship neither and imply both.</p>
+      </div>
+    </div>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 12 · the interval</span>
+        <h3>A bare probability is a lie of precision</h3>
+        <p>Every verdict carries a 90 percent interval, produced by bootstrapping over the per-factor contributions. The rule that follows is enforced in the code <em>and</em> asserted by a test: the probability is <strong>never rendered without its interval</strong>. There is no code path in the app that can print “A wins, 59%” on its own. It prints “59% (52–64%)”, or it prints nothing.</p>
+      </div>
+    </article>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 13 · declining to answer</span>
+        <h3>Too close to call</h3>
+        <p>If the interval straddles fifty percent, the tool refuses to name a winner. Boundary touching counts as straddling — the tie breaks toward humility.</p>
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 700 210" role="img" aria-label="Two probability intervals on a 0 to 100 percent axis. The first sits clear of 50 percent and yields a verdict. The second straddles 50 percent and is reported as too close to call.">
+          <g font-family="IBM Plex Mono, monospace" font-size="11">
+            <!-- axis 1 -->
+            <line x1="120" y1="58" x2="620" y2="58" stroke="currentColor" stroke-opacity=".2"/>
+            <line x1="370" y1="42" x2="370" y2="74" stroke="currentColor" stroke-opacity=".45"/>
+            <rect x="380" y="50" width="90" height="16" rx="2" fill="var(--signal)" fill-opacity=".18" stroke="var(--signal)"/>
+            <circle cx="415" cy="58" r="5" fill="var(--signal)"/>
+            <text x="16" y="62" fill="currentColor" fill-opacity=".75">clear of 50%</text>
+            <text x="484" y="62" fill="var(--signal)">→ “A preferred — 59% (52–64%)”</text>
+
+            <!-- axis 2 -->
+            <line x1="120" y1="140" x2="620" y2="140" stroke="currentColor" stroke-opacity=".2"/>
+            <line x1="370" y1="124" x2="370" y2="156" stroke="currentColor" stroke-opacity=".45"/>
+            <rect x="325" y="132" width="105" height="16" rx="2" fill="var(--noise)" fill-opacity=".18" stroke="var(--noise)"/>
+            <circle cx="382" cy="140" r="5" fill="var(--noise)"/>
+            <text x="16" y="144" fill="currentColor" fill-opacity=".75">straddles 50%</text>
+            <text x="446" y="144" fill="var(--noise)">→ “Too close to call”</text>
+
+            <text x="370" y="176" text-anchor="middle" fill="currentColor" fill-opacity=".5" font-size="10.5">50%</text>
+            <text x="120" y="176" text-anchor="middle" fill="currentColor" fill-opacity=".5" font-size="10.5">0%</text>
+            <text x="620" y="176" text-anchor="middle" fill="currentColor" fill-opacity=".5" font-size="10.5">100%</text>
+            <text x="120" y="198" fill="currentColor" fill-opacity=".5" font-size="10.5">There is deliberately no second dead-band: the interval already widens when evidence is thin.</text>
+          </g>
+        </svg>
+        <figcaption><b>The most valuable output, and the one users like least.</b> “Gather more evidence” is a real answer. A tool that always names a winner is not more decisive — it is less honest, and it reproduces the 47.3-versus-44.1 problem with better arithmetic.</figcaption>
+      </figure>
+    </article>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 14 · Kendall &amp; Babington Smith, 1940</span>
+        <h3>ζ — a noise meter needing no outcomes and no second person</h3>
+        <p>My favourite instrument in the project, because it measures your own incoherence from your own data, today.</p>
+        <p>If you prefer A over B, and B over C, and then C over A, you have a <strong>circular triad</strong>. That is not a mistake about the world — it is an internal contradiction. No ranking whatsoever is consistent with all three of your own choices.</p>
+      </div>
+      <div class="fx">T  =  n(n²−1)/24  −  ½ Σᵢ (pᵢ − (n−1)/2)²
+
+ζ  =  1  −  T / T_max</div>
+      <div class="col">
+        <p>ζ = 1 is perfectly transitive; ζ = 0 is maximally cyclic. It needs no ground truth, no outcomes and no second rater — which makes it the one honesty instrument that works for a PM sitting alone at a desk. The implementation returns <code>None</code> honestly when there is not yet a complete triad to judge, rather than inventing a number.</p>
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 700 230" role="img" aria-label="On the left, a transitive set of preferences where A beats B, B beats C and A beats C. On the right, a circular triad where C also beats A, which no ranking can satisfy.">
+          <defs>
+            <marker id="a2" markerWidth="9" markerHeight="9" refX="7.5" refY="3" orient="auto"><polygon points="0 0, 7 3, 0 6" fill="currentColor"/></marker>
+            <marker id="a3" markerWidth="9" markerHeight="9" refX="7.5" refY="3" orient="auto"><polygon points="0 0, 7 3, 0 6" fill="var(--noise)"/></marker>
+          </defs>
+          <g font-family="IBM Plex Mono, monospace" font-size="12">
+            <!-- transitive -->
+            <g transform="translate(60,20)">
+              <circle cx="90" cy="20" r="19" fill="none" stroke="currentColor" stroke-opacity=".45"/><text x="90" y="25" text-anchor="middle" fill="currentColor">A</text>
+              <circle cx="20" cy="140" r="19" fill="none" stroke="currentColor" stroke-opacity=".45"/><text x="20" y="145" text-anchor="middle" fill="currentColor">B</text>
+              <circle cx="160" cy="140" r="19" fill="none" stroke="currentColor" stroke-opacity=".45"/><text x="160" y="145" text-anchor="middle" fill="currentColor">C</text>
+              <line x1="78" y1="37" x2="33" y2="122" stroke="currentColor" stroke-opacity=".5" marker-end="url(#a2)"/>
+              <line x1="41" y1="145" x2="137" y2="145" stroke="currentColor" stroke-opacity=".5" marker-end="url(#a2)"/>
+              <line x1="102" y1="37" x2="147" y2="122" stroke="currentColor" stroke-opacity=".5" marker-end="url(#a2)"/>
+              <text x="90" y="196" text-anchor="middle" fill="currentColor" fill-opacity=".8" font-size="11.5">ζ = 1 · consistent</text>
+              <text x="90" y="212" text-anchor="middle" fill="currentColor" fill-opacity=".5" font-size="10.5">a ranking exists: A &gt; B &gt; C</text>
+            </g>
+            <line x1="350" y1="35" x2="350" y2="195" stroke="currentColor" stroke-opacity=".12"/>
+            <!-- cyclic -->
+            <g transform="translate(430,20)">
+              <circle cx="90" cy="20" r="19" fill="none" stroke="currentColor" stroke-opacity=".45"/><text x="90" y="25" text-anchor="middle" fill="currentColor">A</text>
+              <circle cx="20" cy="140" r="19" fill="none" stroke="currentColor" stroke-opacity=".45"/><text x="20" y="145" text-anchor="middle" fill="currentColor">B</text>
+              <circle cx="160" cy="140" r="19" fill="none" stroke="currentColor" stroke-opacity=".45"/><text x="160" y="145" text-anchor="middle" fill="currentColor">C</text>
+              <line x1="78" y1="37" x2="33" y2="122" stroke="currentColor" stroke-opacity=".5" marker-end="url(#a2)"/>
+              <line x1="41" y1="145" x2="137" y2="145" stroke="currentColor" stroke-opacity=".5" marker-end="url(#a2)"/>
+              <line x1="147" y1="122" x2="102" y2="37" stroke="var(--noise)" stroke-width="1.6" marker-end="url(#a3)"/>
+              <text x="90" y="196" text-anchor="middle" fill="var(--noise)" font-size="11.5">ζ = 0 · circular triad</text>
+              <text x="90" y="212" text-anchor="middle" fill="currentColor" fill-opacity=".5" font-size="10.5">no ranking can satisfy all three</text>
+            </g>
+          </g>
+        </svg>
+        <figcaption><b>One arrow reversed is the whole difference.</b> The cycle on the right cannot be explained by any beliefs about the ideas — it can only be explained by the judge being inconsistent between comparisons. That makes ζ a live noise meter, computable from the decision log the moment it holds a complete triad.</figcaption>
+      </figure>
+    </article>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 15 · Brier, 1950</span>
+        <h3>Being right versus knowing how right you are</h3>
+        <p><strong>Discrimination</strong> is ranking — does the tool put better ideas above worse ones? <strong>Calibration</strong> is honesty about confidence — of all the times it said seventy percent, did the thing happen about seventy percent of the time? They are different virtues and a model can have either without the other.</p>
+      </div>
+      <div class="fx">Brier  =  (1/N) Σ (pᵢ − oᵢ)²</div>
+      <div class="col">
+        <p>The mean squared error of a probability forecast; zero is perfect. It accumulates from decision one. A reliability curve — predicted probability binned against observed frequency — unlocks at thirty decisions and not before, because a calibration plot drawn from eight points is <em>itself</em> overconfident. An uncalibrated calibration report would be a fine joke at this product's expense.</p>
+      </div>
+    </article>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 16 · the missing scoreboard</span>
+        <h3>Why the c-statistic is not in the product</h3>
+        <p>For a choice model the c-statistic equals the AUC, and it reads beautifully directly: <em>the probability the model ranks a randomly chosen better idea above a worse one</em>. 0.5 is a coin flip. Somers' D = 2c − 1.</p>
+        <p>Here is why it is absent, and this is the part most tools quietly skip. To distinguish c = 0.80 from chance you need roughly <strong>45 outcome-labeled decisions</strong>. For c = 0.70, about 109. If you have five decisions and post “c = 1.000”, you have not measured discrimination — you have measured your sample size.</p>
+        <p>So the tool ships the metrics that are honest at small n — pick agreement, ζ, Brier — and leaves the outcome scoreboard locked until data exists to support it.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ PART VI ============ -->
+<section class="part">
+  <div class="wrap">
+    <div class="part-head">
+      <span class="part-num">PART VI</span>
+      <div>
+        <h2 class="part-title">Turning a verdict into a to-do list</h2>
+        <p class="part-sub">Because the model is linear, the explanation is not an approximation — it is the model itself.</p>
+      </div>
+    </div>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 17 · attribution</span>
+        <h3>Leverage, exactly — no SHAP required</h3>
+        <p>The verdict pulls apart with no approximation at all:</p>
+      </div>
+      <div class="fx">L  =  wᵀd  =  Σⱼ  wⱼ · dⱼ</div>
+      <div class="col">
+        <p>Each term is factor j's signed contribution to the decision. No attribution heuristic, no sampling, no surrogate model — the model is linear, so the decomposition <em>is</em> the model. It answers “why did it say that”, and it frequently reveals that a verdict you liked rests entirely on a number you guessed. That is the live panel at the top of this page.</p>
+      </div>
+    </article>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 18 · counterfactual</span>
+        <h3>Path to parity, in units a person can act on</h3>
+        <p>Given a verdict, what is the smallest single change that flips it? Solve for the shift in factor j that drives the log-odds to zero, then convert back through that factor's standard deviation:</p>
+      </div>
+      <div class="fx">required z-shift    =  L / wⱼ
+required raw shift  =  (L / wⱼ) × σⱼ</div>
+      <div class="col">
+        <p>The conversion is the point. Not “raise z by 1.04” but <strong>“raise the eval pass rate from 62% to 78%”</strong>, or “cut three person-weeks of scope”. The panel computes this for parity and for a 60/40 margin, and checks the target against the factor's plausible range — a path requiring forty million users is arithmetic, not advice, and is marked infeasible.</p>
+      </div>
+    </article>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 19 · the honesty tag</span>
+        <h3>Lever or fact</h3>
+        <p>Every factor carries a tag. A <strong>lever</strong> is something you can change by working — eval pass rate, effort, evidence of pull, unit economics. A <strong>fact</strong> is what it is — problem severity, segment size, capability-trajectory exposure.</p>
+        <p>Parity paths are proposed only through levers. If every route runs through a fact, the tool says so plainly: <em>this loses on fundamentals; no amount of working harder flips it</em>. That sentence is itself a decision-grade output, and it is the one a spreadsheet will never give you.</p>
+      </div>
+    </article>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 20 · the mirror</span>
+        <h3>Fragility — when a win rests on one guess</h3>
+        <p>The same mathematics pointed the other way. If the <em>winner's</em> margin would flip under a small plausible move of one factor — currently 0.75 standard deviations — the card says so: <em>“A wins, but the margin rests entirely on the effort estimate. Re-estimate before committing.”</em></p>
+        <p>A win that survives only if your guess was exactly right is not a win. It is a coin flip with a narrative attached.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ PART VII ============ -->
+<section class="part">
+  <div class="wrap">
+    <div class="part-head">
+      <span class="part-num">PART VII</span>
+      <div>
+        <h2 class="part-title">Knowing where it stops</h2>
+        <p class="part-sub">The boundaries are not disclaimers bolted on afterwards. They are enforced by tests.</p>
+      </div>
+    </div>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 21 · the ladder</span>
+        <h3>Four models, each earning its rung</h3>
+      </div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Rung</th><th>Model</th><th>Trains on</th><th class="mono">Active at</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">M0</td><td>Prior-weight linear, σ(w₀ᵀd)</td><td>nothing at all</td><td class="mono">day one</td></tr>
+            <tr><td class="mono">M1</td><td>Ridge logistic BT, shrunk to prior</td><td>your logged picks</td><td class="mono">~10 picks</td></tr>
+            <tr><td class="mono">M2</td><td>Same regression against outcomes</td><td>labeled outcomes</td><td class="mono">~45 outcomes</td></tr>
+            <tr><td class="mono">M3</td><td>Nonlinear ML, interactions</td><td>hundreds</td><td class="mono">far future</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col">
+        <p>Each rung replaces the one below <strong>only</strong> by beating it out of sample on c-statistic and Brier. The equal-weight version stays available throughout as a scientific control.</p>
+        <p>The direction of travel is the opposite of the industry instinct. More sophistication is not generally better here. With small, noisy, non-stationary data — which is exactly what product decisions are — the simple end of the ladder usually wins out of sample. The ceiling for a real PM tool is low, and that is a feature.</p>
+      </div>
+    </article>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 22 · two regimes</span>
+        <h3>Search and allocation are not the same problem</h3>
+        <p>They share a surface — choose between options under uncertainty — but they sit in opposite statistical regimes, so the tool changes what it claims.</p>
+      </div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>—</th><th>0 → 1 · search</th><th>1 → N · allocation</th></tr></thead>
+          <tbody>
+            <tr><td>Environment</td><td>Non-stationary, unknown</td><td>Stable-ish, familiar</td></tr>
+            <tr><td>Sample size</td><td>Tiny, no reference class</td><td>Accumulates decision by decision</td></tr>
+            <tr><td>Expensive error</td><td>False negative — killing the winner</td><td>False positive — shipping mediocrity</td></tr>
+            <tr><td>Payoffs</td><td>Convex; one hit funds everything</td><td>Roughly linear</td></tr>
+            <tr><td><b>What it claims</b></td><td><b>Structure &amp; consistency only. No accuracy claim.</b></td><td><b>A mechanical baseline</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col">
+        <p>In search mode the banner is permanent, asserted by a test, and the config loader <em>refuses to load the mode without it</em>. The ceiling flag follows the same reasoning: a high-ceiling outlier is routed to human portfolio judgement rather than averaged into a score, because tail-hunting is a portfolio question wearing a ranking question's clothes. Convexity belongs at selection — never inside the probability.</p>
+      </div>
+    </article>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 23 · Meehl's cinema</span>
+        <h3>Broken legs, and the honest warning attached</h3>
+        <p>A formula predicts whether someone attends the cinema tonight, and it is a good formula — but she broke her leg this morning. The formula cannot see that. Overruling it is correct.</p>
+        <p>This is the legitimate case for override, and the app always allows it: pick against the verdict, or against a too-close-to-call, and it is logged with one sentence of rationale. No friction, no nagging.</p>
+        <p>The catch, and the literature is blunt about it — humans <strong>drastically overuse</strong> the broken-leg exception. Ordinary cues get treated as decisive, and the override quietly reintroduces the noise the model removed. So overrides are recorded with your stated reason, and can later be audited against outcomes. If your overrides underperform the model — which is the usual finding — that is worth knowing. And you will only know it if you wrote them down.</p>
+      </div>
+    </article>
+
+    <article class="concept">
+      <div class="col">
+        <span class="eyebrow">Concept 24 · the evidence base</span>
+        <h3>What the literature actually supports</h3>
+        <p>Meehl (1954) reviewed the comparative studies available then: in all but one, actuarial prediction equalled or beat the clinician. Grove et al. (2000) meta-analyzed 136 studies — mechanical prediction about ten percent more accurate on average, substantially better in 33 to 47 percent of studies, humans substantially better in only 6 to 16 percent.</p>
+        <p>Read that carefully, because the popular version is wrong. The claim is <em>not</em> that any model beats any human. Models degrade badly with broken-leg cues, tiny samples and non-stationary environments — which describes a great deal of product strategy.</p>
+        <div class="callout"><b>The defensible claim, stated narrowly.</b> A simple, consistent mechanical rule is a golden baseline that beats most humans most of the time — mostly by removing noise, not by being clever. That is what this is. A baseline that does not have Tuesdays, that shows its interval, and that says “too close to call” when it means it.</div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ HOW BUILT ============ -->
+<section class="part">
+  <div class="wrap">
+    <div class="part-head">
+      <span class="part-num">COLOPHON</span>
+      <div>
+        <h2 class="part-title">How it was built</h2>
+        <p class="part-sub">One Spine, seven Leaves — the delivery method the project was also a test of.</p>
+      </div>
+    </div>
+
+    <figure>
+      <svg viewBox="0 0 700 260" role="img" aria-label="One spine, the customer narrative, feeding seven leaves: architecture, engineering, go to market, design, compliance, sequencing and decisions.">
+        <defs><marker id="a4" markerWidth="8" markerHeight="8" refX="6.5" refY="3" orient="auto"><polygon points="0 0, 7 3, 0 6" fill="currentColor" fill-opacity=".45"/></marker></defs>
+        <g font-family="IBM Plex Mono, monospace" font-size="11">
+          <rect x="26" y="96" width="132" height="62" rx="2" fill="var(--signal)" fill-opacity=".12" stroke="var(--signal)"/>
+          <text x="92" y="120" text-anchor="middle" fill="var(--signal)" font-size="12">THE SPINE</text>
+          <text x="92" y="137" text-anchor="middle" fill="currentColor" fill-opacity=".6" font-size="10">customer narrative</text>
+          <text x="92" y="150" text-anchor="middle" fill="currentColor" fill-opacity=".6" font-size="10">problem · user · refusals</text>
+
+          <g stroke="currentColor" stroke-opacity=".3" marker-end="url(#a4)">
+            <line x1="162" y1="112" x2="246" y2="30"/><line x1="162" y1="118" x2="246" y2="66"/>
+            <line x1="162" y1="124" x2="246" y2="102"/><line x1="162" y1="130" x2="246" y2="138"/>
+            <line x1="162" y1="136" x2="246" y2="174"/><line x1="162" y1="142" x2="246" y2="210"/>
+            <line x1="162" y1="148" x2="246" y2="246"/>
+          </g>
+          <g fill="currentColor" fill-opacity=".85">
+            <rect x="250" y="16" width="180" height="26" rx="2" fill="none" stroke="currentColor" stroke-opacity=".3"/><text x="262" y="33">Architecture</text>
+            <rect x="250" y="52" width="180" height="26" rx="2" fill="none" stroke="currentColor" stroke-opacity=".3"/><text x="262" y="69">Engineering</text>
+            <rect x="250" y="88" width="180" height="26" rx="2" fill="none" stroke="currentColor" stroke-opacity=".3"/><text x="262" y="105">Go-to-market</text>
+            <rect x="250" y="124" width="180" height="26" rx="2" fill="none" stroke="currentColor" stroke-opacity=".3"/><text x="262" y="141">Design</text>
+            <rect x="250" y="160" width="180" height="26" rx="2" fill="none" stroke="currentColor" stroke-opacity=".3"/><text x="262" y="177">Compliance</text>
+            <rect x="250" y="196" width="180" height="26" rx="2" fill="none" stroke="var(--signal)" stroke-opacity=".5"/><text x="262" y="213">Sequencing</text>
+            <rect x="250" y="232" width="180" height="26" rx="2" fill="none" stroke="var(--signal)" stroke-opacity=".5"/><text x="262" y="249">Decisions</text>
+          </g>
+          <text x="446" y="33" fill="currentColor" fill-opacity=".45" font-size="10">diagram + build-vs-adopt split</text>
+          <text x="446" y="69" fill="currentColor" fill-opacity=".45" font-size="10">the working code</text>
+          <text x="446" y="105" fill="currentColor" fill-opacity=".45" font-size="10">interactive tour</text>
+          <text x="446" y="141" fill="currentColor" fill-opacity=".45" font-size="10">states + trust signals</text>
+          <text x="446" y="177" fill="currentColor" fill-opacity=".45" font-size="10">traceability matrix + tests</text>
+          <text x="446" y="213" fill="var(--signal)" fill-opacity=".7" font-size="10">work graph — the team self-routes</text>
+          <text x="446" y="249" fill="var(--signal)" fill-opacity=".7" font-size="10">disagreements, on a 2-day clock</text>
+        </g>
+      </svg>
+      <figcaption><b>Five disciplinary Leaves, two meta.</b> Each Leaf is an artifact in the medium its consumer actually uses, and every Leaf is code under version control — so a change to the Spine propagates like a build step rather than a round of meetings. The last two are the ones that keep a system of many authors coherent: Sequencing routes the work, Decisions resolves the disagreement.</figcaption>
+    </figure>
+
+    <div class="col">
+      <p>The seven Leaves were authored by seven agents working in parallel, then negotiated across twenty rounds of full cross-review — each agent pressing its own agenda, all of them reading everything the others produced. Six disputes were opened over those rounds. All six were settled by the parties themselves; the AI-adjudication mechanism that stands behind the two-day clock was never needed, which is roughly the best outcome a deadline can have.</p>
+      <p>The most useful thing the process produced was not polish. It was three defects found in files that had already been declared finished — and all three were the same shape: <em>a check whose scope was wider or narrower than the thing it claimed to verify</em>. The sharpest was a test asserting the engine imports no network library, which passed only because a sibling test had already imported one into the same process. It was measuring the test runner, not the product.</p>
+      <div class="callout"><b>A suite that reports green on the strength of its collection order does to shippers exactly what a false-precision scorecard does to product managers.</b> Both hand you a number that feels like evidence and isn't. Finding that, in a project about exactly that, was worth the twenty rounds.</div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="col">
+      <h3 style="font-family:Newsreader,Georgia,serif;font-weight:500;font-size:20px;margin:0 0 14px">References</h3>
+    </div>
+    <div class="refs">
+      <ol>
+        <li>Kahneman, Sibony &amp; Sunstein — <i>Noise: A Flaw in Human Judgment</i> (2021)</li>
+        <li>Meehl — <i>Clinical versus Statistical Prediction</i> (1954)</li>
+        <li>Grove, Zald, Lebow, Snitz &amp; Nelson — “Clinical versus mechanical prediction: a meta-analysis”, <i>Psychological Assessment</i> 12(1) (2000)</li>
+        <li>Dawes — “The Robust Beauty of Improper Linear Models in Decision Making”, <i>American Psychologist</i> 34(7) (1979)</li>
+        <li>Dawes &amp; Corrigan — “Linear models in decision making”, <i>Psychological Bulletin</i> 81(2) (1974)</li>
+        <li>Goldberg — “Man versus model of man”, <i>Psychological Bulletin</i> 73(6) (1970)</li>
+        <li>Bradley &amp; Terry — “Rank analysis of incomplete block designs”, <i>Biometrika</i> 39 (1952)</li>
+        <li>Thurstone — “A law of comparative judgment”, <i>Psychological Review</i> 34 (1927)</li>
+        <li>Kendall &amp; Babington Smith — “On the method of paired comparisons”, <i>Biometrika</i> 31 (1940)</li>
+        <li>Brier — “Verification of forecasts expressed in terms of probability”, <i>Monthly Weather Review</i> 78 (1950)</li>
+        <li>Einhorn &amp; Hogarth — “Unit weighting schemes for decision making”, <i>OBHP</i> 13 (1975)</li>
+        <li>Grimstad &amp; Jørgensen — “Inconsistency of expert judgment-based estimates of software development effort”, <i>JSS</i> 80(11) (2007)</li>
+      </ol>
+    </div>
+    <p class="foot-note">
+      PairwisePM runs entirely offline — numpy only, no model API, no network call at decision time, nothing stored on any server.
+      <a href="https://github.com/brettleehari/PairwisePM">Source</a> ·
+      <a href="https://huggingface.co/brettleehari/PairwisePM">Hugging Face</a> ·
+      <a href="https://github.com/brettleehari/PairwisePM/blob/main/docs/the-statistics.md">The same explanation in prose</a>
+      <br><br>Do let me know where you think the reasoning is wrong, there is always room for improvement.
+    </p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var tt=document.getElementById('tt');
+  tt.addEventListener('click',function(){
+    var r=document.documentElement;
+    var cur=r.getAttribute('data-theme');
+    if(!cur){ cur = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark':'light'; }
+    r.setAttribute('data-theme', cur==='dark'?'light':'dark');
+  });
+
+  // --- the real M0 arithmetic, 1->N mode, shipped prior weights ---
+  var F=[
+    {k:'impact',   n:'Impact on the primary metric', w: 0.25},
+    {k:'feas',     n:'Capability feasibility',       w: 0.20},
+    {k:'reach',    n:'Reach',                        w: 0.15},
+    {k:'econ',     n:'Unit economics',               w: 0.15},
+    {k:'flywheel', n:'Data flywheel',                w: 0.10},
+    {k:'risk',     n:'Risk surface',                 w: 0.05},
+    {k:'effort',   n:'Effort (cost — enters negative)', w:-0.10}
+  ];
+  var start=[0.8,0.5,-0.3,0.4,0.0,0.2,0.6];
+  var vals=start.slice();
+
+  var sl=document.getElementById('sl');
+  F.forEach(function(f,i){
+    var row=document.createElement('div'); row.className='srow';
+    row.innerHTML='<div class="slab">'+f.n+'<span class="w">weight '+(f.w>0?'+':'')+f.w.toFixed(2)+'</span></div>'+
+      '<input type="range" min="-2" max="2" step="0.1" value="'+vals[i]+'" aria-label="'+f.n+' difference in standard deviations">'+
+      '<div class="sval" id="v'+i+'"></div>';
+    sl.appendChild(row);
+    row.querySelector('input').addEventListener('input',function(e){
+      vals[i]=parseFloat(e.target.value); render();
+    });
+  });
+
+  function sig(x){ return 1/(1+Math.exp(-x)); }
+
+  // deterministic pseudo-random so the interval is stable across renders
+  var seed=20260901;
+  function rnd(){ seed=(seed*1103515245+12345)&0x7fffffff; return seed/0x7fffffff; }
+
+  function bootstrap(contribs){
+    var k=contribs.length, B=400, ps=[];
+    seed=20260901;
+    for(var b=0;b<B;b++){
+      var s=0;
+      for(var j=0;j<k;j++){ s+=contribs[Math.floor(rnd()*k)]; }
+      ps.push(sig(s));
+    }
+    ps.sort(function(a,b){return a-b;});
+    return [ps[Math.floor(0.05*B)], ps[Math.floor(0.95*B)-1]];
+  }
+
+  function render(){
+    var contribs=F.map(function(f,i){ return f.w*vals[i]; });
+    var L=contribs.reduce(function(a,b){return a+b;},0);
+    var p=sig(L);
+    var ci=bootstrap(contribs);
+    var lo=Math.min(ci[0],ci[1]), hi=Math.max(ci[0],ci[1]);
+
+    F.forEach(function(f,i){
+      document.getElementById('v'+i).textContent=(vals[i]>0?'+':'')+vals[i].toFixed(1)+'σ';
+    });
+
+    var tooClose = (lo<=0.5 && hi>=0.5);
+    var vd=document.getElementById('vd'), pl=document.getElementById('pl');
+    if(tooClose){
+      vd.textContent='Too close to call';
+      vd.className='verdict close';
+      pl.textContent='interval straddles 50% — gather more evidence';
+    }else{
+      var winner = p>0.5 ? 'A' : 'B';
+      var shown = p>0.5 ? p : 1-p;
+      var slo = p>0.5 ? lo : 1-hi, shi = p>0.5 ? hi : 1-lo;
+      vd.textContent='Idea '+winner+' preferred';
+      vd.className='verdict';
+      pl.textContent=(shown*100).toFixed(0)+'%  ('+(slo*100).toFixed(0)+'–'+(shi*100).toFixed(0)+'%)   ·   wᵀd = '+(L>=0?'+':'')+L.toFixed(3);
+    }
+
+    document.getElementById('dot').style.left=(p*100)+'%';
+    var ciEl=document.getElementById('ci');
+    ciEl.style.left=(lo*100)+'%';
+    ciEl.style.width=Math.max((hi-lo)*100,1.2)+'%';
+
+    var max=Math.max.apply(null,contribs.map(Math.abs)).toFixed(4);
+    max=Math.max(parseFloat(max),0.02);
+    var lv=document.getElementById('lv');
+    lv.innerHTML='';
+    F.map(function(f,i){return {n:f.n,c:contribs[i]};})
+     .sort(function(a,b){return Math.abs(b.c)-Math.abs(a.c);})
+     .forEach(function(r){
+        var pct=Math.abs(r.c)/max*49;
+        var d=document.createElement('div'); d.className='levrow';
+        var col = r.c>=0 ? 'var(--signal)' : 'var(--noise)';
+        var style = r.c>=0
+          ? 'left:50%;width:'+pct+'%;background:'+col
+          : 'right:50%;width:'+pct+'%;background:'+col;
+        d.innerHTML='<div class="levname">'+r.n.replace(' (cost — enters negative)','')+'</div>'+
+          '<div class="levbar"><span class="levmid"></span><i style="'+style+'"></i></div>';
+        lv.appendChild(d);
+     });
+  }
+  render();
+})();
+</script>
+</body>
+</html>
